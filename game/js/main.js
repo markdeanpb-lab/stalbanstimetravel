@@ -360,8 +360,15 @@
     await nextFrame();
     Game.state = 'title';
     SA.emit('loaded');
-    if (SA.Menus) SA.Menus.showTitle();
-    else Game.start(null);
+    if (SA.Menus) {
+      SA.Menus.showTitle();
+      // a game in progress when the page was republished carries on where it was
+      if (SA.hotResume) {
+        const d = SA.hotResume;
+        SA.hotResume = null;
+        SA.Menus.resume(d);
+      }
+    } else Game.start(null);
   }
 
   // ------------------------------------------------------------------ game start / serialise
@@ -623,14 +630,39 @@
       if (!window.THREE) throw new Error('three.js failed to load (vendor/three.min.js missing?)');
       const test = document.createElement('canvas');
       if (!(test.getContext('webgl2') || test.getContext('webgl'))) throw new Error('WebGL is not available in this browser.');
-      load().catch((e) => {
-        console.error(e);
-        const el = document.getElementById('err');
-        el.textContent = 'Could not start: ' + e.message;
-        el.classList.remove('hidden');
-        SA.lastError = e.message + '\n' + (e.stack || '');
-      });
-      requestAnimationFrame(frame);
+      // When the page runs in Claude's artifact viewer, window.claude.hot lets a game in
+      // progress survive a republish: the viewer keeps the snapshot and hands it back on
+      // reload. Anywhere else (file://, a local server) window.claude is absent.
+      const hot = window.claude && window.claude.hot;
+      let started = false;
+      const start = (data) => {
+        if (started) return;
+        started = true;
+        SA.hotResume = data && data.save ? data.save : null;
+        load().catch((e) => {
+          console.error(e);
+          const el = document.getElementById('err');
+          el.textContent = 'Could not start: ' + e.message;
+          el.classList.remove('hidden');
+          SA.lastError = e.message + '\n' + (e.stack || '');
+        });
+        requestAnimationFrame(frame);
+      };
+      if (hot && typeof hot.snapshot === 'function') {
+        try {
+          hot.snapshot(() => (SA.Mission && ['play', 'cutscene', 'pause', 'menu'].indexOf(Game.state) >= 0 ? { save: Game.serialize() } : {}));
+        } catch (e) {
+          /* optional */
+        }
+      }
+      if (hot && typeof hot.ready === 'function') {
+        try {
+          hot.ready(start);
+        } catch (e) {
+          start({});
+        }
+        setTimeout(() => start(hot.data || {}), 3000); // never wait on the viewer for long
+      } else start((hot && hot.data) || {});
     } catch (e) {
       const el = document.getElementById('err');
       el.textContent = e.message;

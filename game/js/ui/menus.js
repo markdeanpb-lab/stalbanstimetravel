@@ -131,6 +131,11 @@
     showScreen('screen-title', false);
     showScreen('screen-loading', false);
   }
+  // carry on with a game handed over by the page viewer (see main.js boot)
+  M.resume = function (d) {
+    hideTitle();
+    if (!SA.Game.load(d)) M.showTitle();
+  };
   M.showTitle = function () {
     SA.Game.state = 'title';
     showScreen('screen-loading', false);
@@ -393,7 +398,12 @@
   SA.on('loaded', () => {
     setInterval(() => {
       if (SA.Game.state !== 'pause' && SA.Game.state !== 'menu') return;
-      const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+      let pads = [];
+      try {
+        pads = navigator.getGamepads ? navigator.getGamepads() : [];
+      } catch (e) {
+        return; // gamepads blocked here (some embedded viewers)
+      }
       for (const p of pads) {
         if (p && p.buttons[9] && p.buttons[9].pressed && !M._padStart) {
           M._padStart = true;
