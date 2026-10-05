@@ -577,13 +577,26 @@
         float streak = vnoise(vec2(uv.x*3.0, uv.y*0.4))*0.05;
         return base*(0.96 + n - streak);
       } else if (wt < 2.5) {
-        vec2 q = uv*11.0;
-        float n = vnoise(q) ; float n2 = vnoise(q*2.1+7.0);
-        float flint = smoothstep(0.42,0.62,n*0.65+n2*0.35);
-        vec3 mortar = mix(vec3(0.74,0.72,0.66), base, 0.35);
-        vec3 stone = base*vec3(0.62,0.64,0.68)*(0.85+0.3*n2);
-        vec3 c = mix(mortar, stone, flint*aa*0.85 + 0.15);
-        return c*(0.92+0.12*vnoise(uv*0.7));
+        // flint: packed nodules (Worley cells, about 11 x 9 cm) in pale lime mortar
+        vec2 q = uv*vec2(9.0, 11.0);
+        vec2 qi = floor(q), qf = fract(q);
+        float d1 = 8.0, d2 = 8.0; vec2 id = qi;
+        for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) {
+          vec2 g = vec2(float(x), float(y));
+          vec2 r = g + vec2(h21(qi + g), h21(qi + g + 17.3))*0.8 + 0.1 - qf;
+          float d = dot(r, r);
+          if (d < d1) { d2 = d1; d1 = d; id = qi + g; } else if (d < d2) { d2 = d; }
+        }
+        float nod = smoothstep(0.05, 0.2, sqrt(d2) - sqrt(d1));
+        float hv = h21(id + 3.1);
+        vec3 fl = mix(vec3(0.11,0.12,0.14), vec3(0.38,0.37,0.35), hv*hv);
+        fl = mix(fl, vec3(0.74,0.72,0.66), step(0.92, hv)*0.6);
+        fl *= 0.8 + 0.35*(1.0 - sqrt(d1));
+        vec3 mortar = mix(vec3(0.80,0.78,0.72), base, 0.25);
+        float aaF = clamp(1.0 - length(fwidth(q))*1.2, 0.0, 1.0);
+        vec3 avg = mix(mortar, vec3(0.24,0.24,0.25), 0.6);
+        vec3 c = mix(avg, mix(mortar, fl, nod), aaF);
+        return c*(0.94+0.1*vnoise(uv*0.7));
       } else if (wt < 4.5) {
         return base*(0.97 + vnoise(uv*1.5)*0.05);
       } else if (wt < 5.5) {
@@ -675,7 +688,10 @@
         `)
         .replace('#include <color_fragment>', '')
         .replace('#include <emissivemap_fragment>', `
-          float litBay = step(h21(floor(vLocal) + vec2(vCell.z*113.0, vCell.z*7.0)), uLitFrac);
+          // lit or dark per window bay. Round the building seed first: the interpolated varying
+          // differs by tiny amounts per pixel, which made the hash flicker into speckles.
+          float sd = floor(vCell.z * 997.0 + 0.5);
+          float litBay = step(h21(floor(vLocal) + vec2(sd * 0.113, sd * 0.007)), uLitFrac);
           totalEmissiveRadiance *= glowm * litBay * uNight;
         `);
     };
@@ -736,11 +752,15 @@
 
   // ------------------------------------------------------------------ sign atlas (per era)
   // Shelf-packed 2048 x 2048 canvas holding fascia signs, plaques, posters and banners.
-  Tex.SignAtlas = function (size) {
+  // Signs are packed on a tall canvas; finish() crops it to the rows actually used, so an era
+  // with few signs costs less texture memory and a busy one (1897) never runs out of room.
+  Tex.SignAtlas = function (size, maxH) {
     const S = size || 2048;
     this.size = S;
+    this.maxH = maxH || S;
     this.cv = document.createElement('canvas');
-    this.cv.width = this.cv.height = S;
+    this.cv.width = S;
+    this.cv.height = this.maxH;
     this.ctx = this.cv.getContext('2d');
     this.x = 0;
     this.y = 0;
@@ -756,8 +776,9 @@
       this.y += this.rowH + 2;
       this.rowH = 0;
     }
-    if (this.y + h > S) {
+    if (this.y + h > this.maxH) {
       this.full = true;
+      console.warn('[SA] sign atlas full: a sign was dropped');
       return null;
     }
     const r = { x: this.x, y: this.y, w, h };
@@ -772,8 +793,8 @@
     return this.allocRect(w || 128, h || 128);
   };
   Tex.SignAtlas.prototype.uv = function (r) {
-    const S = this.size;
-    return [(r.x + 0.5) / S, 1 - (r.y + r.h - 0.5) / S, (r.x + r.w - 0.5) / S, 1 - (r.y + 0.5) / S];
+    const S = this.size, H = this.maxH;
+    return [(r.x + 0.5) / S, 1 - (r.y + r.h - 0.5) / H, (r.x + r.w - 0.5) / S, 1 - (r.y + 0.5) / H];
   };
   // style: {bg, fg, font, border, gilt, script, upper}
   Tex.SignAtlas.prototype.text = function (text, style, w, h) {
@@ -831,10 +852,26 @@
     return this.uv(r);
   };
   Tex.SignAtlas.prototype.finish = function () {
-    const t = new THREE.CanvasTexture(this.cv);
+    // crop to the used rows; UVs were computed for the full height, so map them with the
+    // texture transform: v' = v * k + (1 - k), k = fullHeight / croppedHeight
+    const used = Math.min(this.maxH, Math.max(128, Math.ceil((this.y + this.rowH + 2) / 128) * 128));
+    let cv = this.cv;
+    if (used < this.maxH) {
+      cv = document.createElement('canvas');
+      cv.width = this.size;
+      cv.height = used;
+      cv.getContext('2d').drawImage(this.cv, 0, 0);
+      this.cv = cv;
+      this.ctx = cv.getContext('2d');
+    }
+    const t = new THREE.CanvasTexture(cv);
+    const k = this.maxH / used;
+    t.repeat.set(1, k);
+    t.offset.set(0, 1 - k);
     t.colorSpace = THREE.SRGBColorSpace;
     t.anisotropy = 4;
     this.texture = t;
+    this.usedHeight = used;
     return t;
   };
 

@@ -26,8 +26,10 @@
     if (seen) P.addHeat(weight * 1.2);
     else {
       // a passer-by may report it a moment later
+      // (game time, and only in the same year: the police can't follow you through time)
       const odd = SA.Player.outOfPlace(SA.Game.era) ? 0.75 : 0.55;
-      if (Math.random() < odd) setTimeout(() => P.addHeat(weight), 2500);
+      const era = SA.Game.era;
+      if (Math.random() < odd) SA.after(2.5, () => SA.Game.era === era && !SA.TimeKey.trans && P.addHeat(weight));
     }
   };
   P.addHeat = function (h) {

@@ -54,7 +54,7 @@
       const s = SA.World.findSafe(e, it.x, it.z, { r: 0.4 });
       SA.Interact.add({
         id: 'd-' + it.id, x: s.x, z: s.z, r: it.r || 3, era: e, label: 'Look: ' + it.title, inVehicle: false,
-        enabled: () => SA.Mission && (SA.Mission.complete || !D.found[key]),
+        enabled: () => SA.Mission && SA.Mission.complete,
         action: () => D.discover(it, key),
       });
     }

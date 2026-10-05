@@ -203,6 +203,11 @@
     const add = (model, x, z, rot, s, opts) => {
       (place[model] = place[model] || []).push({ x, z, rot: rot || 0, s: s || 1, y: opts && opts.y !== undefined ? opts.y : null });
     };
+    // box collider standing on the ground: heights are relative to the terrain at its centre
+    const propBox = (x, z, hw, hd, ang, h, opts) => {
+      const g = SA.Terrain.height(x, z);
+      return col.addBox(x, z, hw, hd, ang, Object.assign({ y0: g - 1, y1: g + h }, opts));
+    };
     const lamps = [];
     const glows = [];
     const r = U.rng(eraId * 17 + 3);
@@ -275,16 +280,16 @@
       add('planter', 140, -170, 0);
       add('planter', 160, -200, 0);
       add('k6', 32, 4, Math.PI / 2); // K6 kiosk in Boot Alley (listed)
-      col.addBox(32, 4, 0.5, 0.5, 0, { y1: 2.8, tag: 'k6' });
+      propBox(32, 4, 0.5, 0.5, 0, 2.8, { tag: 'k6' });
       add('cycleRack', 128, -128, 0.4);
       add('cycleRack', 129, -126, 0.4);
     }
     if (eraId === 1964) {
       add('bench', ct.x - 6, ct.z + 5, 0.3);
       add('k6', 32, 4, Math.PI / 2);
-      col.addBox(32, 4, 0.5, 0.5, 0, { y1: 2.8, tag: 'k6' });
+      propBox(32, 4, 0.5, 0.5, 0, 2.8, { tag: 'k6' });
       add('k6', 150, -150, 0.5);
-      col.addBox(150, -150, 0.5, 0.5, 0.5, { y1: 2.8, tag: 'k6' });
+      propBox(150, -150, 0.5, 0.5, 0.5, 2.8, { tag: 'k6' });
       add('pillarbox', 100, -82, 0);
       col.addCircle(100, -82, 0.35, { y1: 1.6 });
     }
@@ -329,7 +334,7 @@
           if (side > 0) return;
           if (!okSpot(x, z, 1.6)) return;
           add('stall60', x, z, rot + Math.PI / 2);
-          col.addBox(x, z, 1.45, 0.75, -(rot + Math.PI / 2), { y1: 2.4, tag: 'stall', cam: false });
+          propBox(x, z, 1.45, 0.75, -(rot + Math.PI / 2), 2.4, { tag: 'stall', cam: false });
         });
       }
       // rubble car park on the Christopher site: rubble heaps and a tin shed
@@ -351,9 +356,9 @@
         });
       }
       add('handcart', 120, -150, 0.6);
-      col.addBox(120, -150, 0.7, 1.1, -0.6, { y1: 1.2 });
+      propBox(120, -150, 0.7, 1.1, -0.6, 1.2, {});
       add('dray', 70, -112, 0.4);
-      col.addBox(70, -112, 1.0, 1.9, -0.4, { y1: 2 });
+      propBox(70, -112, 1.0, 1.9, -0.4, 2, {});
     }
     // boundaries: barriers along openings (era appropriate)
     const barrierModel = eraId === 1897 ? 'hurdle' : eraId === 1964 ? 'trestle60' : 'barrier26';

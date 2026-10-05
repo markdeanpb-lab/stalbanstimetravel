@@ -107,7 +107,8 @@ There are two alternatives. You can copy the `game/` folder to the phone and ser
 | **Free roam** | Discoveries in each era; postcard views of 5 landmarks in 3 eras; 1897 greased pig; 1964 scooter sprint; wardrobe at the Clock Tower | Done |
 | **UI** | HUD (era, objective + distance, minimap, key ring, wanted stars, prompts), full map, journal, settings, save codes | Done |
 | | Touch controls (dynamic stick, camera drag, contextual buttons); gamepad | Done |
-| **Performance** | Instanced characters/vehicles/props, chunked merged buildings, fog distance, quality presets | Done (see verification notes) |
+| **Performance** | Instanced characters/vehicles/props, chunked merged buildings, fog distance, Low/Medium/High presets (Low on touch devices: no shadows, pixel ratio 1, half-size ground paint) | Partial: budgets measured (phone preset 51–93 draw calls, ≤ 142k triangles); not yet profiled on a real phone |
+| **Testing** | Headless checks (`tools/verify.js`), a full playthrough of both endings (`tools/playthrough.js`), a performance report (`tools/perf.js`) and documentation screenshots (`tools/screens.js`) | Done (see [`docs/VERIFICATION.md`](docs/VERIFICATION.md)) |
 
 ## Documentation
 
@@ -116,13 +117,29 @@ There are two alternatives. You can copy the `game/` folder to the phone and ser
 - [`docs/KNOWN_ISSUES.md`](docs/KNOWN_ISSUES.md): known issues and a prioritised list of next steps.
 - [`docs/VERIFICATION.md`](docs/VERIFICATION.md): the test checklist, results and screenshots.
 
+## Running the checks (developers)
+
+The game itself needs nothing installed. The test tools need Node.js 18+ and Playwright's Chromium:
+
+```sh
+npm install playwright        # once; or use an existing global install
+npx playwright install chromium
+node tools/verify.js out/verify             # checklist: movement, camera, vehicles, jumps, police, saves, touch, file://
+node tools/playthrough.js out/play returned # the whole opening mission, Town Hall ending
+node tools/playthrough.js out/play dinner   # ... and the Corn Exchange ending
+node tools/perf.js out/perf                 # draw calls, triangles, memory, simulation cost per era
+node tools/screens.js out/screens           # the screenshots in docs/screenshots
+```
+
+They run the game in headless Chromium with software WebGL, which is far too slow to play in real time, so they advance the game with `SA.debug.sim()` and take screenshots between steps.
+
 ## Repository layout
 
 ```
 game/                 the runnable game (open index.html)
   index.html, css/, js/ (core, world, entities, game, ui, data), vendor/three.min.js
 docs/                 design note, research notes, known issues, verification + screenshots
-tools/                developer-only tools (map pipeline, three.js vendoring, headless test harness)
+tools/                developer-only tools (map pipeline, three.js vendoring, headless checks, playthrough, perf, screenshots)
 dist/                 curfew-st-albans-m1.zip (the game folder plus docs)
 ```
 

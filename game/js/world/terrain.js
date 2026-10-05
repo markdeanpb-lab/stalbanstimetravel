@@ -193,10 +193,11 @@
     }
     // grime noise for variety
     const rng = U.rng(eraId);
+    const px = S / 1024; // dab sizes and strokes were tuned at 1024 px
     c.globalAlpha = 0.06;
     for (let i = 0; i < 1400; i++) {
       c.fillStyle = rng() < 0.5 ? '#000' : '#fff';
-      const x = rng() * S, y = rng() * S, r = 2 + rng() * 10;
+      const x = rng() * S, y = rng() * S, r = (2 + rng() * 10) * px;
       c.beginPath();
       c.arc(x, y, r, 0, Math.PI * 2);
       c.fill();
@@ -212,7 +213,7 @@
         else c.lineTo(q[0], q[1]);
       });
       c.closePath();
-      c.lineWidth = 2.2;
+      c.lineWidth = Math.max(1, 2.2 * px);
       c.strokeStyle = 'rgba(30,26,22,0.35)';
       c.stroke();
     }

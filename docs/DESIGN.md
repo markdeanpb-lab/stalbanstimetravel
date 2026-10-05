@@ -56,7 +56,9 @@ The playable district covers the Clock Tower and Market Cross, French Row, Marke
 | `josiah_cleared` | bool | The Pennick plaque on the Clock Tower (1964 and 2026) and NPC lines |
 | `met_young_edie` | bool | Old Edie's dialogue and the letter's existence (bootstrap) |
 
-All flags are saved in localStorage and in the copyable save code. They are applied by one function (`World.applyFlags`) every time an era is built or shown, so every variant stays consistent.
+*(revised)* In Milestone 1 the two choices always set `crabbe_fate` and `josiah_cleared` together with `fund_outcome` (Town Hall: `jailed` and cleared; Corn Exchange: `fled` and not cleared). Every visible variant therefore keys off `fund_outcome`, the Clock Tower plaque included. The other three flags are saved now so that Mission 2 can branch on them; the separate 1964 "Crabbe business" lines and the 2026 museum caption are not built yet.
+
+All flags are saved in localStorage and in the copyable save code. *(revised)* They are applied while an era is built: `World.buildEra(era, flags)` hands them to the shopfront overrides, the authored signs and `Landmarks.consequences`. `Flags.set` rebuilds the affected eras (1964 and 2026) the moment a flag changes, and loading a save rebuilds all three, so every variant stays consistent.
 
 ## Build order (vertical slices)
 

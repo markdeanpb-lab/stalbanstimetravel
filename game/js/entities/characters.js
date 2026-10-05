@@ -147,7 +147,7 @@
     this.blobs.count = 0;
     let n = 0;
     for (const ch of this.list) {
-      if (!ch.visible) continue;
+      if (!ch.visible || ch.camNear) continue;
       if (camPos && U.dist2(ch.x, ch.z, camPos.x, camPos.z) > 160 * 160) continue;
       this._draw(ch, dt);
       n++;

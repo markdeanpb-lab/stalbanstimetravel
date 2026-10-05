@@ -602,7 +602,7 @@
     const group = new THREE.Group();
     group.name = 'era-' + eraId;
     const col = new SA.Collision(8);
-    const signAtlas = new SA.Tex.SignAtlas(2048);
+    const signAtlas = new SA.Tex.SignAtlas(2048, 4096);
     const ctx = { eraId, chunks: new Map(), signGB: new SA.Buildings.GB(), atlas: signAtlas, col, chimneys: [] };
     const specs = [];
     const used = new Set();
@@ -655,15 +655,16 @@
     }
     for (const s of specs) SA.Buildings.addBuilding(ctx, s);
     // landmark colliders and meshes
-    SA.Landmarks.build(eraId, group, col, signAtlas, flags, mats);
+    SA.Landmarks.build(eraId, group, col, signAtlas, flags, mats, ctx.signGB);
+    SA.Buildings.finish(ctx, { facade: mats.facade, roof: mats.roof, sign: mats.signMat, chimney: mats.chimney }, group);
+    // props, barriers, lamps
+    const props = SA.Props.build(eraId, group, col, flags, mats, signAtlas);
+    // all signs are drawn: upload the (cropped) atlas
     signAtlas.finish();
     for (const k of ['signMat', 'signPlain', 'signAlpha']) {
       mats[k].map = signAtlas.texture;
       mats[k].needsUpdate = true;
     }
-    SA.Buildings.finish(ctx, { facade: mats.facade, roof: mats.roof, sign: mats.signMat, chimney: mats.chimney }, group);
-    // props, barriers, lamps
-    const props = SA.Props.build(eraId, group, col, flags, mats, signAtlas);
     return { id: eraId, group, col, specs, signAtlas, props, era };
   };
 

@@ -30,9 +30,11 @@
         if (P.vehicle && !it.inVehicle) continue;
         if (!P.vehicle && it.vehicleOnly) continue;
         const x = typeof it.x === 'function' ? it.x() : it.x, z = typeof it.z === 'function' ? it.z() : it.z;
-        const d = U.dist(px, pz, x, z);
-        if (d > it.r) continue;
+        const d0 = U.dist(px, pz, x, z);
+        if (d0 > it.r) continue;
         if (!it.enabled()) continue;
+        // mission interactions win over discoveries and other extras
+        const d = d0 - ((it.id || '').startsWith('m-') ? 100 : 0);
         if (d < bd) {
           bd = d;
           best = it;

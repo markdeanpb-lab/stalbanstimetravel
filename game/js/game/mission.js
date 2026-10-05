@@ -135,23 +135,30 @@
       obj(S().obj.toSolicitor, M.solicitorMarker());
       note('Robin arrived in St Albans to collect a parcel left by great-great-grandmother Edie in 1971.');
       SA.HUD.hint('move');
-      setTimeout(() => alive(tok) && SA.HUD.hint('look'), 7000);
-      setTimeout(() => {
+      SA.after(7, () => alive(tok) && SA.HUD.hint('look'));
+      SA.after(1.6, () => {
         if (!alive(tok)) return;
         say(S().phone1).then(() => alive(tok) && SA.HUD.hint('map'));
-      }, 1600);
+      });
       M.data.towerSeen = false;
     },
     update(dt, tok) {
       // camera lesson: notice the Clock Tower above the rooftops
       if (!M.data.towerSeen) {
         const cam = G().camera();
+        cam.updateMatrixWorld();
         const ct = SA.Landmarks.clockTowerInfo;
-        const v = new THREE.Vector3(ct.x, ct.base + 14, ct.z).project(cam);
+        const top = new THREE.Vector3(ct.x, ct.base + 14, ct.z);
+        const v = top.clone().project(cam);
         const d = U.dist(cam.position.x, cam.position.z, ct.x, ct.z);
-        if (v.z < 1 && Math.abs(v.x) < 0.5 && Math.abs(v.y) < 0.6 && d < 220 && SA.World.current.col.lineOfSight(cam.position.x, cam.position.z, ct.x, ct.z)) {
-          M.data.towerSeen = true;
-          if (!SA.Dialogue.busy()) say(S().towerSeen);
+        if (v.z < 1 && Math.abs(v.x) < 0.5 && Math.abs(v.y) < 0.6 && d < 220) {
+          // a clear sightline in 3D, so the tower counts when seen over the rooftops
+          // (the ray stops at the tower's own walls just short of the point)
+          const f = SA.World.current.col.castCamera(cam.position.x, cam.position.y, cam.position.z, top.x, top.y, top.z);
+          if ((1 - f) * d < 8) {
+            M.data.towerSeen = true;
+            if (!SA.Dialogue.busy()) say(S().towerSeen);
+          }
         }
       }
       const door = M.solicitorDoor();
@@ -258,7 +265,7 @@
           M.goto('a2');
         },
       });
-      if (!SA.Dialogue.busy()) setTimeout(() => alive(tok) && say(S().arrive1964), 2200);
+      if (!SA.Dialogue.busy()) SA.after(2.2, () => alive(tok) && say(S().arrive1964));
     },
     update() {
       const e = M.npcs.edieOld;
@@ -278,7 +285,8 @@
       const s = SA.World.findSafe(1964, sx, sz, { r: 1.0 });
       let v = SA.Vehicles.list.find((x) => x.mission === 'terry');
       if (!v) {
-        v = SA.Vehicles.create('scooter', s.x, s.z, Math.atan2(-d.nz, -d.nx), { era: 1964, parked: true, color: '#9fd3c7', mission: 'terry' });
+        // parked parallel to the shopfront, ready to ride off along the street
+        v = SA.Vehicles.create('scooter', s.x, s.z, Math.atan2(d.nz, -d.nx), { era: 1964, parked: true, color: '#9fd3c7', mission: 'terry' });
         v.label = "Terry's scooter";
       }
       M.data.scooter = v;
@@ -351,7 +359,7 @@
           fl.style.transition = 'opacity 0.3s';
           fl.style.background = '#000';
           fl.style.opacity = '1';
-          await new Promise((r) => setTimeout(r, 450));
+          await SA.wait(0.45);
           SA.Player.setOutfit('victorian');
           SA.Player.take('coat');
           fl.style.opacity = '0';
@@ -387,6 +395,7 @@
     era: 1897,
     enter(tok) {
       const t = tower();
+      M.clearNpcs();
       note('Wound back to Jubilee night, 22 June 1897. Gabriel tolled and the Clock Tower clock stopped at 9.14, the moment Robin arrived.');
       M.npc('josiah', 1897, 'josiah', t.cx + t.nx * 4.5, t.cz + t.nz * 4.5, Math.atan2(t.nx, t.nz));
       M.npc('edieYoung', 1897, 'edieYoung', t.cx + t.nx * 8 + t.nz * 3, t.cz + t.nz * 8 - t.nx * 3, 0);
@@ -401,7 +410,7 @@
       M.data.bike = b;
       obj(S().obj.findThief);
       SA.TimeKey.locked = true;
-      setTimeout(async () => {
+      SA.after(1.2, async () => {
         if (!alive(tok)) return;
         await say(S().arrive1897);
         if (!alive(tok)) return;
@@ -410,7 +419,7 @@
         if (!alive(tok)) return;
         SA.Game.setFlag('met_young_edie', true);
         M.goto('b2');
-      }, 1200);
+      });
     },
     update() {
       const p = SA.Player.ch;
@@ -496,7 +505,22 @@
       const start = g.nearest(cart.x, cart.z, 40);
       const goal = g.nearest(-215, -5, 60) || g.nearest(SA.Landmarks.gatewayInfo.x, SA.Landmarks.gatewayInfo.z, 80);
       const path = SA.Police.astar(g, start, goal) || [start];
-      cart.ai = { update: M.cartDrive, path, i: 0, done: false };
+      // join the route ahead of the cart (skip lane nodes behind it) and face along it
+      let i0 = 0, bd = 1e9;
+      for (let k = 0; k < Math.min(path.length, 8); k++) {
+        const d = U.dist(path[k].x, path[k].z, cart.x, cart.z);
+        if (d < bd) {
+          bd = d;
+          i0 = k;
+        }
+      }
+      if (i0 + 1 < path.length) i0++;
+      cart.yaw = Math.atan2(path[i0].x - cart.x, path[i0].z - cart.z);
+      cart.ai = { update: M.cartDrive, path, i: i0, done: false };
+      // clear slow traffic off the escape route (it reappears elsewhere, out of sight)
+      for (const t of SA.Traffic.list.slice()) {
+        if (path.some((n) => U.dist2(n.x, n.z, t.x, t.z) < 12 * 12)) SA.Traffic.respawn(t);
+      }
       // Crabbe rides on the cart (visible driver)
       const ch = new SA.Character({ era: 1897, role: 'story', look: Object.assign({}, LOOKS.crabbe) });
       ch.prop = 'carpetbag';
@@ -523,9 +547,9 @@
         return true;
       };
       // constables spot a curate chasing a gentleman
-      setTimeout(() => {
+      SA.after(6, () => {
         if (alive(tok) && SA.Police.level < 1) SA.Police.setLevel(1, 'scripted');
-      }, 6000);
+      });
       SA.HUD.setMarkers([]);
       SA.Interact.add({
         id: 'm-grab', x: () => cart.x, z: () => cart.z, r: 4.2, era: 1897, label: 'Grab the carpet bag', inVehicle: true,
@@ -569,21 +593,51 @@
     const nx = ai.path[Math.min(ai.i + 1, ai.path.length - 1)];
     // keep left
     const dx0 = nx.x - n.x, dz0 = nx.z - n.z, l0 = Math.hypot(dx0, dz0) || 1;
-    const tx = n.x + (dz0 / l0) * 1.6, tz = n.z + (-dx0 / l0) * 1.6;
-    const dx = tx - v.x, dz = tz - v.z, d = Math.hypot(dx, dz);
-    if (d < 3.5) {
+    let tx = n.x + (dz0 / l0) * 1.6, tz = n.z + (-dx0 / l0) * 1.6;
+    const d = Math.hypot(tx - v.x, tz - v.z);
+    if (d < 5) {
       ai.i++;
       return;
     }
+    // overtake anything in the way: on the right, unless it is already over to the right
+    const fx = Math.sin(v.yaw), fz = Math.cos(v.yaw);
+    let pass = 0, nearest = 18;
+    for (const o of SA.Vehicles.list) {
+      if (o === v || o.era !== v.era || o.visible === false) continue;
+      const ox = o.x - v.x, oz = o.z - v.z;
+      const ahead = ox * fx + oz * fz;
+      const latL = ox * fz - oz * fx; // + = to the cart's left
+      if (ahead < 0 || ahead > nearest || Math.abs(latL) > 3) continue;
+      nearest = ahead;
+      pass = latL < -0.8 ? -1 : 1;
+    }
+    if (pass) {
+      tx += -fz * 3.2 * pass;
+      tz += fx * 3.2 * pass;
+    }
+    const dx = tx - v.x, dz = tz - v.z;
     const want = Math.atan2(dx, dz);
     const diff = U.wrapAngle(want - v.yaw);
+    // jammed against a corner or a parked vehicle: back off for a moment, then carry on
+    ai.stuckT = Math.abs(v.speed) < 0.6 ? (ai.stuckT || 0) + dt : 0;
+    if (ai.stuckT > 1.2) {
+      ai.backT = 0.9;
+      ai.stuckT = 0;
+    }
+    if (ai.backT > 0) {
+      ai.backT -= dt;
+      v.throttle = -1;
+      v.steerIn = -U.clamp(diff * 2.4, -1, 1);
+      v.handbrake = false;
+      return;
+    }
     v.steerIn = U.clamp(diff * 2.4, -1, 1);
-    // Crabbe drives hard but slows when the player is right behind (the horse is tiring)
+    // Crabbe drives hard but eases off when the player is right behind (the horse is tiring)
     const p = SA.Player.pos();
     const pd = U.dist(p.x, p.z, v.x, v.z);
-    let target = v.def.maxSpeed * (pd < 25 ? 0.85 : 0.75) * (1 - Math.min(0.6, Math.abs(diff)));
+    let target = v.def.maxSpeed * (pd < 25 ? 0.85 : 0.8) * (1 - Math.min(0.6, Math.abs(diff)));
     if (M.data.chaseT > 50) target *= 0.8;
-    v.throttle = U.clamp((target - v.speed) * 0.7, -1, 1);
+    v.throttle = U.clamp((target - v.speed) * 1.5, -1, 1);
     v.handbrake = false;
   };
   M.grabBag = async function () {
@@ -628,7 +682,8 @@
     }
     if (stage === 'b4') {
       M.goto('b4', { retry: true });
-      setTimeout(() => SA.Police.setLevel(2, 'scripted'), 3000);
+      const tok = M.token;
+      SA.after(3, () => alive(tok) && SA.Police.setLevel(2, 'scripted'));
     } else M.goto('b3', { retry: true });
   };
   ST.b4 = {
@@ -636,7 +691,7 @@
     enter(tok, opts) {
       obj(S().obj.loseCops);
       SA.HUD.hint('wanted');
-      if (!opts.retry) setTimeout(() => alive(tok) && say(S().loseThem), 2500);
+      if (!opts.retry) SA.after(2.5, () => alive(tok) && say(S().loseThem));
       SA.Police.onCaught = () => {
         say(S().missionCaught);
         M.retry('b4');
@@ -764,7 +819,7 @@
       M.npc(who, 2026, who, d.x + d.nx * 0.8, d.z + d.nz * 0.8, Math.atan2(d.nx, d.nz));
       M.data.shopNpc = who;
       obj(S().obj.seeChange, { x: d.x, z: d.z, era: 2026, letter: 'F', label: 'French Row' });
-      setTimeout(() => alive(tok) && say(S().arriveHome), 1500);
+      SA.after(1.5, () => alive(tok) && say(S().arriveHome));
       M.data.met = false;
     },
     update(dt, tok) {
@@ -783,7 +838,7 @@
     const who = M.data.shopNpc;
     await say(who === 'priya' ? S().priya : who === 'dot' ? S().dot : S().phoneFixx, { lock: true });
     if (!alive(tok)) return;
-    await new Promise((r) => setTimeout(r, 900));
+    await SA.wait(0.9);
     await say(S().phone2[f.fund_outcome === 'dinner' ? 'dinner' : 'returned']);
     if (!alive(tok)) return;
     M.complete = true;
@@ -795,11 +850,13 @@
       '<p class="fine">Free roam is open: all three years are available. Look for discoveries (?) and postcard views (✉) on the map.</p>';
     SA.Menus.showComplete('Mission complete: Wind the Key', html, () => {
       M.goto('free');
-      setTimeout(() => {
+      const tok = M.token;
+      SA.after(4, () => {
+        if (!alive(tok)) return;
         SA.Audio && SA.Audio.gabriel(0.8);
         say(S().teaser);
         SA.Game.setFlag('teaser', true);
-      }, 4000);
+      });
     });
   };
   ST.free = {

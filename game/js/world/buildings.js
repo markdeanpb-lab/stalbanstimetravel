@@ -47,6 +47,22 @@
     this.idx.push(n0, n0 + 1, n0 + 2);
     this.n += 3;
   };
+  GB.prototype.append = function (o) {
+    if (!o || !o.n) return;
+    const off = this.n;
+    const push = (a, b) => {
+      for (let i = 0; i < b.length; i++) a.push(b[i]);
+    };
+    push(this.pos, o.pos);
+    push(this.nor, o.nor);
+    push(this.uv, o.uv);
+    push(this.col, o.col);
+    push(this.wall, o.wall);
+    push(this.cell, o.cell);
+    push(this.base, o.base);
+    for (let i = 0; i < o.idx.length; i++) this.idx.push(o.idx[i] + off);
+    this.n += o.n;
+  };
   GB.prototype.build = function () {
     if (!this.n) return null;
     const g = new THREE.BufferGeometry();

@@ -97,6 +97,12 @@
     return SA.World.rawBuildings.find((b) => b.id === id);
   }
   function meshes(group, gw, gr, mats, name) {
+    if (L._gw) {
+      // merged into the era's shared landmark buffers (2 draw calls for all landmarks)
+      L._gw.append(gw);
+      L._gr.append(gr);
+      return;
+    }
     const w = gw.build();
     if (w) {
       const m = new THREE.Mesh(w, mats.facade);
@@ -226,8 +232,19 @@
   };
 
   // Adds a free-standing sign quad (in the era group) using the era sign material
-  L.addSignQuad = function (group, mats, x, y, z, n, w, h, uv, name) {
+  L.addSignQuad = function (group, mats, x, y, z, n, w, h, uv, name, opts) {
     if (!uv) return null;
+    if (L._signGB && !(opts && opts.alpha)) {
+      // merged into the era's sign mesh (wave-aware material)
+      const nx = n[0], nz = n[1];
+      const rx = nz, rz = -nx; // right vector seen from the front
+      const hw = w / 2, hh = h / 2;
+      const base = SA.Terrain.height(x, z);
+      const white = new THREE.Color(1, 1, 1);
+      L._signGB.quad([[x - rx * hw, y - hh, z - rz * hw], [x + rx * hw, y - hh, z + rz * hw], [x + rx * hw, y + hh, z + rz * hw], [x - rx * hw, y + hh, z - rz * hw]], [nx, 0, nz],
+        [[uv[0], uv[1]], [uv[2], uv[1]], [uv[2], uv[3]], [uv[0], uv[3]]], white, [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]], [0, 0, 0], base);
+      return { position: new THREE.Vector3(x, y, z), userData: {}, merged: true };
+    }
     const g = new THREE.PlaneGeometry(w, h);
     const a = g.attributes.uv;
     a.setXY(0, uv[0], uv[3]);
@@ -278,7 +295,8 @@
     const gw = GB(), gr = GB();
     const mx = (fa[0] + fb[0]) / 2, mz = (fa[1] + fb[1]) / 2;
     const ang = Math.atan2(fb[1] - fa[1], fb[0] - fa[0]);
-    const pw = Math.min(13, Math.hypot(fb[0] - fa[0], fb[1] - fa[1]) * 0.55), pd = 3.4;
+    // the OSM outline already includes the projecting portico front (about 7 m), so span most of it
+    const pw = Math.min(13, Math.hypot(fb[0] - fa[0], fb[1] - fa[1]) * 0.95), pd = 3.4;
     const pc = [mx + fn[0] * (pd / 2), mz + fn[1] * (pd / 2)];
     const white = C(eraId === 1897 ? '#e6dcc6' : '#f2eee4');
     solidBox(gw, pc[0], base - 0.5, pc[1], pw + 0.6, floor - base + 0.5, pd, ang, white, 5, base);
@@ -746,10 +764,13 @@
       const cc = CELLS.arch;
       gw.quad([[La[0], y - 0.3, La[1]], [Rb[0], y - 0.3, Rb[1]], [Rb[0], y + h + 0.4, Rb[1]], [La[0], y + h + 0.4, La[1]]], [n[0], 0, n[1]], [[0, 0], [1, 0], [1, 1], [0, 1]], C('#d9cfbd'), [[0, 0, 1], [w, 0, 1], [w, h, 1], [0, h, 1]], [cc[0], cc[1], 0.1], base);
     }
-    const g = gw.build();
-    const m = new THREE.Mesh(g, mats.passage);
-    m.name = 'passage';
-    group.add(m);
+    if (L._gw) L._gw.append(gw);
+    else {
+      const g = gw.build();
+      const m = new THREE.Mesh(g, mats.passage);
+      m.name = 'passage';
+      group.add(m);
+    }
     // collision: passage corridor lets walkers through the building; side walls keep them in
     const ang = Math.atan2(dz, dx);
     const mid = [(A[0] + Cc[0]) / 2, (A[1] + Cc[1]) / 2];
@@ -808,7 +829,8 @@
     if (f.fund_outcome === 'returned' && eraId !== 1897) {
       // blue plaque on the Clock Tower's south face
       const uv = plaque(['JOSIAH PENNICK', 'KEEPER OF', 'THIS CLOCK', '1881 - 1919'], '#1d4f9e', '#ffffff');
-      const m = L.addSignQuad(group, mats, cf.x + cf.nx * 0.08 + cf.nz * 1.6, ct.base + 2.6, cf.z + cf.nz * 0.08 - cf.nx * 1.6, [cf.nx, cf.nz], 0.9, 0.9, uv, 'plaque-josiah');
+      // on the ground stage, whose face stands 0.32 m proud of the clock stage the dial is on
+      const m = L.addSignQuad(group, mats, cf.x + cf.nx * 0.36 + cf.nz * 1.6, ct.base + 2.6, cf.z + cf.nz * 0.36 - cf.nx * 1.6, [cf.nx, cf.nz], 0.9, 0.9, uv, 'plaque-josiah', { alpha: true });
       if (m) m.material = mats.signAlpha;
       L.consequenceInfo.plaque = { x: cf.x + cf.nx * 1.5, z: cf.z + cf.nz * 1.5 };
       // the gilded Jubilee Lamp the Committee wanted, by the Town Hall steps
@@ -846,7 +868,7 @@
     if (f.fund_outcome === 'dinner' && eraId !== 1897 && L.cornInfo) {
       const ci = L.cornInfo;
       const uv = plaque(['ON JUBILEE NIGHT 1897', 'AN UNKNOWN FRIEND', 'FED 300 OF', "THIS CITY'S POOR"], '#5a1f24', '#f4e6c4', '#d9b45a');
-      const m = L.addSignQuad(group, mats, ci.door[0] + ci.nx * 0.12 + ci.nz * 3.2, ci.floor + 2.3, ci.door[1] + ci.nz * 0.12 - ci.nx * 3.2, [ci.nx, ci.nz], 1.0, 1.0, uv, 'plaque-dinner');
+      const m = L.addSignQuad(group, mats, ci.door[0] + ci.nx * 0.12 + ci.nz * 3.2, ci.floor + 2.3, ci.door[1] + ci.nz * 0.12 - ci.nx * 3.2, [ci.nx, ci.nz], 1.0, 1.0, uv, 'plaque-dinner', { alpha: true });
       if (m) m.material = mats.signAlpha;
       L.consequenceInfo.plaque = { x: ci.door[0] + ci.nx * 2 + ci.nz * 3.2, z: ci.door[1] + ci.nz * 2 - ci.nx * 3.2 };
     }
@@ -900,8 +922,11 @@
   };
 
   // ------------------------------------------------------------------ build all for an era
-  L.build = function (eraId, group, col, atlas, flags, mats) {
+  L.build = function (eraId, group, col, atlas, flags, mats, signGB) {
     L.passageList = [];
+    L._gw = GB();
+    L._gr = GB();
+    L._signGB = signGB || null;
     L.clockTower(eraId, group, col, atlas, flags, mats);
     L.townHall(eraId, group, col, atlas, flags, mats);
     L.cornExchange(eraId, group, col, atlas, flags, mats);
@@ -911,5 +936,9 @@
     L.baptist(eraId, group, col, atlas, flags, mats);
     L.passages(eraId, group, col, atlas, flags, mats);
     L.consequences(eraId, group, col, atlas, flags, mats);
+    const gw = L._gw, gr = L._gr;
+    L._gw = L._gr = null;
+    L._signGB = null;
+    meshes(group, gw, gr, mats, 'landmarks');
   };
 })();

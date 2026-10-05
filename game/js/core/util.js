@@ -178,6 +178,40 @@
     }
   };
 
+  // ---------------------------------------------------------------- game-time timers
+  // Advanced from the main loop's step(), so they pause with the game, follow SA.debug.sim()
+  // and never fire on the title screen or in menus. Use these for anything that changes game
+  // state; real-time setTimeout is only for pure UI effects.
+  let timers = [];
+  let clock = 0;
+  SA.after = function (sec, fn) {
+    const t = { at: clock + sec, fn };
+    timers.push(t);
+    return t;
+  };
+  SA.wait = (sec) => new Promise((r) => SA.after(sec, r));
+  SA.cancelTimer = function (t) {
+    timers = timers.filter((x) => x !== t);
+  };
+  SA.clearTimers = function () {
+    timers = [];
+  };
+  SA.runTimers = function (dt) {
+    clock += dt;
+    if (!timers.length) return;
+    const due = timers.filter((t) => t.at <= clock);
+    if (!due.length) return;
+    timers = timers.filter((t) => t.at > clock);
+    due.sort((a, b) => a.at - b.at);
+    for (const t of due) {
+      try {
+        t.fn();
+      } catch (e) {
+        console.error('[SA] timer error', e);
+      }
+    }
+  };
+
   // ---------------------------------------------------------------- DOM helpers
   U.$ = (id) => document.getElementById(id);
   U.show = (el, on) => {

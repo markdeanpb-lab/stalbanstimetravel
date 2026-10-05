@@ -30,7 +30,7 @@
     renderer.toneMapping = THREE.NeutralToneMapping;
     renderer.toneMappingExposure = 1.0;
     renderer.shadowMap.enabled = q === 'high';
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.2, 900);
     hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 1);
@@ -195,7 +195,9 @@
   }
 
   // ------------------------------------------------------------------ camera controller
-  const Cam = (Game.cam = { yaw: Math.PI, pitch: 0.28, dist: 4.6, curDist: 4.6, target: new THREE.Vector3(), lastInput: 0, shake: 0, fovKick: 0, override: null });
+  const Cam = (Game.cam = { yaw: Math.PI, pitch: 0.28, dist: 4.6, curDist: 4.6, tightYaw: 0, tightPitch: 0, tightGoal: -1, target: new THREE.Vector3(), lastInput: 0, shake: 0, fovKick: 0, override: null });
+  // [yaw offset, pitch offset] candidates for the tight-street camera, in order of preference
+  const TIGHT_TRIES = [[0, 0.45], [0, 0.85], [0.55, 0.3], [-0.55, 0.3], [1.0, 0.35], [-1.0, 0.35]];
   function updateCamera(dt) {
     const I = SA.Input;
     const sens = 0.0042 * (Game.settings.sensitivity || 1);
@@ -234,16 +236,37 @@
       return;
     }
     // desired position: behind (yaw) & above (pitch); yaw = direction the camera looks along (forward)
-    const cp = Math.cos(Cam.pitch), sp = Math.sin(Cam.pitch);
-    const fx = -Math.sin(Cam.yaw), fz = -Math.cos(Cam.yaw);
-    const dx = -fx * cp, dz = -fz * cp, dy = sp;
     const tx = Cam.target.x, ty = Cam.target.y, tz = Cam.target.z;
-    let want = Cam.dist;
-    // anti-clip against buildings: cast from target to desired camera position
+    const want = Cam.dist;
     const col = SA.World.current.col;
-    const ex = tx + dx * want, ey = ty + dy * want, ez = tz + dz * want;
-    let frac = col ? castCam(col, tx, ty, tz, ex, ey, ez) : 1;
-    let d = Math.max(0.6, want * frac - 0.35);
+    // anti-clip against buildings: cast from target to desired camera position
+    const reach = (yaw, pitch) => {
+      const cp = Math.cos(pitch);
+      const dx = Math.sin(yaw) * cp, dz = Math.cos(yaw) * cp, dy = Math.sin(pitch);
+      const frac = col ? castCam(col, tx, ty, tz, tx + dx * want, ty + dy * want, tz + dz * want) : 1;
+      return Math.max(0.6, want * frac - 0.35);
+    };
+    // tight streets: when the wall behind is close, crane up over the shoulder, then try
+    // swinging a little to either side. The player's own yaw/pitch are left untouched;
+    // the offsets ease back to zero once there is room again.
+    let goalPitch = 0, goalYaw = 0, goal = -1;
+    const base = reach(Cam.yaw, Cam.pitch);
+    if (base < 2.6) {
+      let best = base + 0.4; // hysteresis: only move for a clear gain, and favour the current choice
+      TIGHT_TRIES.forEach(([ay, ap], i) => {
+        // while moving, only crane up: swinging sideways would turn the camera-relative controls
+        if (ay !== 0 && moving) return;
+        const r = reach(Cam.yaw + ay, Math.min(1.3, Cam.pitch + ap)) + (i === Cam.tightGoal ? 0.3 : 0);
+        if (r > best) { best = r; goal = i; goalYaw = ay; goalPitch = Math.min(1.3, Cam.pitch + ap) - Cam.pitch; }
+      });
+    }
+    Cam.tightGoal = goal;
+    Cam.tightYaw = U.damp(Cam.tightYaw, goalYaw, 3, dt);
+    Cam.tightPitch = U.damp(Cam.tightPitch, goalPitch, 3, dt);
+    const pitch = Cam.pitch + Cam.tightPitch, yaw = Cam.yaw + Cam.tightYaw;
+    const cp = Math.cos(pitch), sp = Math.sin(pitch);
+    const dx = Math.sin(yaw) * cp, dz = Math.cos(yaw) * cp, dy = sp;
+    const d = reach(yaw, pitch);
     // also keep the camera above ground
     // smooth: pull in fast, ease out slowly
     Cam.curDist = d < Cam.curDist ? U.damp(Cam.curDist, d, 30, dt) : U.damp(Cam.curDist, d, 3.5, dt);
@@ -302,6 +325,8 @@
     await nextFrame();
     SA.World.init();
     facadeAtlas = SA.Tex.makeFacadeAtlas(Game.settings.quality === 'low' ? 128 : 256);
+    // ground paint resolution (two canvases per era): 1.2 m per pixel on Low, 0.6 m otherwise
+    SA.Terrain.SPLAT = Game.settings.quality === 'low' ? 512 : 1024;
     groundMat = SA.Terrain.makeMaterial();
     ground = SA.Terrain.buildMesh(groundMat, Game.settings.quality === 'low' ? 8 : 6);
     scene.add(ground);
@@ -340,7 +365,16 @@
   }
 
   // ------------------------------------------------------------------ game start / serialise
+  // forget pending timed events and police memory from any earlier game in this tab
+  function resetSession() {
+    SA.clearTimers();
+    if (SA.Police) {
+      SA.Police.clear();
+      SA.Police.perEra = {};
+    }
+  }
   Game.newGame = function () {
+    resetSession();
     Game.flags = {};
     for (const e of [1964, 2026]) Game.rebuildEra(e);
     SA.Player.inventory = [];
@@ -375,6 +409,7 @@
   };
   Game.load = function (d) {
     if (!d) return false;
+    resetSession();
     Game.flags = d.flags || {};
     for (const e of [2026, 1964, 1897]) Game.rebuildEra(e);
     SA.Player.inventory = (d.inv || []).slice();
@@ -450,6 +485,7 @@
   function step(dt) {
     Game.time += dt;
     Game.playTime += dt;
+    SA.runTimers(dt);
     const I = SA.Input;
     if (I.pressed('pause')) {
       SA.Menus ? SA.Menus.openPause() : Game.pause(true);
@@ -464,7 +500,7 @@
       return;
     }
     const Cy = Cam.yaw;
-    SA.Player.update(dt, Cy);
+    SA.Player.update(dt, Cy + Cam.tightYaw);
     SA.Vehicles && SA.Vehicles.update(dt);
     SA.NPCs && SA.NPCs.update(dt);
     SA.Traffic && SA.Traffic.update(dt);

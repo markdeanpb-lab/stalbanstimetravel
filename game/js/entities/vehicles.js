@@ -107,7 +107,7 @@
   });
   D('sergeantBike', Object.assign({}, V.defs.bicycle, { id: 'sergeantBike', name: 'Police bicycle', maxSpeed: 8.0, horn: 'whistle' }));
   D('cart', {
-    name: "Baker's cart", len: 5.6, wid: 1.6, radius: 2.4, maxSpeed: 6.5, accel: 1.6, brake: 4, steer: 0.5, wheelBase: 3.2, colors: ['#7a3b2a', '#2e4a35', '#2c3a5a'], showRider: true, riderPose: 'driver', horse: true, horseOff: 2.3, camDist: 8, camHeight: 2.2, horn: 'horseWhinny', engine: 'hooves',
+    name: "Baker's cart", len: 5.6, wid: 1.6, radius: 2.4, maxSpeed: 6.5, accel: 2.6, brake: 4, steer: 0.5, wheelBase: 3.2, colors: ['#7a3b2a', '#2e4a35', '#2c3a5a'], showRider: true, riderPose: 'driver', horse: true, horseOff: 2.3, camDist: 8, camHeight: 2.2, horn: 'horseWhinny', engine: 'hooves',
     paint: () => [P(box(1.5, 1.2, 2.2), '#fff', 0, 1.35, -1.2), P(box(1.55, 0.12, 2.3), '#fff', 0, 2.0, -1.2)],
     trim: () => [P(box(1.5, 0.08, 1.0), '#5a4030', 0, 0.85, 0.3), P(box(0.5, 0.25, 0.4), '#4a3424', 0, 1.1, 0.25), P(cyl(0.55, 0.55, 0.08, 14), '#3a2a1a', 0.8, 0.55, -1.0, 0, 0, Math.PI / 2), P(cyl(0.55, 0.55, 0.08, 14), '#3a2a1a', -0.8, 0.55, -1.0, 0, 0, Math.PI / 2), P(box(0.05, 0.05, 2.0), '#5a4030', 0.45, 0.95, 1.4), P(box(0.05, 0.05, 2.0), '#5a4030', -0.45, 0.95, 1.4)],
   });
