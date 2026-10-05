@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#16140f">
+<meta name="description" content="CURFEW: an open-world time-travel game set in St Albans in 1897, 1964 and 2026.">
+<title>Curfew: St Albans</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="game" aria-label="Game view"></canvas>
+<div id="grade" aria-hidden="true"></div>
+<div id="flash" aria-hidden="true"></div>
+
+<!-- HUD -->
+<div id="hud" class="hidden">
+  <div id="hud-era" class="panel" aria-live="polite"><span class="era-icon" aria-hidden="true">⌛</span><div><div id="era-year">2026</div><div id="era-date">Monday 5 October</div></div></div>
+  <div id="hud-objective" class="panel" aria-live="polite"><div class="obj-title" id="obj-mission">Wind the Key</div><div id="obj-text">Walk to the solicitors on the High Street</div><div id="obj-dist"></div></div>
+  <div id="hud-minimap" class="panel"><canvas id="minimap" width="200" height="200"></canvas><div id="mm-north" aria-hidden="true">N</div></div>
+  <div id="hud-status">
+    <div id="hud-key" class="panel" title="The Curfew Key"><canvas id="key-ring" width="64" height="64"></canvas><div><div class="lbl">Curfew Key</div><div id="key-text">Not found</div></div></div>
+    <div id="hud-wanted" class="panel hidden" aria-live="assertive"><div class="lbl" id="wanted-label">WANTED</div><div id="wanted-stars"></div><div id="wanted-text"></div></div>
+    <div id="hud-outfit" class="panel hidden"><span aria-hidden="true">👁</span> <span id="outfit-text">Out of place</span></div>
+  </div>
+  <div id="hud-prompt" class="hidden"><span class="kbd" id="prompt-key">E</span><span id="prompt-text">Talk</span></div>
+  <div id="hud-hint" class="hidden"></div>
+  <div id="hud-toast" class="hidden"></div>
+  <div id="hud-subtitle" class="hidden" aria-live="polite"><span id="sub-speaker"></span><span id="sub-text"></span></div>
+  <div id="hud-vehicle" class="panel hidden"><span id="veh-name"></span> <span id="veh-speed"></span></div>
+  <div id="hud-wind" class="hidden"><div id="wind-label">Winding…</div><div class="bar"><div id="wind-bar"></div></div><div id="wind-target"></div></div>
+  <div id="hud-eras" class="hidden" role="radiogroup" aria-label="Choose a year"></div>
+  <div id="hud-fps"></div>
+</div>
+
+<!-- Touch controls -->
+<div id="touch" class="hidden" aria-hidden="true">
+  <div id="stick-zone"><div id="stick-base"><div id="stick-knob"></div></div></div>
+  <div id="look-zone"></div>
+  <div id="tbtns">
+    <button class="tbtn" id="tb-act" data-act="interact"><span class="ic">✋</span><span class="tl">Use</span></button>
+    <button class="tbtn" id="tb-veh" data-act="vehicle"><span class="ic">🚲</span><span class="tl">Ride</span></button>
+    <button class="tbtn" id="tb-key" data-act="timekey"><span class="ic">⌛</span><span class="tl">Key</span></button>
+    <button class="tbtn" id="tb-run" data-act="sprint"><span class="ic">🏃</span><span class="tl">Run</span></button>
+    <button class="tbtn" id="tb-brake" data-act="brake"><span class="ic">⛔</span><span class="tl">Brake</span></button>
+    <button class="tbtn" id="tb-horn" data-act="horn"><span class="ic">📯</span><span class="tl">Horn</span></button>
+  </div>
+  <div id="ttop">
+    <button class="tbtn small" id="tb-map" data-act="map"><span class="ic">🗺</span><span class="tl">Map</span></button>
+    <button class="tbtn small" id="tb-pause" data-act="pause"><span class="ic">⏸</span><span class="tl">Menu</span></button>
+  </div>
+</div>
+
+<!-- Screens -->
+<div id="screen-loading" class="screen">
+  <div class="title-card">
+    <h1>CURFEW</h1>
+    <div class="subtitle">St Albans Across Time</div>
+    <div id="load-msg">Winding the clock…</div>
+    <div class="bar"><div id="load-bar"></div></div>
+  </div>
+</div>
+
+<div id="screen-title" class="screen hidden">
+  <div class="title-card">
+    <h1>CURFEW</h1>
+    <div class="subtitle">St Albans Across Time</div>
+    <div class="years"><span>1897</span><span>1964</span><span>2026</span></div>
+    <div class="menu" id="title-menu">
+      <button id="btn-continue" class="hidden">Continue</button>
+      <button id="btn-new">New game</button>
+      <button id="btn-import">Load a save code</button>
+      <button id="btn-settings-t">Settings</button>
+      <button id="btn-credits-t">Credits &amp; map data</button>
+    </div>
+    <div class="fine" id="storage-note"></div>
+    <div class="fine">Milestone 1: the Clock Tower district and the opening mission.</div>
+  </div>
+</div>
+
+<div id="screen-pause" class="screen hidden">
+  <div class="card">
+    <h2>Paused</h2>
+    <div class="menu">
+      <button id="btn-resume">Resume</button>
+      <button id="btn-map">Map</button>
+      <button id="btn-journal">Journal</button>
+      <button id="btn-save">Save game</button>
+      <button id="btn-code">Save code (export / import)</button>
+      <button id="btn-settings">Settings</button>
+      <button id="btn-help">Controls</button>
+      <button id="btn-credits">Credits &amp; map data</button>
+      <button id="btn-quit">Quit to title</button>
+    </div>
+    <div class="fine" id="pause-note"></div>
+  </div>
+</div>
+
+<div id="screen-map" class="screen hidden">
+  <div class="card wide">
+    <div class="row"><h2 id="map-title">Map</h2><button class="close" data-close="screen-map" aria-label="Close map">✕</button></div>
+    <canvas id="bigmap" width="900" height="760"></canvas>
+    <div id="map-legend" class="legend"></div>
+  </div>
+</div>
+
+<div id="screen-journal" class="screen hidden">
+  <div class="card wide">
+    <div class="row"><h2>Journal</h2><button class="close" data-close="screen-journal" aria-label="Close journal">✕</button></div>
+    <div id="journal-body" class="scroll"></div>
+  </div>
+</div>
+
+<div id="screen-code" class="screen hidden">
+  <div class="card">
+    <div class="row"><h2>Save code</h2><button class="close" data-close="screen-code" aria-label="Close">✕</button></div>
+    <p>Copy this code to keep your progress anywhere, or paste a code to load it.</p>
+    <textarea id="code-text" rows="5" spellcheck="false" aria-label="Save code"></textarea>
+    <div class="menu horizontal">
+      <button id="btn-code-copy">Copy</button>
+      <button id="btn-code-load">Load this code</button>
+    </div>
+    <div class="fine" id="code-msg" aria-live="polite"></div>
+  </div>
+</div>
+
+<div id="screen-settings" class="screen hidden">
+  <div class="card">
+    <div class="row"><h2>Settings</h2><button class="close" data-close="screen-settings" aria-label="Close settings">✕</button></div>
+    <div class="settings" id="settings-body"></div>
+  </div>
+</div>
+
+<div id="screen-help" class="screen hidden">
+  <div class="card wide">
+    <div class="row"><h2>Controls</h2><button class="close" data-close="screen-help" aria-label="Close">✕</button></div>
+    <div id="help-body" class="scroll"></div>
+  </div>
+</div>
+
+<div id="screen-credits" class="screen hidden">
+  <div class="card wide">
+    <div class="row"><h2>Credits &amp; map data</h2><button class="close" data-close="screen-credits" aria-label="Close">✕</button></div>
+    <div id="credits-body" class="scroll"></div>
+  </div>
+</div>
+
+<div id="screen-letter" class="screen hidden">
+  <div class="letter" id="letter-body"></div>
+  <button id="btn-letter-close">Fold the letter away</button>
+</div>
+
+<div id="screen-choice" class="screen hidden">
+  <div class="card">
+    <h2 id="choice-title">Choose</h2>
+    <div id="choice-body"></div>
+    <div class="menu" id="choice-options"></div>
+  </div>
+</div>
+
+<div id="screen-complete" class="screen hidden">
+  <div class="card wide">
+    <h2 id="complete-title">Mission complete</h2>
+    <div id="complete-body" class="scroll"></div>
+    <div class="menu horizontal"><button id="btn-complete-ok">Carry on exploring</button></div>
+  </div>
+</div>
+
+<div id="err" class="hidden"></div>
+<noscript><div class="screen"><div class="card"><h2>JavaScript needed</h2><p>Curfew is a WebGL game and needs JavaScript enabled.</p></div></div></noscript>
+
+<script src="vendor/three.min.js"></script>
+<script src="js/data/mapdata.js"></script>
+<script src="js/core/util.js"></script>
+<script src="js/data/story.js"></script>
+<script src="js/core/save.js"></script>
+<script src="js/core/input.js"></script>
+<script src="js/core/audio.js"></script>
+<script src="js/world/eras.js"></script>
+<script src="js/world/textures.js"></script>
+<script src="js/world/terrain.js"></script>
+<script src="js/world/collision.js"></script>
+<script src="js/world/buildings.js"></script>
+<script src="js/world/landmarks.js"></script>
+<script src="js/world/props.js"></script>
+<script src="js/world/navgraph.js"></script>
+<script src="js/world/world.js"></script>
+<script src="js/entities/characters.js"></script>
+<script src="js/entities/player.js"></script>
+<script src="js/entities/vehicles.js"></script>
+<script src="js/entities/npcs.js"></script>
+<script src="js/entities/traffic.js"></script>
+<script src="js/entities/police.js"></script>
+<script src="js/game/flags.js"></script>
+<script src="js/game/dialogue.js"></script>
+<script src="js/game/timekey.js"></script>
+<script src="js/game/mission.js"></script>
+<script src="js/game/discoveries.js"></script>
+<script src="js/ui/hud.js"></script>
+<script src="js/ui/menus.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
