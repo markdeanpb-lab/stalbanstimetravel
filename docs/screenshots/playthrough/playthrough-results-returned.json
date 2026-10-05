@@ -1,0 +1,246 @@
+{
+  "ending": "returned",
+  "results": [
+    {
+      "name": "2026 start: New Game opens in 2026 with the phone call and an objective",
+      "pass": true,
+      "detail": {
+        "era": 2026,
+        "stage": "p0",
+        "subtitle": "Robin:There it is. Six hundred years of telling St Albans it's late.",
+        "objective": "WIND THE KEY\nWalk to Lattimore & Hale, solicitors, on the High Street\n★ 187 m"
+      }
+    },
+    {
+      "name": "2026: camera lesson (tower spotted), solicitors door interaction, parcel and letter",
+      "pass": true,
+      "detail": {
+        "seen": true,
+        "label": "Go into Lattimore & Hale",
+        "letter": true,
+        "stage": "p1",
+        "inv": [
+          "parcel",
+          "letter",
+          "key"
+        ]
+      }
+    },
+    {
+      "name": "2026: letter closed, the Curfew Key is ready at the Clock Tower",
+      "pass": true,
+      "detail": {
+        "stage": "p2",
+        "key": {
+          "owned": true,
+          "rest": 0,
+          "allowed": [
+            1964
+          ],
+          "locked": false,
+          "trans": false,
+          "jumps": 0,
+          "status": "ready"
+        }
+      }
+    },
+    {
+      "name": "First jump lands in 1964 (Saturday market day), rest timer running; a parked bread van on the spot makes the key slip Robin aside",
+      "pass": true,
+      "detail": {
+        "era": 1964,
+        "stage": "a1",
+        "rest": 29,
+        "slips": [
+          {
+            "era": 1964,
+            "reason": "vehicle",
+            "moved": 3.2
+          }
+        ],
+        "toast": "Key rule learned: Same place, safe ground. You arrive on the same spot in the other year. If something solid is there, t"
+      }
+    },
+    {
+      "name": "1964: old Edie explains the six rules and the thief (information carried to 1897)",
+      "pass": true,
+      "detail": {
+        "label": "Talk to Edie",
+        "stage": "a2",
+        "rules": 5,
+        "inv": [
+          "parcel",
+          "letter",
+          "key",
+          "halfcrown"
+        ]
+      }
+    },
+    {
+      "name": "1964: Terry's scooter — get on and ride (vehicle tutorial)",
+      "pass": true,
+      "detail": {
+        "veh": "scooter",
+        "stage": "a3",
+        "speed": 4.5
+      }
+    },
+    {
+      "name": "1964: buy the coat at the market stall, change into Victorian clothes at Edie's",
+      "pass": true,
+      "detail": {
+        "invAtStall": [
+          "parcel",
+          "letter",
+          "key",
+          "coat"
+        ],
+        "stage": "a5",
+        "outfit": "victorian"
+      }
+    },
+    {
+      "name": "Second jump: 1964 -> 1897, Jubilee night (Gabriel tolls, the clock stops)",
+      "pass": true,
+      "detail": {
+        "era": 1897,
+        "stage": "b2",
+        "flags": {
+          "clockStopped1897": true,
+          "met_young_edie": true
+        }
+      }
+    },
+    {
+      "name": "1897: three men in check suits; the 1964 description singles out Crabbe",
+      "pass": true,
+      "detail": {
+        "stage": "b2",
+        "label": "Confront the man in the check suit"
+      }
+    },
+    {
+      "name": "1897: Crabbe flees in the baker's cart; Robin takes young Edie's bicycle; the City Police join in",
+      "pass": true,
+      "detail": {
+        "stage": "b3",
+        "veh": "bicycle",
+        "maxWanted": 1,
+        "units": 1,
+        "sameCart": true,
+        "cartNode": 6,
+        "cartSpeed": 4.5
+      }
+    },
+    {
+      "name": "1897: alongside the cart, the prompt offers to grab the carpet bag",
+      "pass": true,
+      "detail": {
+        "label": "Grab the carpet bag"
+      }
+    },
+    {
+      "name": "1897: bag grabbed; wanted level rises to 2 and constables close in",
+      "pass": true,
+      "detail": {
+        "stage": "b4",
+        "inv": [
+          "parcel",
+          "letter",
+          "key",
+          "bag"
+        ],
+        "wanted": 2,
+        "units": 3
+      }
+    },
+    {
+      "name": "1897: break line of sight and the constables give up (wanted level decays to 0)",
+      "pass": true,
+      "detail": {
+        "wanted": 0,
+        "secondsToLose": 26,
+        "stage": "b5"
+      }
+    },
+    {
+      "name": "1897: young Edie explains the choice (choice card shown)",
+      "pass": true,
+      "detail": {
+        "open": true,
+        "stage": "b5"
+      }
+    },
+    {
+      "name": "1897: carry the fund to the Town Hall",
+      "pass": true,
+      "detail": {
+        "stage": "b6",
+        "label": "Give the Jubilee Fund to the Mayor (Town Hall)"
+      }
+    },
+    {
+      "name": "1897: the choice sets the world-state flags",
+      "pass": true,
+      "detail": {
+        "stage": "b7",
+        "flags": {
+          "clockStopped1897": true,
+          "met_young_edie": true,
+          "josiah_cleared": true,
+          "crabbe_fate": "jailed",
+          "fund_outcome": "returned"
+        }
+      }
+    },
+    {
+      "name": "Long wind 1897 -> 2026 after the 90 s rest",
+      "pass": true,
+      "detail": {
+        "era": 2026,
+        "stage": "c1"
+      }
+    },
+    {
+      "name": "2026: French Row shows the change; mission-complete card summarises it",
+      "pass": true,
+      "detail": {
+        "open": true,
+        "stage": "c1",
+        "text": "Mission complete: Wind the Key\n\nYou returned the Jubilee Fund to the Town Hall.\n\n1897: Crabbe is arrested; the Mayor thanks Josiah Pennick in front of the crowd"
+      }
+    },
+    {
+      "name": "2026 free roam: French Row shopfront changed in the world",
+      "pass": true,
+      "detail": {
+        "stage": "free",
+        "sign": "Pennick & Daughters · Clockmakers since 1881"
+      }
+    },
+    {
+      "name": "Page reload + Continue: the outcome and the changed shopfront persist",
+      "pass": true,
+      "detail": {
+        "cont": true,
+        "era": 2026,
+        "stage": null,
+        "flags": {
+          "clockStopped1897": true,
+          "met_young_edie": true,
+          "josiah_cleared": true,
+          "crabbe_fate": "jailed",
+          "fund_outcome": "returned",
+          "mission1_complete": true
+        },
+        "sign": "Pennick & Daughters · Clockmakers since 1881"
+      }
+    },
+    {
+      "name": "No runtime errors during the playthrough",
+      "pass": true,
+      "detail": []
+    }
+  ],
+  "wallSeconds": 550
+}

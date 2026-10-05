@@ -1,0 +1,312 @@
+{
+  "phone-low": {
+    "rows": [
+      {
+        "era": 2026,
+        "place": "Clock Tower",
+        "calls": 84,
+        "tris": 109745,
+        "stepMs": 0.52,
+        "npcs": 32,
+        "vehicles": 12
+      },
+      {
+        "era": 2026,
+        "place": "St Peter's Street",
+        "calls": 73,
+        "tris": 105661,
+        "stepMs": 0.61,
+        "npcs": 32,
+        "vehicles": 12
+      },
+      {
+        "era": 2026,
+        "place": "High Street",
+        "calls": 92,
+        "tris": 111947,
+        "stepMs": 0.84,
+        "npcs": 32,
+        "vehicles": 12
+      },
+      {
+        "era": 2026,
+        "place": "Cathedral precinct",
+        "calls": 50,
+        "tris": 88203,
+        "stepMs": 0.79,
+        "npcs": 32,
+        "vehicles": 12
+      },
+      {
+        "era": 2026,
+        "place": "George Street",
+        "calls": 69,
+        "tris": 102008,
+        "stepMs": 0.74,
+        "npcs": 32,
+        "vehicles": 12
+      },
+      {
+        "era": 1964,
+        "place": "Clock Tower",
+        "calls": 83,
+        "tris": 128282,
+        "stepMs": 0.72,
+        "npcs": 35,
+        "vehicles": 12
+      },
+      {
+        "era": 1964,
+        "place": "St Peter's Street",
+        "calls": 75,
+        "tris": 123232,
+        "stepMs": 0.56,
+        "npcs": 35,
+        "vehicles": 12
+      },
+      {
+        "era": 1964,
+        "place": "High Street",
+        "calls": 91,
+        "tris": 130321,
+        "stepMs": 0.57,
+        "npcs": 35,
+        "vehicles": 12
+      },
+      {
+        "era": 1964,
+        "place": "Cathedral precinct",
+        "calls": 51,
+        "tris": 101615,
+        "stepMs": 0.66,
+        "npcs": 35,
+        "vehicles": 12
+      },
+      {
+        "era": 1964,
+        "place": "George Street",
+        "calls": 69,
+        "tris": 115536,
+        "stepMs": 0.81,
+        "npcs": 35,
+        "vehicles": 12
+      },
+      {
+        "era": 1897,
+        "place": "Clock Tower",
+        "calls": 85,
+        "tris": 140131,
+        "stepMs": 0.68,
+        "npcs": 59,
+        "vehicles": 7
+      },
+      {
+        "era": 1897,
+        "place": "St Peter's Street",
+        "calls": 78,
+        "tris": 141447,
+        "stepMs": 0.96,
+        "npcs": 59,
+        "vehicles": 7
+      },
+      {
+        "era": 1897,
+        "place": "High Street",
+        "calls": 92,
+        "tris": 142424,
+        "stepMs": 0.73,
+        "npcs": 59,
+        "vehicles": 7
+      },
+      {
+        "era": 1897,
+        "place": "Cathedral precinct",
+        "calls": 58,
+        "tris": 119297,
+        "stepMs": 0.87,
+        "npcs": 59,
+        "vehicles": 7
+      },
+      {
+        "era": 1897,
+        "place": "George Street",
+        "calls": 76,
+        "tris": 128550,
+        "stepMs": 0.8,
+        "npcs": 59,
+        "vehicles": 7
+      }
+    ],
+    "memory": {
+      "geometryMB": 21.2,
+      "textureMB": 67.2,
+      "textures": 12,
+      "geometries": 491,
+      "rendererInfo": {
+        "calls": 76,
+        "tris": 128550,
+        "geometries": 345,
+        "textures": 15
+      }
+    },
+    "quality": "low",
+    "pixelRatio": 1,
+    "shadows": false,
+    "loadMs": 3890
+  },
+  "desktop-high": {
+    "rows": [
+      {
+        "era": 2026,
+        "place": "Clock Tower",
+        "calls": 161,
+        "tris": 226123,
+        "stepMs": 0.73,
+        "npcs": 46,
+        "vehicles": 15
+      },
+      {
+        "era": 2026,
+        "place": "St Peter's Street",
+        "calls": 141,
+        "tris": 219865,
+        "stepMs": 0.63,
+        "npcs": 46,
+        "vehicles": 15
+      },
+      {
+        "era": 2026,
+        "place": "High Street",
+        "calls": 159,
+        "tris": 220989,
+        "stepMs": 0.81,
+        "npcs": 46,
+        "vehicles": 15
+      },
+      {
+        "era": 2026,
+        "place": "Cathedral precinct",
+        "calls": 114,
+        "tris": 199751,
+        "stepMs": 0.65,
+        "npcs": 46,
+        "vehicles": 15
+      },
+      {
+        "era": 2026,
+        "place": "George Street",
+        "calls": 132,
+        "tris": 215030,
+        "stepMs": 0.6,
+        "npcs": 46,
+        "vehicles": 15
+      },
+      {
+        "era": 1964,
+        "place": "Clock Tower",
+        "calls": 147,
+        "tris": 258846,
+        "stepMs": 0.75,
+        "npcs": 50,
+        "vehicles": 15
+      },
+      {
+        "era": 1964,
+        "place": "St Peter's Street",
+        "calls": 136,
+        "tris": 252094,
+        "stepMs": 0.68,
+        "npcs": 50,
+        "vehicles": 15
+      },
+      {
+        "era": 1964,
+        "place": "High Street",
+        "calls": 148,
+        "tris": 254881,
+        "stepMs": 0.77,
+        "npcs": 50,
+        "vehicles": 15
+      },
+      {
+        "era": 1964,
+        "place": "Cathedral precinct",
+        "calls": 103,
+        "tris": 223135,
+        "stepMs": 0.54,
+        "npcs": 50,
+        "vehicles": 15
+      },
+      {
+        "era": 1964,
+        "place": "George Street",
+        "calls": 120,
+        "tris": 238784,
+        "stepMs": 0.52,
+        "npcs": 50,
+        "vehicles": 15
+      },
+      {
+        "era": 1897,
+        "place": "Clock Tower",
+        "calls": 149,
+        "tris": 279923,
+        "stepMs": 1.23,
+        "npcs": 76,
+        "vehicles": 10
+      },
+      {
+        "era": 1897,
+        "place": "St Peter's Street",
+        "calls": 147,
+        "tris": 285375,
+        "stepMs": 1.09,
+        "npcs": 76,
+        "vehicles": 10
+      },
+      {
+        "era": 1897,
+        "place": "High Street",
+        "calls": 158,
+        "tris": 282063,
+        "stepMs": 1.04,
+        "npcs": 76,
+        "vehicles": 10
+      },
+      {
+        "era": 1897,
+        "place": "Cathedral precinct",
+        "calls": 121,
+        "tris": 255019,
+        "stepMs": 1.08,
+        "npcs": 76,
+        "vehicles": 10
+      },
+      {
+        "era": 1897,
+        "place": "George Street",
+        "calls": 140,
+        "tris": 270974,
+        "stepMs": 1.5,
+        "npcs": 76,
+        "vehicles": 10
+      }
+    ],
+    "memory": {
+      "geometryMB": 21.4,
+      "textureMB": 101.1,
+      "textures": 12,
+      "geometries": 491,
+      "rendererInfo": {
+        "calls": 140,
+        "tris": 270974,
+        "geometries": 343,
+        "textures": 17
+      }
+    },
+    "quality": "high",
+    "pixelRatio": 1,
+    "shadows": true,
+    "loadMs": 3908
+  }
+}

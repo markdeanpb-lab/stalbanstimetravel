@@ -1,0 +1,336 @@
+[
+  {
+    "name": "Movement & collision sweep 2026 (24 random runs, walls never penetrated, feet on ground)",
+    "pass": true,
+    "detail": {
+      "samples": 960,
+      "inside": 0,
+      "maxDy": 0.013,
+      "nan": 0
+    }
+  },
+  {
+    "name": "Movement & collision sweep 1964 (24 random runs, walls never penetrated, feet on ground)",
+    "pass": true,
+    "detail": {
+      "samples": 960,
+      "inside": 0,
+      "maxDy": 0.017,
+      "nan": 0
+    }
+  },
+  {
+    "name": "Movement & collision sweep 1897 (24 random runs, walls never penetrated, feet on ground)",
+    "pass": true,
+    "detail": {
+      "samples": 960,
+      "inside": 0,
+      "maxDy": 0.021,
+      "nan": 0
+    }
+  },
+  {
+    "name": "Camera never ends up inside a building in narrow streets (16 angles × 4 places)",
+    "pass": true,
+    "detail": [
+      {
+        "name": "French Row",
+        "insideCount": 0,
+        "minDist": 0.75
+      },
+      {
+        "name": "Market Place alley",
+        "insideCount": 0,
+        "minDist": 0.6
+      },
+      {
+        "name": "Waxhouse Gate passage",
+        "insideCount": 0,
+        "minDist": 0.83
+      },
+      {
+        "name": "George Street",
+        "insideCount": 0,
+        "minDist": 3.61
+      }
+    ]
+  },
+  {
+    "name": "Vehicle hatch (2026) on the George Street slope: enter, holds when parked, coasts further downhill than up, drives down, climbs back, exits to a free spot",
+    "pass": true,
+    "detail": {
+      "grade": "6.85%",
+      "entered": true,
+      "creep": 0,
+      "coastDown": 5.08,
+      "coastUp": 3.48,
+      "maxSpeed": 13.5,
+      "dropped": 3.11,
+      "climbed": 2.67,
+      "offGround": 0,
+      "stopped": true,
+      "exited": true,
+      "standFree": true
+    }
+  },
+  {
+    "name": "Vehicle scooter (1964) on the George Street slope: enter, holds when parked, coasts further downhill than up, drives down, climbs back, exits to a free spot",
+    "pass": true,
+    "detail": {
+      "grade": "6.85%",
+      "entered": true,
+      "creep": 0,
+      "coastDown": 5.31,
+      "coastUp": 3.2,
+      "maxSpeed": 10.21,
+      "dropped": 2.26,
+      "climbed": 1.8,
+      "offGround": 0,
+      "stopped": true,
+      "exited": true,
+      "standFree": true
+    }
+  },
+  {
+    "name": "Vehicle bicycle (1897) on the George Street slope: enter, holds when parked, coasts further downhill than up, drives down, climbs back, exits to a free spot",
+    "pass": true,
+    "detail": {
+      "grade": "6.85%",
+      "entered": true,
+      "creep": 0,
+      "coastDown": 6.13,
+      "coastUp": 3.06,
+      "maxSpeed": 7.15,
+      "dropped": 1.54,
+      "climbed": 0.84,
+      "offGround": 0,
+      "stopped": true,
+      "exited": true,
+      "standFree": true
+    }
+  },
+  {
+    "name": "Vehicle cart (1897) on the George Street slope: enter, holds when parked, coasts further downhill than up, drives down, climbs back, exits to a free spot",
+    "pass": true,
+    "detail": {
+      "grade": "6.85%",
+      "entered": true,
+      "creep": 0,
+      "coastDown": 5.09,
+      "coastUp": 3.48,
+      "maxSpeed": 5.34,
+      "dropped": 1.18,
+      "climbed": 0.82,
+      "offGround": 0,
+      "stopped": true,
+      "exited": true,
+      "standFree": true
+    }
+  },
+  {
+    "name": "Jump 2026 -> 1964 completes, rest timer set, lands on open ground",
+    "pass": true,
+    "detail": {
+      "era": 1964,
+      "rest": 39,
+      "inside": false,
+      "trans": false
+    }
+  },
+  {
+    "name": "Jump 1964 -> 1897 completes, rest timer set, lands on open ground",
+    "pass": true,
+    "detail": {
+      "era": 1897,
+      "rest": 35,
+      "inside": false,
+      "trans": false
+    }
+  },
+  {
+    "name": "Jump 1897 -> 2026 completes, rest timer set, lands on open ground",
+    "pass": true,
+    "detail": {
+      "era": 2026,
+      "rest": 80,
+      "inside": false,
+      "trans": false
+    }
+  },
+  {
+    "name": "Jump 2026 -> 1897 completes, rest timer set, lands on open ground",
+    "pass": true,
+    "detail": {
+      "era": 1897,
+      "rest": 80,
+      "inside": false,
+      "trans": false
+    }
+  },
+  {
+    "name": "Jump 1897 -> 1964 completes, rest timer set, lands on open ground",
+    "pass": true,
+    "detail": {
+      "era": 1964,
+      "rest": 35,
+      "inside": false,
+      "trans": false
+    }
+  },
+  {
+    "name": "Jump 1964 -> 2026 completes, rest timer set, lands on open ground",
+    "pass": true,
+    "detail": {
+      "era": 2026,
+      "rest": 35,
+      "inside": false,
+      "trans": false
+    }
+  },
+  {
+    "name": "Blocked arrival inside a building slips to safe ground with a message",
+    "pass": true,
+    "detail": {
+      "pointInside2026": true,
+      "slip": {
+        "reason": "building",
+        "moved": 12.8
+      },
+      "era": 2026,
+      "nowInside": false,
+      "statusBeforeVehicleTest": "ready",
+      "vehicleSlip": {
+        "reason": "vehicle",
+        "moved": 3.2
+      }
+    }
+  },
+  {
+    "name": "Blocked arrival on a parked vehicle slips aside with a message",
+    "pass": true,
+    "detail": {
+      "slip": {
+        "reason": "vehicle",
+        "moved": 3.2
+      },
+      "keyBefore": "ready"
+    }
+  },
+  {
+    "name": "Blocked arrival in the road with traffic coming slips onto the pavement with a message",
+    "pass": true,
+    "detail": {
+      "startOnRoad": true,
+      "slip": {
+        "reason": "road",
+        "moved": 4.8
+      },
+      "era": 1964,
+      "endOnRoad": false
+    }
+  },
+  {
+    "name": "Key rules enforced: refuses while wanted and while resting",
+    "pass": true,
+    "detail": {
+      "wanted": "chased",
+      "rest": "rest",
+      "ready": "ready"
+    }
+  },
+  {
+    "name": "Wanted level escalates (1 -> 2, units dispatched) and decays once out of sight",
+    "pass": true,
+    "detail": {
+      "l1": 1,
+      "l2": 2,
+      "units": 3,
+      "escapedAfter": 29,
+      "final": 0
+    }
+  },
+  {
+    "name": "No runtime errors during sweeps",
+    "pass": true,
+    "detail": []
+  },
+  {
+    "name": "Save + page reload preserves the consequence (flags, 2026 and 1964 shopfront signs)",
+    "pass": true,
+    "detail": {
+      "before": "Pennick & Daughters · Clockmakers since 1881",
+      "after": {
+        "cont": true,
+        "flags": {
+          "fund_outcome": "returned",
+          "josiah_cleared": true
+        },
+        "sign": "Pennick & Daughters · Clockmakers since 1881",
+        "sign1964": "Pennick & Daughter · Clockmakers",
+        "plaque": true
+      }
+    }
+  },
+  {
+    "name": "Save code export/import works and corrupt codes are rejected",
+    "pass": true,
+    "detail": {
+      "sign": "The Jubilee Table · since 1897",
+      "badCodeRejected": "The code is damaged (checksum mismatch). Copy it again in full."
+    }
+  },
+  {
+    "name": "Runs with localStorage blocked (shows a note, save codes still available)",
+    "pass": true,
+    "detail": {
+      "avail": false,
+      "note": "Browser storage is unavailable (private mode?). The game still runs: use save codes to keep progress."
+    }
+  },
+  {
+    "name": "Touch: controls shown, stick moves the player, drag rotates the camera, Key button winds",
+    "pass": true,
+    "detail": {
+      "vis": {
+        "touch": true,
+        "scheme": "touch"
+      },
+      "moved": 4.77,
+      "dyaw": 0.672,
+      "keyBtn": true,
+      "jumped": 1964
+    }
+  },
+  {
+    "name": "Phone viewport (915x412, low quality): render stats",
+    "pass": true,
+    "detail": {
+      "calls": 89,
+      "tris": 126302,
+      "geometries": 123,
+      "textures": 9
+    }
+  },
+  {
+    "name": "No runtime errors in touch run",
+    "pass": true,
+    "detail": []
+  },
+  {
+    "name": "Runs when index.html is opened directly (file://, no server)",
+    "pass": true,
+    "detail": {
+      "st": {
+        "state": "play",
+        "era": 2026,
+        "error": null
+      },
+      "errors": []
+    }
+  },
+  {
+    "name": "No requests to external services (every page in this run)",
+    "pass": true,
+    "detail": []
+  }
+]

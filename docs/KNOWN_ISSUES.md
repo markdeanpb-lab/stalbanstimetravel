@@ -8,8 +8,8 @@ These could not be checked in the build environment, which has no GPU, speakers,
 
 | Area | What was done instead | What still needs doing |
 |---|---|---|
-| **Frame rate on a mid-range Android phone (target 30 fps)** | Measured what drives the frame rate in headless Chromium, using the phone preset (915 × 412, Low quality). The results were 51–93 draw calls, 89k–142k triangles, and 0.5–2.3 ms of simulation per step on the test machine. See `tools/perf.js`. | Play for 10 minutes on a real mid-range phone with the counter on (**Settings → Show frame rate**). The heaviest scene is 1897 at the Clock Tower with the Jubilee crowd. |
-| **Frame rate on desktop (target 60 fps)** | The same measurements on the High preset: 105–161 draw calls with shadows and 200k–285k triangles. | Check on integrated graphics (an Intel Iris/UHD class laptop). |
+| **Frame rate on a mid-range Android phone (target 30 fps)** | Measured what drives the frame rate in headless Chromium, using the phone preset (915 × 412, Low quality). The results were 50–92 draw calls, 88k–142k triangles, and under 1 ms of simulation per step on the test machine. See `tools/perf.js`. | Play for 10 minutes on a real mid-range phone with the counter on (**Settings → Show frame rate**). The heaviest scene is 1897 at the Clock Tower with the Jubilee crowd. |
+| **Frame rate on desktop (target 60 fps)** | The same measurements on the High preset: 103–161 draw calls with shadows and 200k–285k triangles. | Check on integrated graphics (an Intel Iris/UHD class laptop). |
 | **Audio** | All sound is procedural Web Audio and was not played back here (no audio device). | Listen to each era's ambience, the bell (Gabriel), sirens and whistles, engines and hooves, and check the mix levels. |
 | **Gamepad** | The standard Gamepad API mapping is implemented. | Try an Xbox or PlayStation pad in Chrome and Firefox. |
 | **Touch on a physical phone** | Emulated touch through Chrome DevTools: the stick moves the player, dragging turns the camera, the Key button winds. | Check thumb comfort, two-thumb use (stick and look together), notches and safe areas, and the browser's own gestures (pull to refresh, back swipe). |
@@ -22,7 +22,7 @@ Issues are grouped by area and roughly ordered by how noticeable they are.
 
 ### Performance and memory
 
-1. **All three eras are built at start-up and stay in memory.** Load takes 6–7 s in headless Chromium on the test machine and will be longer on a phone. Geometry is about 21 MB. Textures are about 90–100 MB, estimated as the sum of uploaded images: mostly the three sign atlases and the ground paint. Building an era only when you first wind to it would roughly halve both.
+1. **All three eras are built at start-up and stay in memory.** Loading to the title screen takes about 4 s in headless Chromium on the test machine and will be longer on a phone. Geometry is about 21 MB. Textures are an estimated 67 MB on Low and 101 MB on High, mostly the three sign atlases and the ground paint. Building an era only when you first wind to it would cut both by about a third.
 2. **There is no automatic quality drop.** The game picks Low on touch devices and High elsewhere, but it does not lower settings if the frame rate stays below target.
 3. **WebGL context loss is not handled.** If a phone browser discards the GPU context, for example after a long time in the background, the page needs a reload.
 

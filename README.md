@@ -16,13 +16,26 @@ This milestone covers the following:
 
 The game runs on three.js in the browser with no build step. Everything it needs is inside the `game/` folder, and it makes no network calls while running.
 
+| 2026 | 1964 | 1897 |
+|---|---|---|
+| ![The Clock Tower in 2026](docs/screenshots/eras/2026-clock-tower.jpg) | ![The Clock Tower in 1964](docs/screenshots/eras/1964-clock-tower.jpg) | ![The Clock Tower on Jubilee night, 1897](docs/screenshots/eras/1897-clock-tower.jpg) |
+| ![French Row, 2026](docs/screenshots/eras/2026-french-row.jpg) | ![French Row, 1964](docs/screenshots/eras/1964-french-row.jpg) | ![French Row, 1897](docs/screenshots/eras/1897-french-row.jpg) |
+
+*The same French Row shop in 2026 before the mission, then after each choice in 1897:*
+
+| Before | Fund returned to the Town Hall | Fund taken to the dinner |
+|---|---|---|
+| ![Phone repair shop](docs/screenshots/consequence-2026-french-row-before.jpg) | ![Pennick & Daughters, clockmakers](docs/screenshots/consequence-2026-french-row-returned.jpg) | ![The Jubilee Table](docs/screenshots/consequence-2026-french-row-dinner.jpg) |
+
+More views, the whole mission beat by beat and the phone layout are in [`docs/screenshots/`](docs/screenshots/).
+
 ---
 
 ## Launching
 
 ### Desktop (Windows, macOS, Linux)
 
-**Option A: double-click.** Open `game/index.html` in Chrome, Edge or Firefox. The game uses classic scripts and no fetches, so it works from `file://`.
+**Option A: double-click.** Open `game/index.html` in Chrome or Edge (tested from `file://` in Chromium) or Firefox. The game uses classic scripts and no fetches, so it works without a server.
 
 **Option B: a local server (recommended).** Run one of these from the repository root, then open the address it prints:
 
@@ -107,7 +120,7 @@ There are two alternatives. You can copy the `game/` folder to the phone and ser
 | **Free roam** | Discoveries in each era; postcard views of 5 landmarks in 3 eras; 1897 greased pig; 1964 scooter sprint; wardrobe at the Clock Tower | Done |
 | **UI** | HUD (era, objective + distance, minimap, key ring, wanted stars, prompts), full map, journal, settings, save codes | Done |
 | | Touch controls (dynamic stick, camera drag, contextual buttons); gamepad | Done |
-| **Performance** | Instanced characters/vehicles/props, chunked merged buildings, fog distance, Low/Medium/High presets (Low on touch devices: no shadows, pixel ratio 1, half-size ground paint) | Partial: budgets measured (phone preset 51–93 draw calls, ≤ 142k triangles); not yet profiled on a real phone |
+| **Performance** | Instanced characters/vehicles/props, chunked merged buildings, fog distance, Low/Medium/High presets (Low on touch devices: no shadows, pixel ratio 1, half-size ground paint) | Partial: budgets measured (phone preset 50–92 draw calls, ≤ 142k triangles, ~67 MB textures); not yet profiled on a real phone |
 | **Testing** | Headless checks (`tools/verify.js`), a full playthrough of both endings (`tools/playthrough.js`), a performance report (`tools/perf.js`) and documentation screenshots (`tools/screens.js`) | Done (see [`docs/VERIFICATION.md`](docs/VERIFICATION.md)) |
 
 ## Documentation
