@@ -216,7 +216,7 @@
       };
       return r;
     };
-    row('Graphics quality (reload to apply)', sel('quality', [['low', 'Low (phones)'], ['medium', 'Medium'], ['high', 'High (desktop)']]));
+    row('Graphics quality (reload to apply)', sel('quality', [['low', 'Low (phones)'], ['medium', 'Medium'], ['high', 'High'], ['ultra', 'Ultra (fast graphics cards)']]));
     row('Subtitle size', sel('subtitleSize', [['small', 'Small'], ['medium', 'Medium'], ['large', 'Large'], ['huge', 'Huge']], applySubs));
     row('Camera sensitivity', rng('sensitivity', 0.3, 2.5, 0.1));
     row('Invert camera vertical', sel('invertY', [[false, 'Off'], [true, 'On']]));

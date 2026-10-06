@@ -222,6 +222,7 @@
 
   // ------------------------------------------------------------------ ground material (splat + procedural detail)
   T.makeMaterial = function () {
+    if (SA.PBR && SA.PBR.ready) return makeMaterialPBR();
     const blank = new THREE.DataTexture(new Uint8Array([128, 128, 128, 255]), 1, 1);
     blank.needsUpdate = true;
     const uniforms = {
@@ -294,6 +295,119 @@
     m.customProgramCacheKey = () => 'ground';
     return m;
   };
+  // Scanned ground (when SA.PBR has loaded): each texel of the splat picks its two strongest
+  // surfaces, samples their scans at their real size, recolours them to the painted ground colour
+  // and blends them by height, so setts and slabs keep crisp joints and grass grows between stones.
+  function makeMaterialPBR() {
+    const blank = new THREE.DataTexture(new Uint8Array([128, 128, 128, 255]), 1, 1);
+    blank.needsUpdate = true;
+    const uniforms = {
+      tColA: { value: blank }, tMatA: { value: blank }, tColB: { value: blank }, tMatB: { value: blank },
+      uSplat: { value: new THREE.Vector4(T.SX0, T.SZ0, 1 / (T.SX1 - T.SX0), 1 / (T.SZ1 - T.SZ0)) },
+      uWaveMode: { value: 0 }, uWaveCenter: SA.Tex.wave.uWaveCenter, uWaveRadius: SA.Tex.wave.uWaveRadius,
+      uOutside: { value: new THREE.Color(0x777168) },
+      uEraA: { value: 2026 }, uEraB: { value: 2026 },
+    };
+    const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, metalness: 0 });
+    m.userData.uniforms = uniforms;
+    m.onBeforeCompile = function (sh) {
+      Object.assign(sh.uniforms, uniforms, SA.PBR.uniforms);
+      sh.vertexShader = sh.vertexShader
+        .replace('#include <common>', '#include <common>\nvarying vec3 vWorldP;')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\n vWorldP = position;');
+      sh.fragmentShader = sh.fragmentShader
+        .replace('#include <common>', `#include <common>
+          varying vec3 vWorldP;
+          uniform sampler2D tColA, tMatA, tColB, tMatB; uniform vec4 uSplat;
+          uniform float uWaveMode; uniform vec2 uWaveCenter; uniform float uWaveRadius; uniform vec3 uOutside;
+          uniform float uEraA, uEraB;
+          ${SA.Tex.GLSL.NOISE}
+          ${SA.PBR.glsl}
+          struct GroundS { vec3 c; float ao; float r; vec2 n; };
+          void layerSample(vec2 p, float L, out vec4 a, out vec4 b) {
+            vec3 uv = pbrUV(p, L);
+            a = texture(tPbrA, uv);
+            b = texture(tPbrB, uv);
+          }
+          GroundS groundSample(vec2 p, sampler2D tc, sampler2D tm, float era) {
+            GroundS g;
+            vec2 uv = vec2((p.x - uSplat.x)*uSplat.z, (p.y - uSplat.y)*uSplat.w);
+            vec3 base; vec4 w;
+            if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) {
+              base = uOutside * (0.9 + 0.15*vnoise(p*0.3));
+              w = vec4(0.0);
+            } else {
+              base = texture2D(tc, vec2(uv.x, 1.0 - uv.y)).rgb;
+              w = texture2D(tm, vec2(uv.x, 1.0 - uv.y));
+            }
+            float pave = clamp(1.0 - (w.r + w.g + w.b + w.a), 0.0, 1.0);
+            // York stone flags and macadam in 1897; concrete slabs and gravel paths later
+            float Lp = era < 1900.0 ? L_YORK_FLAGS : L_CONCRETE_SLABS;
+            float La = era < 1900.0 ? L_DIRT : L_GRAVEL;
+            // the two strongest surfaces at this texel
+            float w1 = pave, L1 = Lp, w2 = 0.0, L2 = Lp;
+            float ws[4] = float[4](w.r, w.g, w.b, w.a);
+            float ls[4] = float[4](L_ASPHALT, L_SETTS, L_GRASS, La);
+            for (int i = 0; i < 4; i++) {
+              if (ws[i] > w1) { w2 = w1; L2 = L1; w1 = ws[i]; L1 = ls[i]; }
+              else if (ws[i] > w2) { w2 = ws[i]; L2 = ls[i]; }
+            }
+            vec4 a1, b1, a2, b2;
+            layerSample(p, L1, a1, b1);
+            float t = 0.0;
+            if (w2 > 0.02) {
+              layerSample(p, L2, a2, b2);
+              t = pbrHeightBlend(b1.w, w1, b2.w, w2);
+            } else { a2 = a1; b2 = b1; }
+            vec3 c1 = pbrRecolour(a1.rgb, base, L1), c2 = pbrRecolour(a2.rgb, base, L2);
+            g.c = mix(c1, c2, t);
+            g.ao = mix(a1.a, a2.a, t);
+            g.r = mix(b1.z, b2.z, t);
+            vec3 n1 = pbrTangentNormal(b1, L1, 1.0), n2 = pbrTangentNormal(b2, L2, 1.0);
+            g.n = mix(n1.xy / n1.z, n2.xy / n2.z, t);
+            // broad variation so the scans never read as a repeating tile
+            g.c *= 0.9 + 0.2 * vnoise(p * 0.11) * (0.6 + 0.4 * vnoise(p * 0.023));
+            return g;
+          }
+        `)
+        .replace('#include <map_fragment>', `
+          vec2 gp = vWorldP.xz;
+          GroundS gA = groundSample(gp, tColA, tMatA, uEraA);
+          vec3 rimGlow = vec3(0.0);
+          if (uWaveMode > 0.5) {
+            GroundS gB = groundSample(gp, tColB, tMatB, uEraB);
+            float d = distance(gp, uWaveCenter);
+            float inside = 1.0 - smoothstep(uWaveRadius - 6.0, uWaveRadius, d);
+            gA.c = mix(gA.c, gB.c, inside);
+            gA.ao = mix(gA.ao, gB.ao, inside);
+            gA.r = mix(gA.r, gB.r, inside);
+            gA.n = mix(gA.n, gB.n, inside);
+            float rim = smoothstep(uWaveRadius - 3.0, uWaveRadius, d) * (1.0 - smoothstep(uWaveRadius, uWaveRadius + 1.5, d));
+            rimGlow = vec3(1.0,0.8,0.45)*rim*0.9;
+          }
+          diffuseColor.rgb *= gA.c;
+        `)
+        .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = gA.r;')
+        .replace('#include <normal_fragment_maps>', `
+          {
+            // the ground's texture axes are world x and z
+            vec3 Tv = (viewMatrix * vec4(1.0, 0.0, 0.0, 0.0)).xyz;
+            vec3 Bv = (viewMatrix * vec4(0.0, 0.0, 1.0, 0.0)).xyz;
+            vec3 Tn = normalize(Tv - normal * dot(normal, Tv));
+            vec3 Bn = normalize(Bv - normal * dot(normal, Bv) - Tn * dot(Tn, Bv));
+            normal = normalize(normal + Tn * gA.n.x + Bn * gA.n.y);
+          }
+        `)
+        .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance += rimGlow;')
+        .replace('#include <aomap_fragment>', `
+          reflectedLight.indirectDiffuse *= gA.ao;
+          reflectedLight.indirectSpecular *= gA.ao * gA.ao;
+          reflectedLight.directDiffuse *= mix(1.0, gA.ao, 0.45);
+        `);
+    };
+    m.customProgramCacheKey = () => 'ground-pbr';
+    return m;
+  }
   T.canvasToTextures = function (pair) {
     const tc = new THREE.CanvasTexture(pair.col);
     tc.colorSpace = THREE.SRGBColorSpace;

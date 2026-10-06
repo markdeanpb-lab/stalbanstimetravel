@@ -206,10 +206,6 @@
     return true;
   };
 
-  const tmpC = new THREE.Color(), tmpC2 = new THREE.Color();
-  function lerpColor(a, b, t) {
-    return tmpC.set(a).lerp(tmpC2.set(b), t).getHex();
-  }
   function stepTransition(dt) {
     const tr = K.trans;
     const G = SA.Game;
@@ -219,27 +215,16 @@
     const R = 2 + ease * 520;
     SA.Tex.wave.uWaveRadius.value = R;
     const cx = tr.cx, cz = tr.cz;
-    // blend lighting between eras
-    const A = SA.ERAS[tr.from], B = SA.ERAS[tr.to];
-    const scene = G.scene();
+    // blend lighting, sky and grade between eras; the sky's light (environment map) swaps half way
     const lk = U.smoothstep(0.1, 0.9, k);
-    scene.fog.color.setHex(lerpColor(A.fog.color, B.fog.color, lk));
-    scene.fog.near = U.lerp(A.fog.near, B.fog.near, lk);
-    scene.fog.far = U.lerp(A.fog.far, B.fog.far, lk);
-    const hemi = G.hemi(), sun = G.sun(), sky = G.sky().material.uniforms;
-    hemi.color.setHex(lerpColor(A.hemi.sky, B.hemi.sky, lk));
-    hemi.groundColor.setHex(lerpColor(A.hemi.ground, B.hemi.ground, lk));
-    hemi.intensity = U.lerp(A.hemi.intensity, B.hemi.intensity, lk);
-    sun.color.setHex(lerpColor(A.sun.color, B.sun.color, lk));
-    sun.intensity = U.lerp(A.sun.intensity, B.sun.intensity, lk);
-    G.sunDir.set(U.lerp(A.sun.dir[0], B.sun.dir[0], lk), U.lerp(A.sun.dir[1], B.sun.dir[1], lk), U.lerp(A.sun.dir[2], B.sun.dir[2], lk)).normalize();
-    sky.top.value.setHex(lerpColor(A.sky.top, B.sky.top, lk));
-    sky.mid.value.setHex(lerpColor(A.sky.mid, B.sky.mid, lk));
-    sky.horizon.value.setHex(lerpColor(A.sky.horizon, B.sky.horizon, lk));
-    sky.glow.value.setHex(lerpColor(A.sky.sunGlow, B.sky.sunGlow, lk));
-    sky.sunDir.value.copy(G.sunDir);
-    sky.uStars.value = U.lerp(tr.from === 1897 ? 0.6 : 0, tr.to === 1897 ? 0.6 : 0, lk);
-    G.renderer().toneMappingExposure = U.lerp(A.exposure, B.exposure, lk);
+    if (!tr.looks) tr.looks = [SA.Render.eraLook(SA.ERAS[tr.from]), SA.Render.eraLook(SA.ERAS[tr.to])];
+    const look = SA.Render.lerpLook(tr.looks[0], tr.looks[1], lk);
+    SA.Render.applyLook(look);
+    G.sunDir.copy(look.lightDir);
+    if (!tr.envSwapped && lk >= 0.5) {
+      tr.envSwapped = true;
+      SA.Render.useEnv(tr.to, tr.looks[1]);
+    }
     G.cam.fovKick = U.damp(G.cam.fovKick, 0, 1.5, dt);
     // old entities vanish as the ring passes; new ones appear inside it
     for (const n of tr.oldNpcs) n.ch.visible = U.dist(n.ch.x, n.ch.z, cx, cz) > R;

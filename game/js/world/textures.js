@@ -658,6 +658,7 @@
   // attributes: color (wall tint), uv (bay/floor units, tiled with fract), aWall (u,v metres, wall type),
   // aCell (atlas col, row (-1 = plain wall), building seed), aBase (ground y for the time-wave collapse)
   Tex.facadeMaterial = function (atlas, eraUniforms) {
+    if (SA.PBR && SA.PBR.ready) return facadePBR(atlas, eraUniforms);
     const m = new THREE.MeshLambertMaterial({ map: atlas.map, emissiveMap: atlas.glow, emissive: 0xffc070, vertexColors: true });
     m.userData.era = eraUniforms;
     m.onBeforeCompile = function (sh) {
@@ -699,6 +700,7 @@
     return m;
   };
   Tex.roofMaterial = function (eraUniforms) {
+    if (SA.PBR && SA.PBR.ready) return roofPBR(eraUniforms);
     const m = new THREE.MeshLambertMaterial({ vertexColors: true });
     m.onBeforeCompile = function (sh) {
       sh.uniforms.uWaveCenter = Tex.wave.uWaveCenter;
@@ -714,6 +716,137 @@
     m.customProgramCacheKey = () => 'roof';
     return m;
   };
+  // ------------------------------------------------------------------ scanned (PBR) facades and roofs
+  // Physically based versions of the two materials above, used when SA.PBR has loaded its texture
+  // arrays. Walls and roofs sample a scan by wall type in metres, recoloured to the building's own
+  // colour; window glass is glossy, so it reflects the sky; ambient occlusion and normals come from
+  // the scans. The Lambert versions above remain the fallback.
+  const PBR_SHARED_FRAG = `
+    // wall type -> texture layer. Red brick alternates between two scans by building.
+    float wallLayer(float wt, float sd) {
+      if (wt < 0.5) return h21(vec2(sd * 0.37, 5.1)) < 0.45 ? L_BRICK_DARK : L_BRICK;
+      if (wt < 1.5) return L_STUCCO;
+      if (wt < 2.5) return L_FLINT;
+      if (wt < 3.5) return L_STOCK_BRICK;
+      if (wt < 4.5) return L_RENDER;
+      return L_STUCCO;
+    }
+    float roofLayer(float rt) {
+      if (rt < 0.5) return L_CLAY_TILE;
+      if (rt < 1.5) return L_SLATE;
+      if (rt < 2.5) return L_FELT;
+      if (rt < 3.5) return L_LEAD;
+      return L_CLAY_TILE;
+    }
+  `;
+  function pbrCommon(sh, eraUniforms) {
+    Object.assign(sh.uniforms, SA.PBR.uniforms);
+    sh.uniforms.uWaveCenter = Tex.wave.uWaveCenter;
+    sh.uniforms.uWaveRadius = Tex.wave.uWaveRadius;
+    sh.uniforms.uWaveMode = eraUniforms.uWaveMode;
+    sh.uniforms.uWeather = eraUniforms.uWeather || { value: 0 };
+  }
+  function facadePBR(atlas, eraUniforms) {
+    const m = new THREE.MeshStandardMaterial({ map: atlas.map, emissiveMap: atlas.glow, emissive: 0xffc070, vertexColors: true, roughness: 0.9, metalness: 0 });
+    m.userData.era = eraUniforms;
+    m.onBeforeCompile = function (sh) {
+      pbrCommon(sh, eraUniforms);
+      sh.uniforms.uNight = eraUniforms.uNight;
+      sh.uniforms.uLitFrac = eraUniforms.uLitFrac;
+      sh.vertexShader = sh.vertexShader
+        .replace('#include <common>', '#include <common>\nattribute vec3 aWall; attribute vec3 aCell; attribute float aBase; varying vec3 vWall; varying vec3 vCell; varying vec2 vLocal;\n' + WAVE_VERT)
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\n vWall = aWall; vCell = aCell; vLocal = uv;\n float wk = waveK(position.xz); transformed.y = mix(aBase - 1.0, transformed.y, wk);');
+      sh.fragmentShader = sh.fragmentShader
+        .replace('#include <common>', '#include <common>\nvarying vec3 vWall; varying vec3 vCell; varying vec2 vLocal; uniform float uNight; uniform float uLitFrac; uniform float uWeather;\n' + NOISE + SA.PBR.glsl + PBR_SHARED_FRAG)
+        .replace('#include <map_fragment>', `
+          vec4 feat = vec4(0.0);
+          float glowm = 0.0;
+          if (vCell.x >= 0.0) {
+            vec2 cs = vec2(0.125, 0.25);
+            vec2 lf = fract(vLocal);
+            vec2 auv = vec2(vCell.x*cs.x, 1.0 - (vCell.y + 1.0)*cs.y) + (lf*0.994 + 0.003)*cs;
+            vec2 gx = dFdx(vLocal)*cs, gy = dFdy(vLocal)*cs;
+            feat = textureGrad(map, auv, gx, gy);
+            glowm = textureGrad(emissiveMap, auv, gx, gy).r;
+          }
+          // round the building seed first: the interpolated varying differs per pixel
+          float sd = floor(vCell.z * 997.0 + 0.5);
+          float wL = wallLayer(vWall.z, sd);
+          // each building starts the scan at its own offset, so neighbours never line up
+          vec2 wm = vWall.xy + vec2(h21(vec2(sd, 1.7)) * 9.0, h21(vec2(sd, 4.3)) * 0.6);
+          vec3 tuv = pbrUV(wm, wL);
+          vec4 pa = texture(tPbrA, tuv);
+          vec4 pb = texture(tPbrB, tuv);
+          vec3 wallc = pbrRecolour(pa.rgb, vColor.rgb, wL);
+          // weathering: soot and splash-back towards the pavement, slow streaks down the face
+          float streak = vnoise(vec2(wm.x * 1.7, wm.y * 0.08)) * 0.5 + vnoise(wm * vec2(0.6, 0.3)) * 0.5;
+          float grime = (1.0 - smoothstep(0.0, 1.1, vWall.y)) * 0.28 + streak * 0.14 * smoothstep(0.4, 1.0, streak);
+          wallc *= 1.0 - grime;
+          diffuseColor.rgb = mix(wallc, feat.rgb, feat.a);
+          float pbrAO = mix(pa.a, 1.0, feat.a);
+          float pbrRough = mix(pb.z, mix(0.62, 0.05, glowm), feat.a);
+          vec4 pbrB = pb;
+          float pbrFlat = feat.a;
+          vec2 pbrM = tuv.xy;
+          float pbrL = wL;
+        `)
+        .replace('#include <color_fragment>', '')
+        .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = pbrRough;')
+        .replace('#include <normal_fragment_maps>', `
+          normal = normalize(pbrTBN(-vViewPosition, normal, pbrM) * pbrTangentNormal(pbrB, pbrL, 1.0 - pbrFlat));
+        `)
+        .replace('#include <emissivemap_fragment>', `
+          float litBay = step(h21(floor(vLocal) + vec2(sd * 0.113, sd * 0.007)), uLitFrac);
+          totalEmissiveRadiance *= glowm * litBay * uNight;
+        `)
+        .replace('#include <aomap_fragment>', `
+          reflectedLight.indirectDiffuse *= pbrAO;
+          reflectedLight.indirectSpecular *= pbrAO * pbrAO;
+          reflectedLight.directDiffuse *= mix(1.0, pbrAO, 0.4);
+        `);
+    };
+    m.customProgramCacheKey = () => 'facade-pbr';
+    return m;
+  }
+  function roofPBR(eraUniforms) {
+    const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0 });
+    m.onBeforeCompile = function (sh) {
+      pbrCommon(sh, eraUniforms);
+      sh.vertexShader = sh.vertexShader
+        .replace('#include <common>', '#include <common>\nattribute vec3 aWall; attribute float aBase; varying vec3 vWall;\n' + WAVE_VERT)
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\n vWall = aWall; float wk = waveK(position.xz); transformed.y = mix(aBase - 1.0, transformed.y, wk);');
+      sh.fragmentShader = sh.fragmentShader
+        .replace('#include <common>', '#include <common>\nvarying vec3 vWall; uniform float uWeather;\n' + NOISE + SA.PBR.glsl + PBR_SHARED_FRAG)
+        .replace('#include <color_fragment>', `
+          float rL = roofLayer(vWall.z);
+          vec3 tuv = pbrUV(vWall.xy, rL);
+          vec4 pa = texture(tPbrA, tuv);
+          vec4 pb = texture(tPbrB, tuv);
+          vec3 rc = pbrRecolour(pa.rgb, vColor.rgb, rL);
+          // lichen and moss on the old clay and slate, thickest towards the eaves
+          float mossN = vnoise(vWall.xy * 0.55) * 0.6 + vnoise(vWall.xy * 2.3) * 0.4;
+          float moss = smoothstep(0.55, 0.85, mossN) * (rL == L_CLAY_TILE ? 0.45 : rL == L_SLATE ? 0.25 : 0.0) * (1.0 - smoothstep(0.0, 4.0, vWall.y) * 0.5);
+          rc = mix(rc, vec3(0.16, 0.18, 0.09) * (0.7 + 0.6 * pa.g), moss);
+          diffuseColor.rgb = rc * (0.92 + 0.16 * vnoise(vWall.xy * 0.21));
+          float pbrAO = pa.a;
+          float pbrRough = min(1.0, pb.z + moss * 0.2);
+          vec4 pbrB = pb;
+          vec2 pbrM = tuv.xy;
+        `)
+        .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = pbrRough;')
+        .replace('#include <normal_fragment_maps>', `
+          normal = normalize(pbrTBN(-vViewPosition, normal, pbrM) * pbrTangentNormal(pbrB, rL, 1.0));
+        `)
+        .replace('#include <aomap_fragment>', `
+          reflectedLight.indirectDiffuse *= pbrAO;
+          reflectedLight.indirectSpecular *= pbrAO * pbrAO;
+          reflectedLight.directDiffuse *= mix(1.0, pbrAO, 0.5);
+        `);
+    };
+    m.customProgramCacheKey = () => 'roof-pbr';
+    return m;
+  }
+
   // Plain vertex-coloured material that also obeys the time wave (signs, props merged geometry)
   Tex.waveMaterial = function (eraUniforms, opts) {
     opts = opts || {};

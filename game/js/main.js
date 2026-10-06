@@ -21,80 +21,20 @@
   let renderer, scene, camera, hemi, sun, sky, ground, groundMat;
   const eraMats = {};
   function setupRenderer() {
-    const canvas = document.getElementById('game');
-    const q = Game.settings.quality;
-    renderer = new THREE.WebGLRenderer({ canvas, antialias: q !== 'low', powerPreference: 'high-performance', stencil: false });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, q === 'low' ? 1 : q === 'medium' ? 1.25 : 1.75));
-    renderer.setSize(window.innerWidth, window.innerHeight, false);
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.NeutralToneMapping;
-    renderer.toneMappingExposure = 1.0;
-    renderer.shadowMap.enabled = q === 'high';
-    renderer.shadowMap.type = THREE.PCFShadowMap;
-    scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.2, 900);
-    hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 1);
-    scene.add(hemi);
-    sun = new THREE.DirectionalLight(0xffffff, 2);
-    sun.castShadow = q === 'high';
-    if (sun.castShadow) {
-      sun.shadow.mapSize.set(2048, 2048);
-      const s = sun.shadow.camera;
-      s.left = -70;
-      s.right = 70;
-      s.top = 70;
-      s.bottom = -70;
-      s.near = 1;
-      s.far = 400;
-      sun.shadow.bias = -0.0006;
-      sun.shadow.normalBias = 0.04;
-    }
-    scene.add(sun);
-    scene.add(sun.target);
-    scene.fog = new THREE.Fog(0xcccccc, 100, 400);
-    // sky dome with gradient shader
-    const sg = new THREE.SphereGeometry(800, 24, 16);
-    const sm = new THREE.ShaderMaterial({
-      side: THREE.BackSide,
-      depthWrite: false,
-      fog: false,
-      uniforms: { top: { value: new THREE.Color() }, mid: { value: new THREE.Color() }, horizon: { value: new THREE.Color() }, glow: { value: new THREE.Color() }, sunDir: { value: new THREE.Vector3(0, 1, 0) }, uTime: { value: 0 }, uStars: { value: 0 } },
-      vertexShader: 'varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); gl_Position.z = gl_Position.w; }',
-      fragmentShader: `uniform vec3 top, mid, horizon, glow, sunDir; uniform float uStars; varying vec3 vP;
-        float h21(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }
-        void main(){
-          float h = vP.y;
-          vec3 c = mix(horizon, mid, smoothstep(0.0, 0.25, h));
-          c = mix(c, top, smoothstep(0.2, 0.8, h));
-          if (h < 0.0) c = mix(horizon, horizon*0.6, smoothstep(0.0, -0.3, h));
-          float sd = max(0.0, dot(normalize(vec3(vP.x, max(vP.y,0.0), vP.z)), normalize(sunDir)));
-          c += glow * pow(sd, 8.0) * 0.55 + glow * pow(sd, 120.0) * 0.9;
-          // soft clouds band
-          float cl = sin(vP.x*9.0 + vP.z*4.0)*0.5 + sin(vP.z*13.0 - vP.x*5.0)*0.5;
-          c = mix(c, c*1.06 + vec3(0.03), smoothstep(0.55, 1.0, cl) * smoothstep(0.05, 0.35, h) * (1.0 - smoothstep(0.35, 0.7, h)));
-          if (uStars > 0.0 && h > 0.1) { vec2 g = floor(vP.xz / (vP.y + 0.6) * 260.0); float s = step(0.9975, h21(g)); c += vec3(s) * uStars * smoothstep(0.1, 0.5, h); }
-          gl_FragColor = vec4(c, 1.0);
-          #include <tonemapping_fragment>
-          #include <colorspace_fragment>
-        }`,
-    });
-    sky = new THREE.Mesh(sg, sm);
-    sky.frustumCulled = false;
-    sky.renderOrder = -1;
-    scene.add(sky);
-    window.addEventListener('resize', onResize);
-  }
-  function onResize() {
-    if (!renderer) return;
-    renderer.setSize(window.innerWidth, window.innerHeight, false);
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    SA.emit('resize');
+    // renderer, lights, sky and post-processing live in core/render.js
+    const R = SA.Render.setup(document.getElementById('game'), Game.settings.quality);
+    renderer = R.renderer;
+    scene = R.scene;
+    camera = R.camera;
+    hemi = R.hemi;
+    sun = R.sun;
+    sky = R.sky;
   }
 
   function makeEraMaterials(eraId, atlas) {
     const uniforms = { uWaveMode: { value: 0 }, uNight: { value: SA.ERAS[eraId].night }, uLitFrac: { value: eraId === 1897 ? 0.55 : eraId === 1964 ? 0.1 : 0.25 } };
     const facade = SA.Tex.facadeMaterial(atlas, uniforms);
+    facade.emissiveIntensity = SA.Render.tier.boost; // lit windows read as light sources (bloom on post tiers)
     const roof = SA.Tex.roofMaterial(uniforms);
     const signMat = new THREE.MeshLambertMaterial({ map: null });
     const signMatW = SA.Tex.waveMaterial(uniforms, { map: null });
@@ -102,6 +42,7 @@
     const chimney = new THREE.MeshLambertMaterial({ color: 0xffffff });
     const prop = new THREE.MeshLambertMaterial({ vertexColors: true });
     const propGlow = new THREE.MeshBasicMaterial({ vertexColors: true });
+    propGlow.color.setScalar(SA.Render.tier.boost); // lamp glass brighter than white, so it blooms
     const foliage = new THREE.MeshLambertMaterial({ vertexColors: true, color: eraId === 2026 ? 0xd9c08a : eraId === 1964 ? 0xffffff : 0xcfe0b0 });
     const bunting = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
     const signAlpha = new THREE.MeshLambertMaterial({ map: null, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide });
@@ -113,33 +54,18 @@
   }
 
   // ------------------------------------------------------------------ era application (lighting etc.)
-  Game.applyEraLook = function (eraId, t) {
+  Game.applyEraLook = function (eraId) {
     const E = SA.ERAS[eraId];
-    hemi.color.set(E.hemi.sky);
-    hemi.groundColor.set(E.hemi.ground);
-    hemi.intensity = E.hemi.intensity;
-    sun.color.set(E.sun.color);
-    sun.intensity = E.sun.intensity;
-    Game.sunDir = new THREE.Vector3().fromArray(E.sun.dir).normalize();
-    scene.fog.color.set(E.fog.color);
-    const farMul = Game.settings.quality === 'low' ? 0.8 : 1;
-    scene.fog.near = E.fog.near;
-    scene.fog.far = E.fog.far * farMul;
-    camera.far = Math.min(900, E.fog.far * farMul + 60);
-    camera.updateProjectionMatrix();
-    renderer.toneMappingExposure = E.exposure;
-    const u = sky.material.uniforms;
-    u.top.value.set(E.sky.top);
-    u.mid.value.set(E.sky.mid);
-    u.horizon.value.set(E.sky.horizon);
-    u.glow.value.set(E.sky.sunGlow);
-    u.sunDir.value.copy(Game.sunDir);
-    u.uStars.value = eraId === 1897 ? 0.6 : 0;
-    // CSS grade overlay (cheap colour grade + vignette + grain)
+    const look = SA.Render.eraLook(E);
+    SA.Render.applyLook(look);
+    SA.Render.useEnv(eraId, look);
+    Game.sunDir = look.lightDir.clone();
+    // the CSS grade overlay only stands in for the post-processing grade on the plain renderer
     const gr = document.getElementById('grade');
-    gr.style.setProperty('--tint', E.grade.color);
-    gr.style.setProperty('--vig', E.grade.vignette);
-    gr.style.setProperty('--grain', Game.settings.quality === 'low' ? 0 : E.grade.grain);
+    const post = !!SA.Render.composer;
+    gr.style.setProperty('--tint', post ? 'transparent' : E.grade.color);
+    gr.style.setProperty('--vig', post ? 0 : E.grade.vignette);
+    gr.style.setProperty('--grain', post || Game.settings.quality === 'low' ? 0 : E.grade.grain);
     document.body.dataset.era = eraId;
   };
 
@@ -321,7 +247,15 @@
     Game.settings = Object.assign({}, DEFAULT_SETTINGS, SA.Save.loadSettings());
     SA.Input.sensitivity = Game.settings.sensitivity;
     setupRenderer();
-    setLoad(0.05, 'Reading the map…');
+    // scanned brick, stone, slate and paving (falls back to the painted materials if they fail)
+    setLoad(0.02, 'Laying the bricks…');
+    await nextFrame();
+    try {
+      await SA.PBR.load(renderer, Game.settings.quality === 'low' ? 256 : 512, (f) => setLoad(0.02 + f * 0.06));
+    } catch (e) {
+      console.warn('[SA] scanned textures unavailable, using painted ones', e);
+    }
+    setLoad(0.08, 'Reading the map…');
     await nextFrame();
     SA.World.init();
     facadeAtlas = SA.Tex.makeFacadeAtlas(Game.settings.quality === 'low' ? 128 : 256);
@@ -483,7 +417,7 @@
     if (Game.state === 'play' || Game.state === 'cutscene') step(dt);
     else if (Game.state === 'title' || Game.state === 'pause' || Game.state === 'menu') idle(dt);
     if (renderer && Game.state !== 'loading' && !(SA.debug && SA.debug.noRender)) {
-      renderer.render(scene, camera);
+      SA.Render.render(dt);
       Game.drawCalls = renderer.info.render.calls;
       Game.tris = renderer.info.render.triangles;
     }
@@ -517,7 +451,7 @@
     SA.Discoveries && SA.Discoveries.update(dt);
     SA.Interact && SA.Interact.update(dt);
     updateCamera(dt);
-    updateSun();
+    updateSun(dt);
     Game.pool.update(dt, camera.position);
     SA.Audio && SA.Audio.update(dt);
     SA.HUD && SA.HUD.update(dt);
@@ -534,16 +468,12 @@
       SA.NPCs && SA.NPCs.update(dt);
       SA.Traffic && SA.Traffic.update(dt);
       Game.pool.update(dt, camera.position);
-    }
-    updateSun();
+      SA.Render.update(dt, { x: ct.x, y: ct.base, z: ct.z });
+    } else updateSun(dt);
     SA.Audio && SA.Audio.update(dt);
   }
-  function updateSun() {
-    if (!Game.sunDir) return;
-    const t = Cam.target;
-    sun.position.set(t.x + Game.sunDir.x * 150, t.y + Game.sunDir.y * 150, t.z + Game.sunDir.z * 150);
-    sun.target.position.set(t.x, t.y, t.z);
-    sky.position.copy(camera.position);
+  function updateSun(dt) {
+    SA.Render.update(dt || 0, Cam.target);
   }
   // Clock dial hands show the era's time (and stop at 9.14 in 1897 once the key has been used there)
   function updateClockDial() {
@@ -588,7 +518,12 @@
       Cam.override = { pos: new THREE.Vector3(x, y, z), look: new THREE.Vector3(tx, ty, tz), speed: 1000 };
     },
     freeCam: () => (Cam.override = null),
-    renderInfo: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures }),
+    renderInfo: () => SA.Render.info(),
+    // render one frame now through the full pipeline and report what it cost
+    renderOnce: () => {
+      SA.Render.render(0);
+      return SA.Render.info();
+    },
     flags: (f) => Object.assign(Game.flags, f),
     rebuild: (e) => Game.rebuildEra(e),
     // advance the simulation without rendering (deterministic tests on slow software GPUs)

@@ -18,7 +18,14 @@
       clock: { h: 16, m: 40 },
       blurb: 'Late afternoon, low autumn sun.',
       sky: { top: 0x5d8fd0, mid: 0xa9c4e2, horizon: 0xf0cfa6, sunGlow: 0xffd6a0 },
-      sun: { dir: sunDir(232, 14), color: 0xffd7aa, intensity: 2.4 },
+      sun: { dir: sunDir(241, 15), color: 0xffd7aa, intensity: 2.6 },
+      // renderer look: physical sky, exposure, environment light, bloom and colour grade (core/render.js)
+      look: {
+        sky: { turbidity: 3.4, rayleigh: 1.35, mie: 0.006, mieG: 0.82, clouds: 0.36, cloudDensity: 0.5, gain: 1.0 },
+        exposure: 0.82, env: 0.75,
+        bloom: { intensity: 0.32, threshold: 0.95 },
+        grade: { lift: [0.0, 0.0, 0.012], gamma: [1.0, 1.0, 1.0], gain: [1.03, 1.0, 0.97], sat: 1.12, contrast: 1.13, vignette: 0.26, grain: 0.0, split: 0.12, shadowTint: '#6a7fa8', highTint: '#ffcfa0' },
+      },
       hemi: { sky: 0xcfdcf5, ground: 0x6e6255, intensity: 1.05 },
       fog: { color: 0xd7c8b6, near: 110, far: 460 },
       exposure: 1.0,
@@ -55,7 +62,14 @@
       clock: { h: 11, m: 30 },
       blurb: 'Market day, five days before the general election.',
       sky: { top: 0x6f9cc8, mid: 0xb7cfe0, horizon: 0xe9e2cf, sunGlow: 0xfff0c8 },
-      sun: { dir: sunDir(152, 26), color: 0xfff1d6, intensity: 2.3 },
+      sun: { dir: sunDir(158, 29), color: 0xfff1d6, intensity: 2.5 },
+      // a warm, slightly faded colour-film look
+      look: {
+        sky: { turbidity: 4.6, rayleigh: 1.15, mie: 0.007, mieG: 0.8, clouds: 0.5, cloudDensity: 0.45, gain: 0.95 },
+        exposure: 0.86, env: 0.7,
+        bloom: { intensity: 0.3, threshold: 0.95 },
+        grade: { lift: [0.025, 0.02, 0.0], gamma: [1.0, 1.0, 0.98], gain: [1.04, 1.0, 0.9], sat: 0.94, contrast: 1.12, vignette: 0.36, grain: 0.045, split: 0.16, shadowTint: '#5f8a86', highTint: '#ffd9a2' },
+      },
       hemi: { sky: 0xd8e4ef, ground: 0x6f6452, intensity: 1.15 },
       fog: { color: 0xd9d3c0, near: 90, far: 400 },
       exposure: 1.02,
@@ -93,6 +107,13 @@
       blurb: "Queen Victoria's Diamond Jubilee. Gas lamps and lanterns.",
       sky: { top: 0x16264a, mid: 0x3d5682, horizon: 0xd88a52, sunGlow: 0xff9a55 },
       sun: { dir: sunDir(318, 7), color: 0xffb27a, intensity: 0.75 },
+      // Jubilee night: deep twilight in the north-west, first stars, gas light that blooms
+      look: {
+        sky: { sun: [321, -6], turbidity: 2.2, rayleigh: 2.4, mie: 0.004, mieG: 0.78, clouds: 0.16, cloudDensity: 0.4, gain: 1.0, twilight: 1.0, stars: 1.0, horizon: 0.16 },
+        exposure: 1.18, env: 0.4,
+        bloom: { intensity: 1.05, threshold: 0.72 },
+        grade: { lift: [0.01, 0.012, 0.03], gamma: [1.0, 0.99, 0.97], gain: [1.06, 0.99, 0.9], sat: 0.84, contrast: 1.1, vignette: 0.48, grain: 0.06, split: 0.2, shadowTint: '#4a5a8a', highTint: '#ffb26a' },
+      },
       hemi: { sky: 0x7f93c4, ground: 0x4a3a2c, intensity: 0.95 },
       fog: { color: 0x4a4a5c, near: 55, far: 300 },
       exposure: 1.05,
