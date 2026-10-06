@@ -61,7 +61,7 @@ async function main() {
   async function shot(page, name) {
     await page.evaluate(() => { SA.debug.noRender = false; });
     await page.waitForTimeout(1200);
-    await page.screenshot({ path: path.join(out, name + '.png') });
+    await page.screenshot({ path: path.join(out, name + '.png'), timeout: 180000 });
     await page.evaluate(() => { SA.debug.noRender = true; });
   }
 
@@ -448,7 +448,7 @@ async function main() {
     rec('Touch: controls shown, stick moves the player, drag rotates the camera, Key button winds', vis.touch && moved > 2 && Math.abs(yaw1 - yaw0) > 0.05 && keyBtn && jumped === 1964, { vis, moved: +moved.toFixed(2), dyaw: +(yaw1 - yaw0).toFixed(3), keyBtn, jumped });
     await page.evaluate(() => { SA.debug.noRender = false; });
     await page.waitForTimeout(1500);
-    await page.screenshot({ path: path.join(out, 'verify_touch_phone.png') });
+    await page.screenshot({ path: path.join(out, 'verify_touch_phone.png'), timeout: 180000 });
     // render stats at phone resolution, low quality preset (what the phone would draw)
     const stats = await page.evaluate(() => { SA.debug.noRender = false; return new Promise((r) => setTimeout(() => r(SA.debug.renderInfo()), 1500)); });
     rec('Phone viewport (915x412, low quality): render stats', stats.calls < 220, stats);

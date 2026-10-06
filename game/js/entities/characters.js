@@ -1070,7 +1070,9 @@
     const police = ch.role === 'police';
     const suit = lk.suit !== undefined ? lk.suit : !fem && (police || (era === 1897 ? r() < 0.8 : era === 1964 ? r() < 0.5 : r() < 0.08));
     const coat = lk.coat !== undefined ? lk.coat : !fem && !lk.skirt && ((police && era === 1897) || (era === 1897 && r() < 0.35));
-    const hair = lk.hairStyle || (fem ? (r() < 0.7 ? 'long' : 'bob') : r() < 0.92 ? 'short' : 'none');
+    // only some grey-haired men in the crowd go bald; story characters keep their hair
+    const greyHair = /^#(b|a|9|c|d|e)/i.test(lk.hair || '') && (lk.hair || '').length === 7 && parseInt((lk.hair || '#000000').slice(1, 3), 16) > 140;
+    const hair = lk.hairStyle || (fem ? (r() < 0.7 ? 'long' : 'bob') : ch.role !== 'story' && ch.role !== 'player' && greyHair && r() < 0.35 ? 'none' : 'short');
     ch._det = { fem, face, suit, coat, hair };
     return ch._det;
   }

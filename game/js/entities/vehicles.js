@@ -129,10 +129,22 @@
     // glossy enamel on motor vehicles, satin varnish on carts and bicycles
     const paints = {};
     const paintMat = (r) => paints[r] || (paints[r] = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: r, metalness: 0 }));
+    // trim carries its own surface per vertex: roughness, metalness and a lamp glow
     const matTrim = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0 });
+    matTrim.onBeforeCompile = function (sh) {
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec3 aSurf; varying vec3 vSurf;').replace('#include <begin_vertex>', '#include <begin_vertex>\n vSurf = aSurf;');
+      sh.fragmentShader = sh.fragmentShader
+        .replace('#include <common>', '#include <common>\nvarying vec3 vSurf;')
+        .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = vSurf.x;')
+        .replace('#include <metalnessmap_fragment>', 'float metalnessFactor = vSurf.y;')
+        .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance += diffuseColor.rgb * vSurf.z;');
+    };
+    matTrim.customProgramCacheKey = () => 'vehicle-trim';
+    const VMs = SA.VehicleModels;
     for (const id in V.defs) {
       const d = V.defs[id];
-      const pg = PP().merge(d.paint()), tg = PP().merge(d.trim());
+      const model = VMs && VMs.models[id] ? VMs.models[id]() : null;
+      const pg = model ? VMs.merge(model.paint) : PP().merge(d.paint()), tg = model ? VMs.merge(model.trim) : PP().merge(d.trim());
       const mp = new THREE.InstancedMesh(pg, paintMat(d.horse || d.engine === 'pedal' ? 0.55 : 0.24), MAXI);
       const mt = new THREE.InstancedMesh(tg, matTrim, MAXI);
       for (const m of [mp, mt]) {

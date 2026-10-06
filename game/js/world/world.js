@@ -665,7 +665,7 @@
       mats[k].map = signAtlas.texture;
       mats[k].needsUpdate = true;
     }
-    return { id: eraId, group, col, specs, signAtlas, props, era };
+    return { id: eraId, group, col, specs, signAtlas, props, era, chimneys: ctx.chimneys };
   };
 
   // Authored sign text for story buildings

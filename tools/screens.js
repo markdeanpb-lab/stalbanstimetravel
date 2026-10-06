@@ -119,7 +119,7 @@ async function main() {
   async function snap(page, name, settle) {
     await page.evaluate(() => { SA.debug.noRender = false; });
     await page.waitForTimeout(settle || 1500);
-    await page.screenshot({ path: path.join(out, name + '.jpg'), type: 'jpeg', quality: 80 });
+    await page.screenshot({ path: path.join(out, name + '.jpg'), type: 'jpeg', quality: 80, timeout: 180000 });
     await page.evaluate(() => { SA.debug.noRender = true; });
     console.log('shot', name);
   }

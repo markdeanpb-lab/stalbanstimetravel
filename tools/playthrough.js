@@ -60,7 +60,7 @@ async function main() {
     await ev(() => { SA.debug.noRender = false; });
     await page.waitForTimeout(1300);
     shotN++;
-    await page.screenshot({ path: path.join(out, String(shotN).padStart(2, '0') + '_' + name + '.jpg'), type: 'jpeg', quality: 82 });
+    await page.screenshot({ path: path.join(out, String(shotN).padStart(2, '0') + '_' + name + '.jpg'), type: 'jpeg', quality: 82, timeout: 180000 });
     await ev(() => { SA.debug.noRender = true; });
   }
 

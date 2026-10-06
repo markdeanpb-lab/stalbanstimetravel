@@ -391,7 +391,7 @@
     }
 
     // ---- build instanced meshes
-    const out = { lamps, glows, bunting, instanced: [] };
+    const out = { lamps, glows, bunting, instanced: [], trees: place.tree || [] };
     const mtx = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), pos = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
     const mk = (modelName, list, mat) => {
       let geo = MODELS[modelName];

@@ -160,3 +160,13 @@ textarea { width: 100%; background: #0f0e0b; color: var(--ink); border: 1px soli
 body.subs-small { --sub-size: 16px; }
 body.subs-large { --sub-size: 23px; }
 body.subs-huge { --sub-size: 28px; }
+
+/* letterbox bars for conversations */
+#letterbox { position: fixed; inset: 0; pointer-events: none; z-index: 4; }
+#letterbox .lb { position: absolute; left: 0; right: 0; height: 0; background: #000; transition: height 0.45s ease; }
+#letterbox .lb-top { top: 0; }
+#letterbox .lb-bottom { bottom: 0; }
+body.cine #letterbox .lb { height: 9vh; }
+body.cine #hud-minimap, body.cine #hud-status, body.cine #hud-objective { opacity: 0; transition: opacity 0.3s; }
+body.cine #hud-subtitle { bottom: calc(1.2vh + var(--safe-b)); }
+body.cine #hud-subtitle span { background: transparent; }

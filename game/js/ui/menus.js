@@ -221,6 +221,7 @@
     row('Camera sensitivity', rng('sensitivity', 0.3, 2.5, 0.1));
     row('Invert camera vertical', sel('invertY', [[false, 'Off'], [true, 'On']]));
     row('Volume', rng('volume', 0, 1, 0.05, (v) => SA.Audio && SA.Audio.setVolume(v)));
+    row('Music', rng('music', 0, 1, 0.05, (v) => SA.Music && SA.Music.setVolume(v)));
     row('Touch controls', sel('touch', [['auto', 'Automatic'], ['on', 'Always on'], ['off', 'Off']], () => SA.HUD && SA.HUD.refreshTouch()));
     row('Camera shake', sel('cameraShake', [[true, 'On'], [false, 'Off']]));
     row('Reduce flashes', sel('reduceFlashes', [[false, 'Off'], [true, 'On']]));

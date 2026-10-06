@@ -58,7 +58,7 @@ async function main() {
     } else if (s.do === 'shot') {
       await page.evaluate(() => { if (window.SA && SA.debug) SA.debug.noRender = false; });
       await page.waitForTimeout(s.settle || 900);
-      await page.screenshot({ path: path.join(out, s.name + '.png') });
+      await page.screenshot({ path: path.join(out, s.name + '.png'), timeout: 180000 });
       await page.evaluate(() => { if (window.SA && SA.debug && window.__fastTest) SA.debug.noRender = true; });
       logs.push('[shot] ' + s.name);
     } else if (s.do === 'key') {

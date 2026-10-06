@@ -190,6 +190,13 @@
           composer.addPass(ao);
           R.ao = ao;
         }
+        // depth of field for conversations (off until a scene asks for it)
+        if (PP.DepthOfFieldEffect) {
+          R.dof = new PP.DepthOfFieldEffect(camera, { worldFocusDistance: 3, worldFocusRange: 2.2, bokehScale: 3.2, resolutionScale: 0.5 });
+          R.dofPass = new PP.EffectPass(camera, R.dof);
+          R.dofPass.enabled = false;
+          composer.addPass(R.dofPass);
+        }
         R.bloom = new PP.BloomEffect({ mipmapBlur: true, luminanceThreshold: 0.9, luminanceSmoothing: 0.3, intensity: 0.5, radius: 0.72 });
         const G = gradeEffectClass();
         R.grade = new G();
@@ -412,6 +419,15 @@
         else if (R.ft < target * 0.82 && R.scale < 1) setScale(R.scale * 1.05);
       }
     }
+  };
+  // keep a world point in focus (conversations), or null for everything sharp
+  R.setFocus = function (target) {
+    if (!R.dofPass) return;
+    if (target) {
+      R.dof.target = R.dof.target || new THREE.Vector3();
+      R.dof.target.copy(target);
+      R.dofPass.enabled = true;
+    } else R.dofPass.enabled = false;
   };
   R.info = function () {
     const i = R.renderer.info;

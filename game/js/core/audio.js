@@ -45,6 +45,26 @@
         d[i] = w * 0.5 + b * 3;
       }
       A.noise = buf;
+      // a shared room: a synthetic impulse response gives every sound a little street reverb
+      const ir = c.createBuffer(2, Math.floor(c.sampleRate * 2.2), c.sampleRate);
+      for (let ch = 0; ch < 2; ch++) {
+        const dd = ir.getChannelData(ch);
+        for (let i = 0; i < dd.length; i++) {
+          const k = i / dd.length;
+          dd[i] = (Math.random() * 2 - 1) * Math.pow(1 - k, 3.4) * (i < 90 ? i / 90 : 1);
+        }
+      }
+      A.reverb = c.createConvolver();
+      A.reverb.buffer = ir;
+      A.revOut = c.createGain();
+      A.revOut.gain.value = 0.3;
+      A.reverb.connect(A.revOut);
+      A.revOut.connect(A.master);
+      A.revSend = c.createGain();
+      A.revSend.gain.value = 0.35;
+      A.sfxBus.connect(A.revSend);
+      A.ambBus.connect(A.revSend);
+      A.revSend.connect(A.reverb);
       A.ready = true;
       if (c.state === 'suspended') c.resume();
       A.setEra(SA.Game.era);
@@ -148,6 +168,52 @@
     const c = A.ctx, t = c.currentTime + 0.01;
     const out = spatial(x, z, vol);
     switch (name) {
+      case 'fwLaunch': {
+        // a rocket's whoosh: noise swept upwards through a band-pass
+        const s = noiseSrc(false);
+        const f = c.createBiquadFilter();
+        f.type = 'bandpass';
+        f.Q.value = 3;
+        f.frequency.setValueAtTime(500, t);
+        f.frequency.exponentialRampToValueAtTime(3200, t + 1.2);
+        const g = c.createGain();
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.18, t + 0.08);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 1.4);
+        s.connect(f);
+        f.connect(g);
+        g.connect(out);
+        s.start(t, Math.random());
+        s.stop(t + 1.5);
+        break;
+      }
+      case 'fwBoom': {
+        // the burst: a low thump with a long, rolling tail off the rooftops
+        burst(t, 1.8, 0.9, out, 'lowpass', 180, 0.8);
+        burst(t, 0.35, 0.5, out, 'lowpass', 900, 0.7);
+        const o = c.createOscillator();
+        o.type = 'sine';
+        o.frequency.setValueAtTime(70, t);
+        o.frequency.exponentialRampToValueAtTime(32, t + 0.6);
+        const g = c.createGain();
+        env(g, t, 0.004, 0.6, 0.7);
+        o.connect(g);
+        g.connect(out);
+        o.start(t);
+        o.stop(t + 0.8);
+        for (const [dly, v] of [[0.21, 0.35], [0.47, 0.22], [0.83, 0.12]]) burst(t + dly, 0.9, v, out, 'lowpass', 140, 0.7);
+        break;
+      }
+      case 'fwCrackle': {
+        // falling stars crackling: a scatter of tiny high clicks
+        for (let i = 0; i < 26; i++) burst(t + Math.random() * 1.4, 0.03 + Math.random() * 0.03, 0.05 + Math.random() * 0.08, out, 'highpass', 2500 + Math.random() * 3000, 0.7);
+        break;
+      }
+      case 'flutter': {
+        // pigeons taking off: quick soft wing claps
+        for (let i = 0; i < 9; i++) burst(t + i * 0.055 + Math.random() * 0.03, 0.05, 0.12, out, 'bandpass', 700 + Math.random() * 500, 1.2);
+        break;
+      }
       case 'whistle': {
         // police whistle: two close high pitches with a pea trill
         for (const f of [2800, 2870]) {
@@ -364,6 +430,21 @@
   A.update = function (dt) {
     if (!A.ready) return;
     const c = A.ctx;
+    SA.Music && SA.Music.update();
+    // Robin's footsteps: one per half stride, heel and scuff, crisper on 1897 cobbles
+    const pc = SA.Player.ch;
+    if (pc && !SA.Player.vehicle && SA.Game.state === 'play' && (pc.speedNow || 0) > 0.4) {
+      const half = Math.floor((pc.phase || 0) / Math.PI);
+      if (half !== A.lastStep) {
+        A.lastStep = half;
+        const run = pc.speedNow > 3.2;
+        const t0 = c.currentTime + 0.005;
+        const out = spatial(pc.x, pc.z, run ? 0.5 : 0.32);
+        const hard = SA.Game.era === 1897 ? 2600 : 1700;
+        burst(t0, 0.035, 0.5, out, 'bandpass', hard * (0.9 + Math.random() * 0.2), 1.4);
+        burst(t0 + 0.02, run ? 0.06 : 0.08, 0.18, out, 'highpass', 3200, 0.7);
+      }
+    }
     A.eventT -= dt;
     const e = SA.Game.era;
     const p = SA.Player.pos();

@@ -22,7 +22,7 @@
       // renderer look: physical sky, exposure, environment light, bloom and colour grade (core/render.js)
       look: {
         sky: { turbidity: 3.4, rayleigh: 1.35, mie: 0.006, mieG: 0.82, clouds: 0.36, cloudDensity: 0.5, gain: 1.0 },
-        exposure: 0.82, env: 0.75,
+        exposure: 0.78, env: 0.75,
         bloom: { intensity: 0.32, threshold: 0.95 },
         grade: { lift: [0.0, 0.0, 0.012], gamma: [1.0, 1.0, 1.0], gain: [1.03, 1.0, 0.97], sat: 1.12, contrast: 1.13, vignette: 0.26, grain: 0.0, split: 0.12, shadowTint: '#6a7fa8', highTint: '#ffcfa0' },
       },
@@ -66,7 +66,7 @@
       // a warm, slightly faded colour-film look
       look: {
         sky: { turbidity: 4.6, rayleigh: 1.15, mie: 0.007, mieG: 0.8, clouds: 0.5, cloudDensity: 0.45, gain: 0.95 },
-        exposure: 0.86, env: 0.7,
+        exposure: 0.79, env: 0.7,
         bloom: { intensity: 0.3, threshold: 0.95 },
         grade: { lift: [0.025, 0.02, 0.0], gamma: [1.0, 1.0, 0.98], gain: [1.04, 1.0, 0.9], sat: 0.94, contrast: 1.12, vignette: 0.36, grain: 0.045, split: 0.16, shadowTint: '#5f8a86', highTint: '#ffd9a2' },
       },

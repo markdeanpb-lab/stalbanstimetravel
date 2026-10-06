@@ -118,6 +118,7 @@
     SA.World.eras[eraId] = e;
     const pair = SA.Terrain.paint(eraId, SA.World);
     e.groundTex = SA.Terrain.canvasToTextures(pair);
+    SA.FX && SA.FX.buildEra(e);
     scene.add(e.group);
     e.group.visible = false;
     SA.Nav && SA.Nav.buildFor && SA.Nav.buildFor(e);
@@ -157,6 +158,7 @@
     Cam.target.x = U.damp(Cam.target.x, px, 14, dt);
     Cam.target.y = U.damp(Cam.target.y, py, 10, dt);
     Cam.target.z = U.damp(Cam.target.z, pz, 14, dt);
+    updateCine(dt);
     if (Cam.override) {
       const o = Cam.override;
       camera.position.lerp(o.pos, 1 - Math.exp(-o.speed * dt));
@@ -221,6 +223,64 @@
     // hide the player if the camera is inside them
     SA.Player.ch.camNear = Cam.curDist < 0.9;
   }
+  // ------------------------------------------------------------------ cinematic conversations
+  // While a conversation holds Robin still, cut to over-the-shoulder shots of whoever is speaking,
+  // with letterbox bars and, on the post-processing tiers, a shallow depth of field on the speaker.
+  const CINE = { on: false, lastNpc: null, lastSpeaker: null, pos: new THREE.Vector3(), look: new THREE.Vector3() };
+  function speakerChar(key) {
+    if (!key || key === 'narrator') return null;
+    if (key === 'robin') return SA.Player.ch;
+    const n = SA.Mission && SA.Mission.npcs && SA.Mission.npcs[key];
+    return n && n.ch && n.ch.visible ? n.ch : null;
+  }
+  function updateCine(dt) {
+    const D = SA.Dialogue;
+    const P = SA.Player.ch;
+    const a = D && D.active && D.lock && !SA.Player.vehicle && Game.state === 'play' ? D.active : null;
+    const spk = a ? speakerChar(a.line.key) : null;
+    if (spk && spk !== P) CINE.lastNpc = spk;
+    const other = spk === P ? CINE.lastNpc : spk;
+    const active = !!(a && other && other.era === Game.era && U.dist(other.x, other.z, P.x, P.z) < 9 && (!Cam.override || Cam.override.cine));
+    if (active !== CINE.on) {
+      CINE.on = active;
+      document.body.classList.toggle('cine', active);
+      if (!active) {
+        if (Cam.override && Cam.override.cine) Cam.override = null;
+        CINE.lastSpeaker = null;
+        SA.Render.setFocus(null);
+      }
+    }
+    if (!active) return;
+    const speaker = spk || other, listener = speaker === P ? other : P;
+    const head = (c) => c.y + 1.64 * ((c.look && c.look.height) || 1);
+    let dx = speaker.x - listener.x, dz = speaker.z - listener.z;
+    const d = Math.hypot(dx, dz) || 1;
+    dx /= d;
+    dz /= d;
+    // Robin turns to face whoever is talking to them
+    if (listener === P) P.yaw = U.dampAngle(P.yaw, Math.atan2(dx, dz), 4, dt);
+    const ly = head(listener);
+    let bx = listener.x - dx * 0.95 + dz * 0.42, by = ly + 0.06, bz = listener.z - dz * 0.95 - dx * 0.42;
+    P.camNear = false;
+    const col = SA.World.current && SA.World.current.col;
+    if (col) {
+      const f = castCam(col, listener.x, ly, listener.z, bx, by, bz);
+      if (f < 1) {
+        bx = listener.x + (bx - listener.x) * Math.max(0.35, f - 0.1);
+        bz = listener.z + (bz - listener.z) * Math.max(0.35, f - 0.1);
+      }
+    }
+    CINE.pos.set(bx, by, bz);
+    // frame the speaker a little off centre, away from the listener's shoulder
+    CINE.look.set(speaker.x + dz * 0.25, head(speaker) - 0.06, speaker.z - dx * 0.25);
+    // a new speaker is a cut; within a line the camera drifts a little
+    const cut = CINE.lastSpeaker !== speaker;
+    CINE.lastSpeaker = speaker;
+    Cam.override = { pos: CINE.pos, look: CINE.look, speed: cut ? 1000 : 3, cine: true };
+    SA.Render.setFocus(CINE.look);
+  }
+  Game.cineActive = () => CINE.on;
+
   function castCam(col, ax, ay, az, bx, by, bz) {
     // ignore passage buildings when the target stands in a passage
     const pas = col.passages && SA.Landmarks.inPassage(ax, az, col.passages);
@@ -281,12 +341,14 @@
     setLoad(0.92, 'Waking the townsfolk…');
     await nextFrame();
     const pool = (Game.pool = new SA.CharPool(scene));
+    SA.FX && SA.FX.init(scene);
     SA.Player.init(pool);
     SA.Vehicles && SA.Vehicles.init(scene);
     SA.NPCs && SA.NPCs.init(pool);
     SA.Traffic && SA.Traffic.init();
     SA.Police && SA.Police.init(pool);
     SA.Audio && SA.Audio.init(Game.settings);
+    SA.Music && SA.Music.init(Game.settings);
     SA.HUD && SA.HUD.init();
     SA.Menus && SA.Menus.init();
     SA.TimeKey && SA.TimeKey.init();
@@ -457,6 +519,7 @@
     updateCamera(dt);
     updateSun(dt);
     Game.pool.update(dt, camera.position);
+    SA.FX && SA.FX.update(dt);
     SA.Audio && SA.Audio.update(dt);
     SA.HUD && SA.HUD.update(dt);
     updateClockDial();
@@ -473,6 +536,7 @@
       SA.Traffic && SA.Traffic.update(dt);
       Game.pool.update(dt, camera.position);
       SA.Render.update(dt, { x: ct.x, y: ct.base, z: ct.z });
+      SA.FX && SA.FX.update(dt);
     } else updateSun(dt);
     SA.Audio && SA.Audio.update(dt);
   }
