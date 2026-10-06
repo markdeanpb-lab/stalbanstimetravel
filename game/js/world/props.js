@@ -201,7 +201,7 @@
     const W = SA.World;
     const place = {};
     const add = (model, x, z, rot, s, opts) => {
-      (place[model] = place[model] || []).push({ x, z, rot: rot || 0, s: s || 1, y: opts && opts.y !== undefined ? opts.y : null });
+      (place[model] = place[model] || []).push({ x, z, rot: rot || 0, s: s || 1, y: opts && opts.y !== undefined ? opts.y : null, sp: opts && opts.sp });
     };
     // box collider standing on the ground: heights are relative to the terrain at its centre
     const propBox = (x, z, hw, hd, ang, h, opts) => {
@@ -255,7 +255,7 @@
       along(rd.p, 11, SA.Terrain.roadWidth(rd) / 2 + 2.2, (x, z) => {
         if (!okSpot(x, z, 1.2) || onRoad(x, z)) return;
         const size = eraId === 1897 ? 0.62 : eraId === 1964 ? 1.25 : 0.95;
-        add('tree', x, z, r() * 6, size * (0.9 + r() * 0.2));
+        add('tree', x, z, r() * 6, size * (0.9 + r() * 0.2), { sp: eraId === 2026 ? 'plane' : 'lime' });
         col.addCircle(x, z, 0.35 * size, { y1: 5, cam: false });
       });
     }
@@ -267,7 +267,7 @@
       for (let i = 0; i < n; i++) {
         const x = U.lerp(b.x0, b.x1, r()), z = U.lerp(b.z0, b.z1, r());
         if (!U.pointInPoly(x, z, a.p) || !col.isFree(x, z, 2.5, 'walk')) continue;
-        add('tree', x, z, r() * 6, 1.1 + r() * 0.5);
+        add('tree', x, z, r() * 6, 0.95 + r() * 0.4, { sp: 'broad' });
         col.addCircle(x, z, 0.4, { y1: 5, cam: false });
       }
     }
@@ -421,10 +421,22 @@
       if (MODELS[k + 'Glass']) mk(k + 'Glass', place[k], mats.propGlow);
     }
     if (place.tree) {
-      mk('treeTrunk', place.tree, mats.prop);
-      const crowns = place.tree;
-      const im = mk('treeCrown', crowns, eraId === 2026 ? mats.foliage : mats.foliage);
-      void im;
+      // trees: three variants per species, each an instanced trunk and an instanced crown
+      const hi = SA.Game.settings.quality !== 'low';
+      const groups = {};
+      place.tree.forEach((p, i) => {
+        const key = (p.sp || 'lime') + ':' + (i % 3);
+        (groups[key] = groups[key] || []).push(p);
+      });
+      for (const key in groups) {
+        const [sp, vi] = key.split(':');
+        const v = SA.Trees.variants(sp, hi)[+vi];
+        MODELS['treeBark_' + key] = v.bark;
+        MODELS['treeLeaves_' + key] = v.leaves;
+        mk('treeBark_' + key, groups[key], mats.bark);
+        const im = mk('treeLeaves_' + key, groups[key], mats.leaves);
+        if (im) im.receiveShadow = true;
+      }
     }
     // lamp glows (sprites) for the dusk era and Belisha globes
     if (eraId === 1897 || eraId === 1964) {

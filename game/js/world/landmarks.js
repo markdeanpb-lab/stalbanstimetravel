@@ -193,10 +193,12 @@
     // clock face mesh (dial + hands), updated per frame by the game for the era time
     const dial = new THREE.Group();
     const r = eraId === 1897 ? 0.95 : 1.15;
-    const faceMat = new THREE.MeshLambertMaterial({ color: eraId === 1897 ? 0x1c1c1c : 0x2f5c4c, emissive: eraId === 1897 ? 0x000000 : 0x000000 });
+    // enamelled dial with gilded ring, numerals and hands
+    const faceMat = new THREE.MeshStandardMaterial({ color: eraId === 1897 ? 0x1c1c1c : 0x2f5c4c, roughness: 0.45, metalness: 0 });
+    const gilt = new THREE.MeshStandardMaterial({ color: 0xe0b35a, roughness: 0.32, metalness: 1 });
     const disc = new THREE.Mesh(new THREE.CircleGeometry(r, 32), faceMat);
     dial.add(disc);
-    const ring = new THREE.Mesh(new THREE.RingGeometry(r * 0.86, r, 32), new THREE.MeshLambertMaterial({ color: 0xd6b25a }));
+    const ring = new THREE.Mesh(new THREE.RingGeometry(r * 0.86, r, 32), gilt);
     ring.position.z = 0.01;
     dial.add(ring);
     const ticks = [];
@@ -207,8 +209,8 @@
       tg.translate(Math.sin(a) * r * 0.72, Math.cos(a) * r * 0.72, 0.012);
       ticks.push(tg);
     }
-    dial.add(new THREE.Mesh(THREE.BufferGeometryUtils.mergeGeometries(ticks), new THREE.MeshLambertMaterial({ color: 0xe8cf7a })));
-    const handMat = new THREE.MeshLambertMaterial({ color: 0xe8cf7a });
+    dial.add(new THREE.Mesh(THREE.BufferGeometryUtils.mergeGeometries(ticks), gilt));
+    const handMat = gilt;
     const hourHand = new THREE.Mesh(new THREE.PlaneGeometry(0.09, r * 0.5), handMat);
     hourHand.geometry.translate(0, r * 0.22, 0);
     hourHand.position.z = 0.02;

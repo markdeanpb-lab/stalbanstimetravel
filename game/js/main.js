@@ -32,25 +32,29 @@
   }
 
   function makeEraMaterials(eraId, atlas) {
-    const uniforms = { uWaveMode: { value: 0 }, uNight: { value: SA.ERAS[eraId].night }, uLitFrac: { value: eraId === 1897 ? 0.55 : eraId === 1964 ? 0.1 : 0.25 } };
+    const uniforms = { uWaveMode: { value: 0 }, uNight: { value: SA.ERAS[eraId].night }, uLitFrac: { value: eraId === 1897 ? 0.55 : eraId === 1964 ? 0.1 : 0.25 }, uEra: { value: eraId }, uBoost: { value: SA.Render.tier.boost } };
     const facade = SA.Tex.facadeMaterial(atlas, uniforms);
     facade.emissiveIntensity = SA.Render.tier.boost; // lit windows read as light sources (bloom on post tiers)
     const roof = SA.Tex.roofMaterial(uniforms);
-    const signMat = new THREE.MeshLambertMaterial({ map: null });
-    const signMatW = SA.Tex.waveMaterial(uniforms, { map: null });
-    const signPlain = new THREE.MeshLambertMaterial({ map: null, side: THREE.DoubleSide });
-    const chimney = new THREE.MeshLambertMaterial({ color: 0xffffff });
-    const prop = new THREE.MeshLambertMaterial({ vertexColors: true });
+    const std = (o) => new THREE.MeshStandardMaterial(Object.assign({ roughness: 0.85, metalness: 0 }, o));
+    const signMat = std({ map: null, roughness: 0.7 });
+    const signMatW = SA.Tex.waveMaterial(uniforms, { map: null, roughness: 0.7 });
+    const signPlain = std({ map: null, side: THREE.DoubleSide, roughness: 0.7 });
+    const chimney = std({ color: 0xffffff, roughness: 0.9 });
+    const prop = std({ vertexColors: true, roughness: 0.72 });
     const propGlow = new THREE.MeshBasicMaterial({ vertexColors: true });
     propGlow.color.setScalar(SA.Render.tier.boost); // lamp glass brighter than white, so it blooms
-    const foliage = new THREE.MeshLambertMaterial({ vertexColors: true, color: eraId === 2026 ? 0xd9c08a : eraId === 1964 ? 0xffffff : 0xcfe0b0 });
-    const bunting = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
-    const signAlpha = new THREE.MeshLambertMaterial({ map: null, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide });
+    const foliage = std({ vertexColors: true, color: eraId === 2026 ? 0xd9c08a : eraId === 1964 ? 0xffffff : 0xcfe0b0, roughness: 0.95 });
+    const bunting = std({ vertexColors: true, side: THREE.DoubleSide, roughness: 0.9 });
+    const signAlpha = std({ map: null, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide, roughness: 0.8 });
     SA.Tex.patchInstancedWave(chimney, uniforms);
     SA.Tex.patchInstancedWave(prop, uniforms);
     SA.Tex.patchInstancedWave(propGlow, uniforms);
     SA.Tex.patchInstancedWave(foliage, uniforms);
-    return { uniforms, facade, roof, signMat: signMatW, signMatPlainBase: signMat, signPlain, signAlpha, chimney, prop, propGlow, foliage, bunting, passage: facade };
+    // trees: October colour in 2026 and 1964, June green in 1897
+    const leaves = SA.Trees.leafMaterial(uniforms, eraId === 2026 ? 0xe6c886 : eraId === 1964 ? 0xd8d49a : 0xc4dca8);
+    const bark = SA.Trees.barkMaterial(uniforms);
+    return { uniforms, facade, roof, signMat: signMatW, signMatPlainBase: signMat, signPlain, signAlpha, chimney, prop, propGlow, foliage, bunting, passage: facade, leaves, bark };
   }
 
   // ------------------------------------------------------------------ era application (lighting etc.)

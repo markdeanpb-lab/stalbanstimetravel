@@ -126,12 +126,14 @@
   const MAXI = 18;
   V.init = function (scene) {
     V.scene = scene;
-    const matPaint = new THREE.MeshLambertMaterial({ color: 0xffffff });
-    const matTrim = new THREE.MeshLambertMaterial({ vertexColors: true });
+    // glossy enamel on motor vehicles, satin varnish on carts and bicycles
+    const paints = {};
+    const paintMat = (r) => paints[r] || (paints[r] = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: r, metalness: 0 }));
+    const matTrim = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0 });
     for (const id in V.defs) {
       const d = V.defs[id];
       const pg = PP().merge(d.paint()), tg = PP().merge(d.trim());
-      const mp = new THREE.InstancedMesh(pg, matPaint, MAXI);
+      const mp = new THREE.InstancedMesh(pg, paintMat(d.horse || d.engine === 'pedal' ? 0.55 : 0.24), MAXI);
       const mt = new THREE.InstancedMesh(tg, matTrim, MAXI);
       for (const m of [mp, mt]) {
         m.count = 0;
@@ -146,7 +148,7 @@
       V.meshes[id] = { paint: mp, trim: mt };
     }
     // horses: instanced parts
-    const hm = new THREE.MeshLambertMaterial({ color: 0xffffff });
+    const hm = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.62, metalness: 0 });
     const mk = (geo, n) => {
       const m = new THREE.InstancedMesh(geo, hm, n);
       m.count = 0;

@@ -18,6 +18,7 @@
     ultra: { post: true, ao: 2, shadow: 4096, maxPR: 2, minScale: 0.75, target: 60, env: 256, boost: 2.6 },
   };
   R.QUALITY_ORDER = ['low', 'medium', 'high', 'ultra'];
+  R.time = { value: 0 }; // shared shader clock (wind, flicker)
 
   // ------------------------------------------------------------------ sky (three's Preetham sky + twilight, stars, horizon fog)
   function makeSky() {
@@ -142,6 +143,7 @@
     const scene = (R.scene = new THREE.Scene());
     const camera = (R.camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.2, 900));
     R.hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 1);
+    R.hemiScale = 0.5;
     scene.add(R.hemi);
     const sun = (R.sun = new THREE.DirectionalLight(0xffffff, 2));
     sun.castShadow = tier.shadow > 0;
@@ -272,7 +274,9 @@
     const sc = R.scene;
     R.hemi.color.copy(L.hemiSky);
     R.hemi.groundColor.copy(L.hemiGround);
-    R.hemi.intensity = L.hemiIntensity;
+    // the sky's own light reaches every material through the environment map; the hemisphere
+    // light only adds a little bounce from the ground on top
+    R.hemi.intensity = L.hemiIntensity * R.hemiScale;
     R.sun.color.copy(L.sunColor);
     R.sun.intensity = L.sunIntensity;
     sc.fog.color.copy(L.fogColor);
@@ -331,6 +335,9 @@
     sky.scale.setScalar(50);
     sky.position.set(0, 0, 0);
     sky.material.uniforms.uStars.value = 0;
+    // the sun itself is the directional light; leaving its disc in the map would light everything twice
+    const disc = sky.material.uniforms.showSunDisc;
+    if (disc) disc.value = 0;
     R.skyScene.add(sky);
     let rt = null;
     try {
@@ -339,6 +346,7 @@
       console.warn('[SA] environment map failed', e);
     }
     R.skyScene.remove(sky);
+    if (disc) disc.value = 1;
     if (parent) parent.add(sky);
     sky.scale.setScalar(s0);
     sky.position.copy(p0);
@@ -362,6 +370,7 @@
     const cam = R.camera;
     R.sky.position.copy(cam.position);
     const u = R.sky.material.uniforms;
+    R.time.value += dt;
     if (u.time) u.time.value += dt;
     u.uTime2.value += dt;
     // the shadow box sits a little ahead of the camera and snaps to its own texels (no shimmer)

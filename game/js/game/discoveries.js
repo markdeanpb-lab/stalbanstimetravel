@@ -177,7 +177,7 @@
       SA.Props.part(new THREE.CylinderGeometry(0.1, 0.12, 0.08, 8), '#d4968a', 0, 0.56, 0.86, Math.PI / 2),
       ...[[-0.2, 0.35], [0.2, 0.35], [-0.2, -0.35], [0.2, -0.35]].map(([x, z]) => SA.Props.part(new THREE.CylinderGeometry(0.06, 0.05, 0.3, 6), '#d4968a', x, 0.15, z)),
     ]);
-    const mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: true }));
+    const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0 }));
     SA.Game.scene().add(mesh);
     const s = SA.World.findSafe(1897, th.x + th.nx * 14, th.z + th.nz * 14, { r: 0.6 });
     D.pig = { mesh, x: s.x, z: s.z, yaw: 0, t: 0, flee: 0 };

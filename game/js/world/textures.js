@@ -746,31 +746,124 @@
     sh.uniforms.uWaveMode = eraUniforms.uWaveMode;
     sh.uniforms.uWeather = eraUniforms.uWeather || { value: 0 };
   }
+  // Window openings set back into the wall (256-unit cell coordinates, y down). Other cells keep
+  // their glass on the wall plane but still show a room behind it.
+  const OPENINGS = { sash6: [80, 46, 176, 194], sash2: [78, 52, 178, 196], casement: [70, 72, 186, 174], modern: [40, 44, 216, 212], timberWin: [92, 36, 164, 120], band60: [0, 56, 256, 164], smallsq: [94, 84, 162, 166] };
+  function openingTable() {
+    const t = [];
+    for (let i = 0; i < COLS * ROWS; i++) t.push(new THREE.Vector4(0, 0, 0, 0));
+    for (const k in OPENINGS) {
+      const c = CELLS[k], o = OPENINGS[k];
+      t[c[1] * COLS + c[0]].set(o[0] / 256, 1 - o[3] / 256, o[2] / 256, 1 - o[1] / 256);
+    }
+    return t;
+  }
+  // Interior mapping: the room behind each window is traced in the shader (back wall, side walls,
+  // floor and ceiling, a piece of furniture, shelves in shops), lit by daylight from the window
+  // or, at night, by a lamp in lit rooms. Glass is glossy, so the sky reflects over it.
+  const INTERIOR_GLSL = `
+    uniform vec4 uOpen[${COLS * ROWS}];
+    uniform float uEra, uBoost;
+    float roomKind(vec2 cell) { // 0 home, 1 shop or pub, 2 office
+      if (cell.y > 1.5 && cell.y < 2.5) return 1.0;
+      if (cell.y > 2.5 && cell.x < 1.5) return 1.0;
+      if (cell.y < 0.5 && (abs(cell.x - 3.0) < 0.5 || abs(cell.x - 6.0) < 0.5)) return 2.0;
+      if (abs(cell.y - 1.0) < 0.5 && abs(cell.x - 6.0) < 0.5) return 2.0;
+      return 0.0;
+    }
+    vec3 eraWallpaper(float s) {
+      vec3 a, b, c;
+      if (uEra < 1900.0) { a = vec3(0.26, 0.07, 0.05); b = vec3(0.10, 0.17, 0.10); c = vec3(0.36, 0.28, 0.16); }
+      else if (uEra < 2000.0) { a = vec3(0.52, 0.38, 0.18); b = vec3(0.17, 0.33, 0.34); c = vec3(0.58, 0.53, 0.43); }
+      else { a = vec3(0.76, 0.75, 0.72); b = vec3(0.50, 0.54, 0.56); c = vec3(0.66, 0.58, 0.48); }
+      return s < 0.34 ? a : s < 0.67 ? b : c;
+    }
+    vec3 eraCurtain(float s) {
+      if (uEra < 1900.0) return s < 0.5 ? vec3(0.32, 0.05, 0.05) : vec3(0.10, 0.20, 0.12);
+      if (uEra < 2000.0) return s < 0.5 ? vec3(0.62, 0.42, 0.14) : vec3(0.80, 0.78, 0.70);
+      return s < 0.5 ? vec3(0.78, 0.78, 0.76) : vec3(0.28, 0.30, 0.34);
+    }
+    // p: where the ray meets the glass, metres from the room's lower left corner;
+    // dir: the ray into the room in the wall's frame (x right, y up, z out of the wall)
+    vec3 interiorRoom(vec2 p, vec3 dir, vec2 room, float depth, float seed, float kind, float lamp, float day) {
+      dir.x = abs(dir.x) < 1e-4 ? 1e-4 : dir.x;
+      dir.y = abs(dir.y) < 1e-4 ? 1e-4 : dir.y;
+      dir.z = min(dir.z, -1e-3);
+      float tx = ((dir.x > 0.0 ? room.x : 0.0) - p.x) / dir.x;
+      float ty = ((dir.y > 0.0 ? room.y : 0.0) - p.y) / dir.y;
+      float tz = -depth / dir.z;
+      float t = min(min(tx, ty), tz);
+      vec3 hp = vec3(p + dir.xy * t, dir.z * t);
+      float s1 = h21(vec2(seed, 3.1)), s2 = h21(vec2(seed, 7.7)), s3 = h21(vec2(seed, 1.9));
+      vec3 paper = kind > 1.5 ? vec3(0.60, 0.61, 0.60) : kind > 0.5 ? vec3(0.66, 0.62, 0.54) : eraWallpaper(s1);
+      vec3 c;
+      if (t == tz) {
+        c = paper;
+        if (kind < 0.5) {
+          float fx = (0.2 + 0.6 * s2) * room.x;
+          if (abs(hp.x - fx) < 0.35 + 0.35 * s3 && hp.y < 0.75 + 0.9 * s3) c = vec3(0.08, 0.055, 0.035);
+          else if (abs(hp.x - (room.x - fx)) < 0.28 && abs(hp.y - 1.75) < 0.22) c = mix(vec3(0.45, 0.38, 0.22), vec3(0.18, 0.22, 0.28), s2);
+        } else if (kind < 1.5) {
+          float shelf = fract(hp.y / 0.45);
+          vec3 stock = mix(vec3(0.55, 0.30, 0.16), vec3(0.22, 0.33, 0.48), h21(floor(hp.xy * vec2(3.0, 2.2)) + seed));
+          c = mix(paper * 0.6, stock, step(0.2, shelf) * step(hp.y, 2.1));
+        } else if (abs(hp.x - room.x * (0.3 + 0.4 * s2)) < 0.45 && hp.y < 2.1) c = vec3(0.1);
+      } else if (t == ty) {
+        c = dir.y > 0.0 ? vec3(0.76, 0.74, 0.70) : (kind > 0.5 ? vec3(0.30, 0.28, 0.26) : vec3(0.13, 0.085, 0.05) * (0.8 + 0.4 * s3));
+      } else {
+        c = paper * 0.8;
+      }
+      vec3 dl = hp - vec3(room.x * 0.5, room.y - 0.35, -depth * 0.45);
+      float fall = 1.0 / (1.0 + dot(dl, dl) * 0.45);
+      vec3 lampCol = kind > 0.5 && uEra > 1950.0 ? vec3(0.95, 0.97, 1.0) : vec3(1.0, 0.64, 0.33);
+      return c * (lampCol * lamp * (0.3 + 1.7 * fall) + vec3(0.85, 0.9, 1.0) * day * exp(hp.z * 0.3));
+    }
+  `;
   function facadePBR(atlas, eraUniforms) {
-    const m = new THREE.MeshStandardMaterial({ map: atlas.map, emissiveMap: atlas.glow, emissive: 0xffc070, vertexColors: true, roughness: 0.9, metalness: 0 });
+    const m = new THREE.MeshStandardMaterial({ map: atlas.map, emissiveMap: atlas.glow, emissive: 0xffffff, vertexColors: true, roughness: 0.9, metalness: 0 });
     m.userData.era = eraUniforms;
+    const open = openingTable();
     m.onBeforeCompile = function (sh) {
       pbrCommon(sh, eraUniforms);
       sh.uniforms.uNight = eraUniforms.uNight;
       sh.uniforms.uLitFrac = eraUniforms.uLitFrac;
+      sh.uniforms.uEra = eraUniforms.uEra || { value: 2026 };
+      sh.uniforms.uBoost = eraUniforms.uBoost || { value: 1 };
+      sh.uniforms.uOpen = { value: open };
       sh.vertexShader = sh.vertexShader
         .replace('#include <common>', '#include <common>\nattribute vec3 aWall; attribute vec3 aCell; attribute float aBase; varying vec3 vWall; varying vec3 vCell; varying vec2 vLocal;\n' + WAVE_VERT)
         .replace('#include <begin_vertex>', '#include <begin_vertex>\n vWall = aWall; vCell = aCell; vLocal = uv;\n float wk = waveK(position.xz); transformed.y = mix(aBase - 1.0, transformed.y, wk);');
       sh.fragmentShader = sh.fragmentShader
-        .replace('#include <common>', '#include <common>\nvarying vec3 vWall; varying vec3 vCell; varying vec2 vLocal; uniform float uNight; uniform float uLitFrac; uniform float uWeather;\n' + NOISE + SA.PBR.glsl + PBR_SHARED_FRAG)
+        .replace('#include <common>', '#include <common>\nvarying vec3 vWall; varying vec3 vCell; varying vec2 vLocal; uniform float uNight; uniform float uLitFrac; uniform float uWeather;\n' + NOISE + SA.PBR.glsl + PBR_SHARED_FRAG + INTERIOR_GLSL)
         .replace('#include <map_fragment>', `
-          vec4 feat = vec4(0.0);
-          float glowm = 0.0;
-          if (vCell.x >= 0.0) {
-            vec2 cs = vec2(0.125, 0.25);
-            vec2 lf = fract(vLocal);
-            vec2 auv = vec2(vCell.x*cs.x, 1.0 - (vCell.y + 1.0)*cs.y) + (lf*0.994 + 0.003)*cs;
-            vec2 gx = dFdx(vLocal)*cs, gy = dFdy(vLocal)*cs;
-            feat = textureGrad(map, auv, gx, gy);
-            glowm = textureGrad(emissiveMap, auv, gx, gy).r;
-          }
           // round the building seed first: the interpolated varying differs per pixel
           float sd = floor(vCell.z * 997.0 + 0.5);
+          // the wall's frame (x along the wall, y up, z out) and the view direction in it
+          mat3 fT = pbrTBN(-vViewPosition, normalize(vNormal), vWall.xy);
+          vec3 Vv = normalize(vViewPosition);
+          vec3 vt = vec3(dot(Vv, fT[0]), dot(Vv, fT[1]), dot(Vv, fT[2]));
+          vec2 dLx = dFdx(vLocal), dLy = dFdy(vLocal);
+          vec2 cellM = vec2(3.0, 3.0);
+          vec2 lf = fract(vLocal);
+          vec2 lq = lf;
+          vec4 op = vec4(0.0);
+          vec4 feat = vec4(0.0);
+          float glowm = 0.0, reveal = 0.0, inOpen = 0.0;
+          if (vCell.x >= 0.0) {
+            op = uOpen[int(vCell.y + 0.5) * ${COLS} + int(vCell.x + 0.5)];
+            if (op.z > op.x && lf.x > op.x && lf.x < op.z && lf.y > op.y && lf.y < op.w) {
+              // the window sits 12 cm back: follow the view ray to its plane; if the ray leaves the
+              // opening first, this pixel shows the reveal (the side of the opening)
+              inOpen = 1.0;
+              vec2 q = lf - vt.xy / max(vt.z, 0.2) * 0.12 / cellM;
+              if (q.x < op.x || q.x > op.z || q.y < op.y || q.y > op.w) reveal = 1.0;
+              lq = clamp(q, op.xy + 0.002, op.zw - 0.002);
+            }
+            vec2 cs = vec2(0.125, 0.25);
+            vec2 auv = vec2(vCell.x*cs.x, 1.0 - (vCell.y + 1.0)*cs.y) + (lq*0.994 + 0.003)*cs;
+            feat = textureGrad(map, auv, dLx*cs, dLy*cs);
+            glowm = textureGrad(emissiveMap, auv, dLx*cs, dLy*cs).r;
+          }
           float wL = wallLayer(vWall.z, sd);
           // each building starts the scan at its own offset, so neighbours never line up
           vec2 wm = vWall.xy + vec2(h21(vec2(sd, 1.7)) * 9.0, h21(vec2(sd, 4.3)) * 0.6);
@@ -782,22 +875,43 @@
           float streak = vnoise(vec2(wm.x * 1.7, wm.y * 0.08)) * 0.5 + vnoise(wm * vec2(0.6, 0.3)) * 0.5;
           float grime = (1.0 - smoothstep(0.0, 1.1, vWall.y)) * 0.28 + streak * 0.14 * smoothstep(0.4, 1.0, streak);
           wallc *= 1.0 - grime;
-          diffuseColor.rgb = mix(wallc, feat.rgb, feat.a);
-          float pbrAO = mix(pa.a, 1.0, feat.a);
-          float pbrRough = mix(pb.z, mix(0.62, 0.05, glowm), feat.a);
+          vec3 surf = mix(mix(wallc, feat.rgb, feat.a), wallc * 0.45, reveal);
+          float glass = glowm * (1.0 - reveal);
+          // the room behind the glass
+          float roomSeed = h21(floor(vLocal) + vec2(sd * 0.113, sd * 0.007));
+          float litBay = step(roomSeed, uLitFrac);
+          vec3 roomRad = vec3(0.0);
+          float curtain = 0.0;
+          if (glass > 0.01) {
+            float kind = roomKind(vCell.xy);
+            float lamp = litBay * uNight * uBoost * 1.6 + (kind > 0.5 && uEra > 1950.0 ? (1.0 - uNight) * 0.45 : 0.0);
+            float day = (1.0 - smoothstep(0.0, 0.6, uNight)) * 0.42 + 0.008;
+            roomRad = interiorRoom(lq * cellM, -vt, cellM, kind > 0.5 ? 6.0 : 4.0, roomSeed * 91.0 + sd, kind, lamp, day);
+            // curtains across the sides of some windows, glowing when the lamp behind is lit
+            if (kind < 0.5 && op.z > op.x && h21(vec2(roomSeed, 5.3)) < 0.6) {
+              float wx = (lq.x - op.x) / (op.z - op.x);
+              float cl = 0.06 + 0.2 * h21(vec2(roomSeed, 8.1)), cr = 0.06 + 0.2 * h21(vec2(roomSeed, 2.6));
+              curtain = (step(wx, cl) + step(1.0 - cr, wx)) * (0.85 + 0.15 * sin(lq.x * 260.0));
+              vec3 cc = eraCurtain(h21(vec2(roomSeed, 4.4)));
+              surf = mix(surf, cc * 0.55, curtain * glass);
+              roomRad = mix(roomRad, cc * vec3(1.0, 0.64, 0.33) * lamp * 0.5, curtain);
+            }
+            roomRad *= glass * (1.0 - curtain);
+          }
+          diffuseColor.rgb = mix(surf, vec3(0.004), glass * (1.0 - curtain));
+          float pbrAO = mix(mix(pa.a, 1.0, feat.a), 0.6, reveal);
+          float pbrRough = mix(mix(pb.z, 0.6, feat.a), mix(0.04, 0.9, curtain), glass);
           vec4 pbrB = pb;
-          float pbrFlat = feat.a;
-          vec2 pbrM = tuv.xy;
+          float pbrFlat = max(feat.a, inOpen) * (1.0 - reveal);
           float pbrL = wL;
         `)
         .replace('#include <color_fragment>', '')
         .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = pbrRough;')
         .replace('#include <normal_fragment_maps>', `
-          normal = normalize(pbrTBN(-vViewPosition, normal, pbrM) * pbrTangentNormal(pbrB, pbrL, 1.0 - pbrFlat));
+          normal = normalize(fT * pbrTangentNormal(pbrB, pbrL, 1.0 - pbrFlat));
         `)
         .replace('#include <emissivemap_fragment>', `
-          float litBay = step(h21(floor(vLocal) + vec2(sd * 0.113, sd * 0.007)), uLitFrac);
-          totalEmissiveRadiance *= glowm * litBay * uNight;
+          totalEmissiveRadiance = roomRad;
         `)
         .replace('#include <aomap_fragment>', `
           reflectedLight.indirectDiffuse *= pbrAO;
@@ -850,7 +964,7 @@
   // Plain vertex-coloured material that also obeys the time wave (signs, props merged geometry)
   Tex.waveMaterial = function (eraUniforms, opts) {
     opts = opts || {};
-    const m = new THREE.MeshLambertMaterial(Object.assign({ vertexColors: true }, opts));
+    const m = new THREE.MeshStandardMaterial(Object.assign({ vertexColors: true, roughness: 0.8, metalness: 0 }, opts));
     m.onBeforeCompile = function (sh) {
       sh.uniforms.uWaveCenter = Tex.wave.uWaveCenter;
       sh.uniforms.uWaveRadius = Tex.wave.uWaveRadius;
