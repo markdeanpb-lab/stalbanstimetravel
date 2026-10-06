@@ -322,6 +322,58 @@
     const x = Math.sin(th) * Math.cos(ph) * (1 - 0.15 * low), y = Math.sin(ph), z = Math.cos(th) * Math.cos(ph) * (1 - 0.3 * low * back);
     return [HC[0] + x * (HR[0] + grow), HC[1] + y * (HR[1] + grow * 0.8) + grow * 0.3, HC[2] + z * (HR[2] + grow) - 0.004];
   }
+  // strands combed down from the crown (darker and lighter fibres across them) and a sheen that
+  // runs across the strands (Kajiya-Kay), so a cap reads as hair rather than a painted helmet
+  function hairMaterial() {
+    const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.72, metalness: 0 });
+    m.onBeforeCompile = function (sh) {
+      sh.vertexShader = sh.vertexShader
+        .replace('#include <common>', '#include <common>\nvarying vec3 vHairP; varying vec3 vHairT;')
+        .replace('#include <begin_vertex>', `#include <begin_vertex>
+          vHairP = position - vec3(${HC[0].toFixed(3)}, ${HC[1].toFixed(3)}, ${HC[2].toFixed(3)});
+          vec3 hn = normalize(vHairP + vec3(0.0, 1e-4, 0.0));
+          // downhill over the skull, straight down where the hair hangs below it
+          vec3 ht = vec3(0.0, -1.0, 0.0) + hn * hn.y;
+          ht = length(ht) > 0.05 ? normalize(ht) : vec3(0.0, 0.0, -1.0);
+          ht = normalize(mix(ht, vec3(0.0, -1.0, 0.0), smoothstep(0.0, -0.06, vHairP.y)));
+          vec4 tv = vec4(ht, 0.0);
+          #ifdef USE_INSTANCING
+            tv = instanceMatrix * tv;
+          #endif
+          vHairT = normalize((modelViewMatrix * tv).xyz);`);
+      sh.fragmentShader = sh.fragmentShader
+        .replace('#include <common>', `#include <common>
+          varying vec3 vHairP; varying vec3 vHairT;
+          float hHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+          float hNoise(vec2 p) {
+            vec2 i = floor(p), f = fract(p);
+            f = f * f * (3.0 - 2.0 * f);
+            return mix(mix(hHash(i), hHash(i + vec2(1.0, 0.0)), f.x), mix(hHash(i + vec2(0.0, 1.0)), hHash(i + vec2(1.0, 1.0)), f.x), f.y);
+          }`)
+        .replace('#include <color_fragment>', `#include <color_fragment>
+          // across the strands is the angle around the head; along them is height
+          float hAz = atan(vHairP.x, vHairP.z);
+          float hStr = hNoise(vec2(hAz * 34.0, vHairP.y * 9.0)) * 0.6 + hNoise(vec2(hAz * 95.0, vHairP.y * 22.0)) * 0.4;
+          diffuseColor.rgb *= 0.62 + 0.62 * hStr;`)
+        .replace('#include <lights_fragment_end>', `#include <lights_fragment_end>
+          #if NUM_DIR_LIGHTS > 0
+          {
+            vec3 hT = normalize(vHairT);
+            vec3 hL = directionalLights[0].direction;
+            vec3 hH = normalize(hL + geometryViewDir);
+            float tH = dot(hT, hH);
+            // a white primary sheen, and a second one tinted by the hair and shifted towards the tips
+            float tH2 = dot(hT, normalize(hH + hT * 0.25));
+            float s1 = pow(sqrt(max(0.0, 1.0 - tH * tH)), 90.0) * 0.12;
+            float s2 = pow(sqrt(max(0.0, 1.0 - tH2 * tH2)), 30.0) * 0.1;
+            float wrap = clamp(dot(geometryNormal, hL) * 0.6 + 0.4, 0.0, 1.0);
+            reflectedLight.directSpecular += directionalLights[0].color * wrap * (s1 + s2 * diffuseColor.rgb * 2.0) * (0.5 + hStr);
+          }
+          #endif`);
+    };
+    m.customProgramCacheKey = () => 'hair-strands';
+    return m;
+  }
   function buildHair(style) {
     const G = new Geo();
     const nLon = 18, nLat = 7;
@@ -878,7 +930,7 @@
     };
     this.meshes = {};
     const rigidMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7, metalness: 0 });
-    const hairMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.55, metalness: 0 });
+    const hairMat = hairMaterial();
     const mk = (name, geo, count, material) => {
       const m = new THREE.InstancedMesh(geo, material || rigidMat, count);
       m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);

@@ -19,7 +19,8 @@ The checks were re-run after each stage of the visual upgrade, and all passed ev
 
 - the rendering pipeline and scanned surfaces;
 - the skinned people, interior-mapped windows and trees;
-- the new vehicles, effects, conversation camera and score.
+- the new vehicles, effects, conversation camera and score;
+- the road markings, gas-lamp lights, height fog, reshaped horses, street reflections in the windows, lighter vehicle meshes, strand-shaded hair and stocked shop shelves.
 
 The upgrade made software-rendered screenshots slower, up to a minute or more for a frame mid-transition. The tools now allow 180 s per screenshot instead of Playwright's default 30 s.
 
@@ -48,18 +49,19 @@ Figures are per era, at five places: the Clock Tower, St Peter's Street, the Hig
 
 | Preset | Year | Draw calls | Triangles | Step (ms) | People / vehicles |
 |---|---|---|---|---|---|
-| **Phone**: 915 × 412, Low (no shadows, pixel ratio 1) | 2026 | 50–92 | 88k–112k | 0.5–0.8 | 32 / 12 |
-| | 1964 | 51–91 | 102k–130k | 0.6–0.8 | 35 / 12 |
-| | 1897 | 58–92 | 119k–142k | 0.7–1.0 | 59 / 7 |
-| **Desktop**: 1280 × 720, High (with shadows) | 2026 | 114–161 | 200k–226k | 0.6–0.8 | 46 / 15 |
-| | 1964 | 103–148 | 223k–259k | 0.5–0.8 | 50 / 15 |
-| | 1897 | 121–158 | 255k–285k | 1.0–1.5 | 76 / 10 |
+| **Phone**: 915 × 412, Low (no shadows, pixel ratio 1) | 2026 | 58–106 | 333k–376k | 0.6–0.7 | 32 / 12 |
+| | 1964 | 57–103 | 326k–378k | 0.6–0.8 | 35 / 12 |
+| | 1897 | 70–110 | 247k–320k | 0.8–1.2 | 59 / 7 |
+| **Desktop**: 1280 × 720, High (with shadows) | 2026 | 156–216 | 710k–794k | 0.7–1.0 | 46 / 15 |
+| | 1964 | 148–204 | 689k–798k | 0.8–1.1 | 50 / 15 |
+| | 1897 | 176–209 | 579k–742k | 1.0–1.4 | 76 / 10 |
 
 - On the desktop preset, the draw calls and triangles include the shadow-map pass.
+- The visual upgrade roughly tripled the triangle counts. Most of the increase is the skinned people, the trees, the rounded vehicles and the kerbs. Vehicle meshes were then simplified, which took about a third off each car.
 - GPU memory estimate, with all three years resident:
-  - Low: geometry 21 MB, textures 67 MB.
-  - High: geometry 21 MB, textures 101 MB.
-- Loading to the title screen takes about 4 s in headless Chromium.
+  - Low: geometry 59 MB, textures 81 MB, render targets 4 MB.
+  - High: geometry 60 MB, textures 149 MB, render targets 50 MB (the post-processing buffers).
+- Loading to the title screen takes about 7 s (phone preset) to 9 s (desktop preset) in headless Chromium. This includes decoding the scanned surfaces and compiling every shader up front, so the first jump to each year doesn't stall.
 
 Rendering time itself can't be measured meaningfully with software WebGL, so these numbers are the inputs that determine it.
 
@@ -75,6 +77,7 @@ All screenshots are in [`screenshots/`](screenshots/).
 - **The mission, beat by beat:** `playthrough/NN_<beat>.jpg`, from the Town Hall ending run.
 - **Phone layout:** `phone-1964.jpg` and `phone-1897.jpg`, at 915 × 412 with the touch controls.
 - **Title screen:** `title.jpg`.
+- **Close-ups of the visual upgrade:** `showcase/`, covering people, surfaces and reflections, a conversation, vehicles in 1964 and 2026, the fireworks, Jubilee night and the horse and cart.
 - **Raw results:** `verify/` holds the checks' own screenshots, `verify-results.json` and `perf.json`. The playthrough results for both endings are in `playthrough/`.
 
 Images come from software rendering at 1280 × 720 (phone shots at 915 × 412). Shadows and colours match a real GPU, but anti-aliasing and texture filtering differ slightly.

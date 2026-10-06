@@ -8,8 +8,8 @@ These could not be checked in the build environment, which has no GPU, speakers,
 
 | Area | What was done instead | What still needs doing |
 |---|---|---|
-| **Frame rate on a mid-range Android phone (target 30 fps)** | Measured what drives the frame rate in headless Chromium, using the phone preset (915 × 412, Low quality). The results were 50–92 draw calls, 88k–142k triangles, and under 1 ms of simulation per step on the test machine. See `tools/perf.js`. | Play for 10 minutes on a real mid-range phone with the counter on (**Settings → Show frame rate**). The heaviest scene is 1897 at the Clock Tower with the Jubilee crowd. |
-| **Frame rate on desktop (target 60 fps)** | The same measurements on the High preset: 103–161 draw calls with shadows and 200k–285k triangles. | Check on integrated graphics (an Intel Iris/UHD class laptop). |
+| **Frame rate on a mid-range Android phone (target 30 fps)** | Measured what drives the frame rate in headless Chromium, using the phone preset (915 × 412, Low quality). The results were 57–110 draw calls, 247k–378k triangles, and about 1 ms or less of simulation per step on the test machine. See `tools/perf.js`. The visual upgrade roughly tripled the triangles. | Play for 10 minutes on a real mid-range phone with the counter on (**Settings → Show frame rate**). The heaviest scenes are the Clock Tower in 2026 and 1964, and 1897 with the Jubilee crowd. If Low struggles, cut the number of people and trees first. |
+| **Frame rate on desktop (target 60 fps)** | The same measurements on the High preset: 148–216 draw calls with shadows and 579k–798k triangles, plus full-screen ambient occlusion, bloom and anti-aliasing. | Check on integrated graphics (an Intel Iris/UHD class laptop). |
 | **Audio** | All sound is procedural Web Audio and was not played back here (no audio device). | Listen to each era's ambience, the bell (Gabriel), sirens and whistles, engines and hooves, and check the mix levels. |
 | **Gamepad** | The standard Gamepad API mapping is implemented. | Try an Xbox or PlayStation pad in Chrome and Firefox. |
 | **Touch on a physical phone** | Emulated touch through Chrome DevTools: the stick moves the player, dragging turns the camera, the Key button winds. | Check thumb comfort, two-thumb use (stick and look together), notches and safe areas, and the browser's own gestures (pull to refresh, back swipe). |
@@ -22,7 +22,7 @@ Issues are grouped by area and roughly ordered by how noticeable they are.
 
 ### Performance and memory
 
-1. **All three eras are built at start-up and stay in memory.** Loading to the title screen takes about 4 s in headless Chromium on the test machine and will be longer on a phone. Geometry is about 21 MB. Textures are an estimated 67 MB on Low and 101 MB on High, mostly the three sign atlases and the ground paint. Building an era only when you first wind to it would cut both by about a third.
+1. **All three eras are built at start-up and stay in memory.** Loading to the title screen takes about 7–9 s in headless Chromium on the test machine, including compiling every shader, and will be longer on a phone. Geometry is about 60 MB. Textures are an estimated 81 MB on Low and 149 MB on High: the scanned surfaces, the three sign atlases and the ground paint. High also uses about 50 MB for post-processing buffers. Building an era only when you first wind to it would cut geometry and the era textures by about a third.
 2. **Quality never changes tier by itself.** The game picks Low on touch devices and High elsewhere. Dynamic resolution lowers the render scale to as little as 60–75% while the frame rate stays below target (30 fps on Low, 60 elsewhere), but it never drops to a lower tier. Change the tier under **Settings → Quality**.
 3. **WebGL context loss is not handled.** If a phone browser discards the GPU context, for example after a long time in the background, the page needs a reload.
 
@@ -103,6 +103,7 @@ The areas, in order:
 - **One or two side activities per era**, as the brief allows. Examples: a 2026 delivery-rider time trial, the 1964 scooter rally (extending the scooter sprint), and the 1897 Jubilee bicycle race.
 - **Police roadblocks** at the district exits, and traffic lights with junction priority in 1964 and 2026.
 - **Recorded voices** for the main cast, keeping subtitles on by default.
+- **Artist-made people.** Swap the procedural bodies for rigged CC0 characters (for example the Quaternius packs on itch.io), keeping the instanced GPU skinning and the era clothing colours. The build environment could not download them, so they need adding by hand.
 
 ### 5. History pass
 

@@ -50,7 +50,7 @@
       "detail": {
         "era": 1964,
         "stage": "a1",
-        "rest": 29,
+        "rest": 30,
         "slips": [
           {
             "era": 1964,
@@ -82,7 +82,7 @@
       "detail": {
         "veh": "scooter",
         "stage": "a3",
-        "speed": 4.7
+        "speed": 4.4
       }
     },
     {
@@ -128,8 +128,8 @@
         "maxWanted": 1,
         "units": 1,
         "sameCart": true,
-        "cartNode": 7,
-        "cartSpeed": 4.8
+        "cartNode": 6,
+        "cartSpeed": 4.5
       }
     },
     {
@@ -159,7 +159,7 @@
       "pass": true,
       "detail": {
         "wanted": 0,
-        "secondsToLose": 26,
+        "secondsToLose": 27,
         "stage": "b5"
       }
     },
@@ -224,7 +224,7 @@
       "detail": {
         "cont": true,
         "era": 2026,
-        "stage": "free",
+        "stage": null,
         "flags": {
           "clockStopped1897": true,
           "met_young_edie": true,
@@ -242,5 +242,5 @@
       "detail": []
     }
   ],
-  "wallSeconds": 536
+  "wallSeconds": 1025
 }

@@ -785,6 +785,20 @@
     }
     // p: where the ray meets the glass, metres from the room's lower left corner;
     // dir: the ray into the room in the wall's frame (x right, y up, z out of the wall)
+    // shop shelving: boards every 45 cm, stocked with goods of varied widths, heights and colours
+    vec3 shopShelves(vec2 q, float seed, vec3 back) {
+      float row = floor(q.y / 0.45), fy = fract(q.y / 0.45);
+      float k = 2.5 + 4.5 * h21(vec2(row, seed));
+      float ix = floor(q.x * k + row * 0.37), fx = fract(q.x * k + row * 0.37);
+      float hsh = h21(vec2(ix + row * 17.0, seed + 3.3));
+      float top = 0.4 + 0.5 * h21(vec2(ix, row + seed));
+      // each shop keeps to its own range of colours, muted like packaging and spines
+      vec3 goods = 0.55 + 0.45 * cos(6.2832 * (h21(vec2(seed, 5.5)) + hsh * 0.4 + vec3(0.0, 0.33, 0.67)));
+      goods = mix(vec3(dot(goods, vec3(0.3, 0.59, 0.11))), goods, 0.5) * (0.2 + 0.3 * h21(vec2(ix, row * 3.1 + seed)));
+      float item = step(0.09, fy) * step(fy, 0.09 + top * 0.88) * step(0.06, fx) * step(h21(vec2(ix, row + 9.1)), 0.9);
+      vec3 c = mix(back * 0.32, goods, item);
+      return mix(c, vec3(0.5, 0.45, 0.38), step(fy, 0.07));
+    }
     vec3 interiorRoom(vec2 p, vec3 dir, vec2 room, float depth, float seed, float kind, float lamp, float day) {
       dir.x = abs(dir.x) < 1e-4 ? 1e-4 : dir.x;
       dir.y = abs(dir.y) < 1e-4 ? 1e-4 : dir.y;
@@ -804,20 +818,14 @@
           if (abs(hp.x - fx) < 0.35 + 0.35 * s3 && hp.y < 0.75 + 0.9 * s3) c = vec3(0.08, 0.055, 0.035);
           else if (abs(hp.x - (room.x - fx)) < 0.28 && abs(hp.y - 1.75) < 0.22) c = mix(vec3(0.45, 0.38, 0.22), vec3(0.18, 0.22, 0.28), s2);
         } else if (kind < 1.5) {
-          float shelf = fract(hp.y / 0.45);
-          vec3 stock = mix(vec3(0.55, 0.30, 0.16), vec3(0.22, 0.33, 0.48), h21(floor(hp.xy * vec2(3.0, 2.2)) + seed));
-          c = mix(paper * 0.6, stock, step(0.2, shelf) * step(hp.y, 2.1));
+          if (hp.y < 2.1) c = shopShelves(hp.xy, seed, paper);
         } else if (abs(hp.x - room.x * (0.3 + 0.4 * s2)) < 0.45 && hp.y < 2.1) c = vec3(0.1);
       } else if (t == ty) {
         c = dir.y > 0.0 ? vec3(0.76, 0.74, 0.70) : (kind > 0.5 ? vec3(0.30, 0.28, 0.26) : vec3(0.13, 0.085, 0.05) * (0.8 + 0.4 * s3));
       } else {
         c = paper * 0.8;
         // shops: shelving along the side walls too
-        if (kind > 0.5 && kind < 1.5 && hp.y < 2.1) {
-          float shelf = fract(hp.y / 0.45);
-          vec3 stock = mix(vec3(0.5, 0.28, 0.15), vec3(0.2, 0.3, 0.45), h21(floor(vec2(hp.z * 3.0, hp.y * 2.2)) + seed));
-          c = mix(paper * 0.5, stock, step(0.2, shelf));
-        }
+        if (kind > 0.5 && kind < 1.5 && hp.y < 2.1) c = shopShelves(vec2(hp.z, hp.y), seed + 0.5, paper) * 0.85;
       }
       // shop floors: chequered tiles in 1964, boards in 1897
       if (t == ty && dir.y < 0.0 && kind > 0.5 && kind < 1.5) {
@@ -923,6 +931,30 @@
         `)
         .replace('#include <emissivemap_fragment>', `
           totalEmissiveRadiance = roomRad;
+        `)
+        .replace('#include <lights_fragment_end>', `
+          // glass mirrors the street: the buildings opposite up to their rooflines, then the sky
+          // (the environment map alone is all sky, which leaves every pane a flat bright sheet)
+          #ifdef USE_ENVMAP
+          float gR = glass * (1.0 - curtain);
+          if (gR > 0.01) {
+            vec3 rW = inverseTransformDirection(reflect(-geometryViewDir, geometryNormal), viewMatrix);
+            vec3 nW = inverseTransformDirection(geometryNormal, viewMatrix);
+            float hz = max(length(rW.xz), 1e-3);
+            // a glancing ray runs a long way down the street before it meets a wall
+            float across = max(dot(rW.xz, nW.xz) / (hz * max(length(nW.xz), 1e-3)), 0.06);
+            float hOpp = 7.5 + 8.0 * vnoise(vec2(vWall.x * 0.06 + sd, 3.1));
+            float rise = (hOpp - vWall.y) * across / 14.0;
+            float skyV = smoothstep(rise - 0.03, rise + 0.03, rW.y / hz);
+            float alb = 0.14 + 0.16 * vnoise(vec2(vWall.x * 0.9 + rW.x * 3.0, rW.y * 6.0));
+            vec3 farE = irradiance + iblIrradiance;
+            #if NUM_DIR_LIGHTS > 0
+              farE += directionalLights[0].color * max(dot(-geometryNormal, directionalLights[0].direction), 0.0) * 0.7;
+            #endif
+            radiance = mix(radiance, mix(farE * RECIPROCAL_PI * alb, radiance, skyV), gR);
+          }
+          #endif
+          #include <lights_fragment_end>
         `)
         .replace('#include <aomap_fragment>', `
           reflectedLight.indirectDiffuse *= pbrAO;

@@ -45,16 +45,19 @@
     return m;
   };
 
-  // Rounded box: every edge rounded with radius r (three bands of vertices per edge).
+  // Rounded box: every edge rounded with radius r (up to three bands of vertices per edge; small
+  // radii get fewer, as the extra bands can't be seen on lamps and handles).
   // fn(x, y, z) optionally deforms it (tapers, sloping bonnets); normals are then recomputed.
+  // Only a deformed box needs rows across its flat faces.
   function rbox(w, h, d, r, fn) {
     const H = [w / 2, h / 2, d / 2];
     r = Math.max(0.001, Math.min(r, H[0] * 0.98, H[1] * 0.98, H[2] * 0.98));
+    const bands = r >= 0.03 ? [0.3, 0.7] : r >= 0.012 ? [0.5] : [];
     const vals = (hh) => {
       const inner = [];
-      const n = Math.max(1, Math.round((2 * (hh - r)) / 0.6));
+      const n = fn ? Math.max(1, Math.round((2 * (hh - r)) / 0.6)) : 1;
       for (let i = 0; i <= n; i++) inner.push(-(hh - r) + (2 * (hh - r) * i) / n);
-      return [-hh, -hh + r * 0.3, -hh + r * 0.7, ...inner, hh - r * 0.7, hh - r * 0.3, hh];
+      return [-hh, ...bands.map((f) => -hh + r * f), ...inner, ...bands.map((f) => hh - r * f).reverse(), hh];
     };
     const pos = [], nor = [], idx = [];
     for (let a = 0; a < 3; a++) {

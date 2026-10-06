@@ -26,10 +26,10 @@ The game runs on three.js in the browser with no build step. Everything it needs
   - Brick, stucco, render, clay tile, slate, York stone, setts, asphalt and grass are CC0 photo scans from Poly Haven, used at their real size and recoloured to each building's paint or brick.
   - The knapped flint of the Clock Tower is generated.
 - **Windows:**
-  - Every window is set back into the wall and has a room behind it, rendered by interior mapping: wallpaper, furniture, curtains and shop shelves.
-  - By day the glass reflects the sky. On Jubilee night the lit rooms glow and the nearest gas lamps cast real light.
+  - Every window is set back into the wall and has a room behind it, rendered by interior mapping: wallpaper, furniture, curtains, and shop shelves stocked in each shop's own colours.
+  - By day the glass reflects the buildings across the street and the sky above their rooflines. On Jubilee night the lit rooms glow and the nearest gas lamps cast real light.
 - **People:**
-  - Smooth procedural humans, skinned on the GPU in instanced batches, with painted faces, hair, era clothing, dresses and frock coats.
+  - Smooth procedural humans, skinned on the GPU in instanced batches, with painted faces, strand-shaded hair, era clothing, dresses and frock coats.
   - Blended walk, run, idle, sitting, cycling and gesture animations. People turn their heads to look at you.
 - **Vehicles:** rounded bodies with glass, rims, chrome, lamps and UK plates, from a 2026 police estate in Battenburg livery to a 1964 Mini and a spoked-wheel hansom cab.
 - **Life:**
@@ -52,6 +52,18 @@ All of it is made in code at load time except the surface scans. [`docs/ASSETS.m
 | Before | Fund returned to the Town Hall | Fund taken to the dinner |
 |---|---|---|
 | ![Phone repair shop](docs/screenshots/consequence-2026-french-row-before.jpg) | ![Pennick & Daughters, clockmakers](docs/screenshots/consequence-2026-french-row-returned.jpg) | ![The Jubilee Table](docs/screenshots/consequence-2026-french-row-dinner.jpg) |
+
+*Close up:*
+
+| People and plane trees, St Peter's Street, 2026 | Scanned flint, brick and paving, and windows reflecting the street, 2026 |
+|---|---|
+| ![People on St Peter's Street in 2026](docs/screenshots/showcase/people-2026-st-peters-street.jpg) | ![The High Street in 2026](docs/screenshots/showcase/surfaces-2026-high-street.jpg) |
+| **A conversation, with letterbox and depth of field, 1964** | **A Mini, a saloon and a police car on George Street, 1964** |
+| ![Terry offers Robin a coffee in 1964](docs/screenshots/showcase/conversation-1964.jpg) | ![Cars on George Street in 1964](docs/screenshots/showcase/vehicles-1964-george-street.jpg) |
+| **A hatchback, a police estate and a taxi, 2026** | **Jubilee fireworks over the Clock Tower, 1897** |
+| ![Cars on George Street in 2026](docs/screenshots/showcase/vehicles-2026-george-street.jpg) | ![Fireworks over the Clock Tower in 1897](docs/screenshots/showcase/fireworks-1897-clock-tower.jpg) |
+| **Jubilee night on the High Street, 1897** | **A baker's cart under a gas lamp, 1897** |
+| ![The High Street on Jubilee night](docs/screenshots/showcase/jubilee-night-1897-high-street.jpg) | ![A horse and cart on George Street in 1897](docs/screenshots/showcase/horse-and-cart-1897-george-street.jpg) |
 
 More views, the whole mission beat by beat and the phone layout are in [`docs/screenshots/`](docs/screenshots/).
 
@@ -150,7 +162,7 @@ There are two alternatives. You can copy the `game/` folder to the phone and ser
 | **Free roam** | Discoveries in each era; postcard views of 5 landmarks in 3 eras; 1897 greased pig; 1964 scooter sprint; wardrobe at the Clock Tower | Done |
 | **UI** | HUD (era, objective + distance, minimap, key ring, wanted stars, prompts), full map, journal, settings, save codes | Done |
 | | Touch controls (dynamic stick, camera drag, contextual buttons); gamepad | Done |
-| **Performance** | Instanced characters/vehicles/props, chunked merged buildings, fog distance, Low/Medium/High presets (Low on touch devices: no shadows, pixel ratio 1, half-size ground paint) | Partial: budgets measured (phone preset 50–92 draw calls, ≤ 142k triangles, ~67 MB textures); not yet profiled on a real phone |
+| **Performance** | Instanced characters/vehicles/props, chunked merged buildings, fog distance, Low/Medium/High presets (Low on touch devices: no shadows, pixel ratio 1, half-size ground paint) | Partial: budgets measured (phone preset 57–110 draw calls, ≤ 378k triangles, ~81 MB textures); not yet profiled on a real phone |
 | **Testing** | Headless checks (`tools/verify.js`), a full playthrough of both endings (`tools/playthrough.js`), a performance report (`tools/perf.js`) and documentation screenshots (`tools/screens.js`) | Done (see [`docs/VERIFICATION.md`](docs/VERIFICATION.md)) |
 
 ## Documentation
@@ -185,7 +197,7 @@ They run the game in headless Chromium with software WebGL, which is far too slo
 game/                 the runnable game (open index.html)
   index.html, css/, js/ (core, world, entities, game, ui, data), vendor/three.min.js
 docs/                 design note, research notes, known issues, verification + screenshots
-tools/                developer-only tools (map pipeline, three.js vendoring, headless checks, playthrough, perf, screenshots)
+tools/                developer-only tools (map pipeline, texture pack, three.js vendoring, headless checks, playthrough, perf, screenshots)
 dist/                 curfew-st-albans-m1.zip (the game folder plus docs)
 ```
 
