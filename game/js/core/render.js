@@ -124,8 +124,23 @@
     return GradeEffect;
   }
 
+  // ------------------------------------------------------------------ height-aware fog
+  // Fog thins with height above the viewer, so towers and rooftops stand out of the street haze.
+  // Replaces three's fog chunks for every material (including the particle shaders).
+  function patchFog() {
+    const C = THREE.ShaderChunk;
+    if (C.__saFog) return;
+    C.__saFog = true;
+    C.fog_pars_vertex = '#ifdef USE_FOG\n\tvarying float vFogDepth;\n\tvarying float vFogH;\n#endif';
+    // world height from the view-space position (the view matrix is a rigid transform)
+    C.fog_vertex = '#ifdef USE_FOG\n\tvFogDepth = - mvPosition.z;\n\tvFogH = ( vec4( mvPosition.xyz - viewMatrix[ 3 ].xyz, 0.0 ) * viewMatrix ).y;\n#endif';
+    C.fog_pars_fragment = C.fog_pars_fragment.replace('varying float vFogDepth;', 'varying float vFogDepth;\n\tvarying float vFogH;');
+    C.fog_fragment = C.fog_fragment.replace('gl_FragColor.rgb = mix(', 'fogFactor *= mix( 1.0, 0.5, smoothstep( cameraPosition.y + 4.0, cameraPosition.y + 55.0, vFogH ) );\n\tgl_FragColor.rgb = mix(');
+  }
+
   // ------------------------------------------------------------------ setup
   R.setup = function (canvas, quality) {
+    patchFog();
     const tier = (R.tier = R.TIERS[quality] || R.TIERS.high);
     R.quality = R.TIERS[quality] ? quality : 'high';
     // antialiasing: SMAA in the post chain; the plain forward path gets none on phones

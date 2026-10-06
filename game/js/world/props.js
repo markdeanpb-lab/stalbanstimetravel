@@ -167,7 +167,12 @@
     MODELS.planter = merge([part(box(1.2, 0.6, 1.2), '#3a3a3a', 0, 0.3, 0), part(sph(0.6, 8, 6), '#4f7a34', 0, 0.85, 0)]);
     MODELS.busstop = merge([part(box(0.08, 2.6, 0.08), '#222', 0, 1.3, 0), part(box(0.5, 0.5, 0.04), '#e3e3e3', 0, 2.55, 0), part(box(0.3, 0.6, 0.06), '#2a5fae', 0, 1.8, 0)]);
     MODELS.signpost = merge([part(box(0.08, 2.3, 0.08), '#333', 0, 1.15, 0), part(box(0.7, 0.45, 0.04), '#1d3c6e', 0, 2.2, 0)]);
-    MODELS.cycleRack = merge([part(box(0.05, 0.7, 0.8), '#555', 0, 0.35, 0), part(box(0.05, 0.05, 0.8), '#555', 0, 0.7, 0)]);
+    // Sheffield stand: an inverted U of steel tube
+    MODELS.cycleRack = merge([
+      part(cyl(0.028, 0.028, 0.6, 8), '#8a8f94', 0, 0.3, -0.33),
+      part(cyl(0.028, 0.028, 0.6, 8), '#8a8f94', 0, 0.3, 0.33),
+      part(new THREE.TorusGeometry(0.33, 0.028, 6, 14, Math.PI), '#8a8f94', 0, 0.6, 0, 0, Math.PI / 2, 0),
+    ]);
     MODELS.rubble = merge([
       part(new THREE.DodecahedronGeometry(1.0, 0), '#7a6a5a', 0, 0.3, 0),
       part(new THREE.DodecahedronGeometry(0.7, 0), '#8a7a66', 0.9, 0.2, 0.4),

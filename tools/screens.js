@@ -109,6 +109,7 @@ async function main() {
   async function open(w, h, touch) {
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1, hasTouch: !!touch, isMobile: !!touch });
     const page = await ctx.newPage();
+    page.setDefaultNavigationTimeout(180000); // software WebGL loads slowly
     page.on('pageerror', (e) => errors.push(e.message));
     await page.goto(url);
     await page.waitForFunction(() => window.SA && SA.Game && SA.Game.state === 'title', null, { timeout: 180000 });

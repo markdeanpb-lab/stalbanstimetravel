@@ -36,6 +36,7 @@ async function main() {
   });
   const ctx = await browser.newContext({ viewport: { width: vw, height: vh }, deviceScaleFactor: 1, hasTouch: !!process.env.TOUCH, isMobile: !!process.env.TOUCH });
   const page = await ctx.newPage();
+  page.setDefaultNavigationTimeout(180000); // software WebGL loads slowly
   const logs = [];
   page.on('console', (m) => logs.push('[' + m.type() + '] ' + m.text()));
   page.on('pageerror', (e) => logs.push('[pageerror] ' + e.message + '\n' + e.stack));

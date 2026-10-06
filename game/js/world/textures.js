@@ -795,7 +795,7 @@
       float t = min(min(tx, ty), tz);
       vec3 hp = vec3(p + dir.xy * t, dir.z * t);
       float s1 = h21(vec2(seed, 3.1)), s2 = h21(vec2(seed, 7.7)), s3 = h21(vec2(seed, 1.9));
-      vec3 paper = kind > 1.5 ? vec3(0.60, 0.61, 0.60) : kind > 0.5 ? vec3(0.66, 0.62, 0.54) : eraWallpaper(s1);
+      vec3 paper = kind > 1.5 ? vec3(0.56, 0.57, 0.56) : kind > 0.5 ? vec3(0.46, 0.43, 0.38) * (0.85 + 0.3 * s1) : eraWallpaper(s1);
       vec3 c;
       if (t == tz) {
         c = paper;
@@ -812,6 +812,17 @@
         c = dir.y > 0.0 ? vec3(0.76, 0.74, 0.70) : (kind > 0.5 ? vec3(0.30, 0.28, 0.26) : vec3(0.13, 0.085, 0.05) * (0.8 + 0.4 * s3));
       } else {
         c = paper * 0.8;
+        // shops: shelving along the side walls too
+        if (kind > 0.5 && kind < 1.5 && hp.y < 2.1) {
+          float shelf = fract(hp.y / 0.45);
+          vec3 stock = mix(vec3(0.5, 0.28, 0.15), vec3(0.2, 0.3, 0.45), h21(floor(vec2(hp.z * 3.0, hp.y * 2.2)) + seed));
+          c = mix(paper * 0.5, stock, step(0.2, shelf));
+        }
+      }
+      // shop floors: chequered tiles in 1964, boards in 1897
+      if (t == ty && dir.y < 0.0 && kind > 0.5 && kind < 1.5) {
+        if (uEra > 1950.0 && uEra < 2000.0) c = mix(vec3(0.08), vec3(0.62, 0.6, 0.55), mod(floor(hp.x * 3.3) + floor(hp.z * 3.3), 2.0));
+        else if (uEra < 1900.0) c = vec3(0.2, 0.13, 0.08) * (0.8 + 0.3 * h21(vec2(floor(hp.x * 6.0), 1.0)));
       }
       vec3 dl = hp - vec3(room.x * 0.5, room.y - 0.35, -depth * 0.45);
       float fall = 1.0 / (1.0 + dot(dl, dl) * 0.45);
@@ -884,7 +895,7 @@
           float curtain = 0.0;
           if (glass > 0.01) {
             float kind = roomKind(vCell.xy);
-            float lamp = litBay * uNight * uBoost * 1.6 + (kind > 0.5 && uEra > 1950.0 ? (1.0 - uNight) * 0.45 : 0.0);
+            float lamp = litBay * uNight * uBoost * 1.6 + (kind > 0.5 && uEra > 1950.0 ? (1.0 - uNight) * 0.32 : 0.0);
             float day = (1.0 - smoothstep(0.0, 0.6, uNight)) * 0.42 + 0.008;
             roomRad = interiorRoom(lq * cellM, -vt, cellM, kind > 0.5 ? 6.0 : 4.0, roomSeed * 91.0 + sd, kind, lamp, day);
             // curtains across the sides of some windows, glowing when the lamp behind is lit

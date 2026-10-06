@@ -47,6 +47,7 @@ async function main() {
       try { localStorage.setItem('curfew-stalbans-settings-v1', JSON.stringify({ quality: q })); } catch (e) { /* ignore */ }
     }, preset.quality);
     const page = await ctx.newPage();
+    page.setDefaultNavigationTimeout(180000); // software WebGL loads slowly
     const t0 = Date.now();
     await page.goto(`http://127.0.0.1:${port}/index.html`);
     await page.waitForFunction(() => window.SA && SA.Game && SA.Game.state === 'title', null, { timeout: 180000 });
@@ -78,12 +79,23 @@ async function main() {
         for (const a of Object.values(g.attributes || {})) if (a && a.array) geoBytes += a.array.byteLength;
         if (g.index && g.index.array) geoBytes += g.index.array.byteLength;
       }
+      // shader-only textures: surface scan arrays, the people's bone texture and face atlas
+      if (SA.PBR && SA.PBR.uniforms) for (const k of ['tPbrA', 'tPbrB']) texs.add(SA.PBR.uniforms[k].value);
+      if (SA.Game.pool) for (const t of [SA.Game.pool.boneTex, SA.Game.pool.faceTex]) if (t) texs.add(t);
       let texBytes = 0;
       for (const t of texs) {
         const img = t.image;
         if (!img || !img.width) continue;
-        texBytes += img.width * img.height * 4 * (t.generateMipmaps === false ? 1 : 1.33);
+        const bpp = t.type === THREE.FloatType ? 16 : 4;
+        texBytes += img.width * img.height * (img.depth || 1) * bpp * (t.generateMipmaps === false ? 1 : 1.33);
       }
+      // render targets: shadow map, environment maps and the post-processing buffers
+      const W = R.domElement.width, H = R.domElement.height;
+      let rtBytes = 0;
+      const sun = SA.Game.sun();
+      if (R.shadowMap.enabled && sun.shadow && sun.shadow.mapSize) rtBytes += sun.shadow.mapSize.x * sun.shadow.mapSize.y * 4;
+      rtBytes += Object.keys(SA.Render.envCache || {}).length * 256 * 256 * 6 * 8 * 1.33;
+      if (SA.Render.composer) rtBytes += W * H * 8 * 2 + W * H * 4 + (SA.Render.ao ? W * H * 8 : 0) + W * H * 8 * 0.7;
       const rows = [];
       for (const era of [2026, 1964, 1897]) {
         SA.debug.era(era);
@@ -97,13 +109,15 @@ async function main() {
           const t1 = performance.now();
           SA.debug.sim(3.0);
           const stepMs = (performance.now() - t1) / 90;
-          // one render for the counts (SwiftShader timing is not meaningful)
-          R.render(scene, cam);
-          rows.push({ era, place: name, calls: R.info.render.calls, tris: R.info.render.triangles, stepMs: +stepMs.toFixed(2), npcs: SA.NPCs.list.length, vehicles: SA.Vehicles.list.filter((v) => v.era === era).length });
+          // one full frame (shadows, scene and post-processing passes) for the counts;
+          // SwiftShader timing is not meaningful
+          SA.Render.render(1 / 60);
+          const ri = SA.Render.info();
+          rows.push({ era, place: name, calls: ri.calls, tris: ri.tris, stepMs: +stepMs.toFixed(2), npcs: SA.NPCs.list.length, vehicles: SA.Vehicles.list.filter((v) => v.era === era).length, people: SA.Game.pool.list.length });
           await tick();
         }
       }
-      return { rows, memory: { geometryMB: +(geoBytes / 1048576).toFixed(1), textureMB: +(texBytes / 1048576).toFixed(1), textures: texs.size, geometries: geos.size, rendererInfo: SA.debug.renderInfo() }, quality: SA.Game.settings.quality, pixelRatio: R.getPixelRatio(), shadows: R.shadowMap.enabled };
+      return { rows, memory: { geometryMB: +(geoBytes / 1048576).toFixed(1), textureMB: +(texBytes / 1048576).toFixed(1), renderTargetMB: +(rtBytes / 1048576).toFixed(1), textures: texs.size, geometries: geos.size, rendererInfo: SA.debug.renderInfo() }, quality: SA.Game.settings.quality, pixelRatio: R.getPixelRatio(), shadows: R.shadowMap.enabled, post: !!SA.Render.composer };
     }, PLACES);
     res.loadMs = loadMs;
     report[preset.name] = res;
@@ -112,7 +126,7 @@ async function main() {
   fs.writeFileSync(path.join(out, 'perf.json'), JSON.stringify(report, null, 2));
   for (const [k, r] of Object.entries(report)) {
     console.log(`\n== ${k} (quality ${r.quality}, pixel ratio ${r.pixelRatio}, shadows ${r.shadows}, load ${r.loadMs} ms in headless Chromium)`);
-    console.log(`memory estimate: geometry ${r.memory.geometryMB} MB, textures ${r.memory.textureMB} MB (${r.memory.textures} textures)`);
+    console.log(`memory estimate: geometry ${r.memory.geometryMB} MB, textures ${r.memory.textureMB} MB (${r.memory.textures} textures), render targets ${r.memory.renderTargetMB} MB, post-processing ${r.post}`);
     console.log('era  place                 calls   tris    step ms  npcs veh');
     for (const x of r.rows) console.log(`${x.era} ${x.place.padEnd(22)} ${String(x.calls).padStart(5)} ${String(x.tris).padStart(8)} ${String(x.stepMs).padStart(8)} ${String(x.npcs).padStart(5)} ${String(x.vehicles).padStart(3)}`);
   }

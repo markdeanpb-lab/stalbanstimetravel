@@ -412,8 +412,52 @@
     return P;
   }
 
+  // ---------------------------------------------------------------- gas light (1897)
+  // The gas lamps nearest the camera are real lights, so their pools fall on walls, setts and
+  // people. The lights always exist (shaders never recompile); away from 1897 they are dark.
+  function lampLights(scene) {
+    const L = { lights: [], n: SA.Game.settings.quality === 'low' ? 0 : 4 };
+    for (let i = 0; i < L.n; i++) {
+      const l = new THREE.PointLight(0xffb066, 0, 16, 2);
+      l.castShadow = false;
+      scene.add(l);
+      L.lights.push(l);
+    }
+    const tmp = [];
+    L.update = function () {
+      const e = SA.World.current;
+      const lamps = SA.Game.era === 1897 && e && e.props ? e.props.lamps : null;
+      if (!lamps || !L.n) {
+        for (const l of L.lights) l.intensity = 0;
+        return;
+      }
+      const c = SA.Game.cam.target;
+      tmp.length = 0;
+      for (const lp of lamps) {
+        const d = (lp.x - c.x) * (lp.x - c.x) + (lp.z - c.z) * (lp.z - c.z);
+        if (d < 50 * 50) tmp.push([d, lp]);
+      }
+      tmp.sort((a, b) => a[0] - b[0]);
+      const far = tmp.length > L.n ? Math.sqrt(tmp[L.n][0]) : 50;
+      for (let i = 0; i < L.n; i++) {
+        const l = L.lights[i];
+        const it = tmp[i];
+        if (!it) {
+          l.intensity = 0;
+          continue;
+        }
+        const lp = it[1], d = Math.sqrt(it[0]);
+        l.position.set(lp.x, (lp.y !== undefined ? lp.y : SA.Terrain.height(lp.x, lp.z)) + 3.35, lp.z);
+        // fade a lamp out before the next one takes its light, so pools never pop
+        l.intensity = 14 * U.clamp((far - d) / 6, 0, 1) * (0.94 + 0.06 * Math.sin(SA.Render.time.value * 9 + i * 1.7));
+      }
+    };
+    return L;
+  }
+
   // ---------------------------------------------------------------- lifecycle
   FX.init = function (scene) {
+    FX.lamps = lampLights(scene);
     FX.fw = fireworks(scene);
     FX.pigeons = pigeons(scene);
     FX.pigeons.reset();
@@ -425,6 +469,7 @@
     FX.scaleU.value = R.renderer.domElement.height / (2 * Math.tan((cam.fov * Math.PI) / 360));
     for (const k in FX.eras) FX.eras[k].group.visible = +k === SA.Game.era || !!(SA.TimeKey && SA.TimeKey.trans);
     if (FX.fw) updateFireworks(FX.fw, dt);
+    if (FX.lamps) FX.lamps.update();
     if (FX.pigeons && SA.Game.state !== 'loading') FX.pigeons.update(dt);
   };
 })();

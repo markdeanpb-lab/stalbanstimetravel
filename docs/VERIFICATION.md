@@ -15,6 +15,14 @@ All checks run the real game (`game/index.html`) in headless Chromium through Pl
 
 Final results, for this commit: **`verify.js` 28/28 checks passed**, **`playthrough.js` 21/21 beats (Town Hall ending) and 21/21 beats (Corn Exchange ending)**, no runtime errors and no network requests outside the game folder.
 
+The checks were re-run after each stage of the visual upgrade, and all passed every time:
+
+- the rendering pipeline and scanned surfaces;
+- the skinned people, interior-mapped windows and trees;
+- the new vehicles, effects, conversation camera and score.
+
+The upgrade made software-rendered screenshots slower, up to a minute or more for a frame mid-transition. The tools now allow 180 s per screenshot instead of Playwright's default 30 s.
+
 ## The brief's checklist
 
 | Check | How | Result |

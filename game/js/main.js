@@ -356,6 +356,17 @@
     SA.Discoveries && SA.Discoveries.init();
     Game.showEra(2026);
     SA.Player.teleport(150, -150, Math.PI);
+    // compile every year's shaders now, behind the loading screen, so the first jump never stalls
+    setLoad(0.96, 'Mixing the paint…');
+    await nextFrame();
+    try {
+      for (const k in SA.World.eras) SA.World.eras[k].group.visible = true;
+      if (renderer.compileAsync) await renderer.compileAsync(scene, camera);
+      else renderer.compile(scene, camera);
+    } catch (e) {
+      console.warn('[SA] shader warm-up skipped', e);
+    }
+    for (const k in SA.World.eras) SA.World.eras[k].group.visible = +k === Game.era;
     setLoad(1, 'Ready.');
     await nextFrame();
     Game.state = 'title';

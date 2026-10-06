@@ -23,35 +23,36 @@ Issues are grouped by area and roughly ordered by how noticeable they are.
 ### Performance and memory
 
 1. **All three eras are built at start-up and stay in memory.** Loading to the title screen takes about 4 s in headless Chromium on the test machine and will be longer on a phone. Geometry is about 21 MB. Textures are an estimated 67 MB on Low and 101 MB on High, mostly the three sign atlases and the ground paint. Building an era only when you first wind to it would cut both by about a third.
-2. **There is no automatic quality drop.** The game picks Low on touch devices and High elsewhere, but it does not lower settings if the frame rate stays below target.
+2. **Quality never changes tier by itself.** The game picks Low on touch devices and High elsewhere. Dynamic resolution lowers the render scale to as little as 60–75% while the frame rate stays below target (30 fps on Low, 60 elsewhere), but it never drops to a lower tier. Change the tier under **Settings → Quality**.
 3. **WebGL context loss is not handled.** If a phone browser discards the GPU context, for example after a long time in the background, the page needs a reload.
 
 ### World and visuals
 
 4. **Buildings are generated from OpenStreetMap footprints.** Heights and storey counts are estimated, facades are generic per street zone, and only landmarks and story buildings are authored. Changes between eras are modelled where documented (Christopher Place, the Peahen, Heritage Close, the 1897 yards); other plots keep their 2026 footprint.
 5. **Landmarks are simplified.** The Cathedral is massing plus the Victorian west front, with no interior or detailed tower. The Clock Tower has no interior stair. The Abbey Gateway is two flint blocks bridged over the passage.
-6. **People are low-poly figures** with no faces or facial animation. All dialogue is subtitled text with no recorded voices.
-7. **There are no dynamic lights at night.** 1897 relies on lit windows, lamp glows and pools painted on the ground. Shadows are on High quality only.
-8. **In the narrowest alleys the camera can end up very close.** It cranes up and swings aside first. At under 0.9 m it hides Robin rather than clipping through, but the view is cramped.
-9. **Time-wave transition.** Buildings and props fold and unfold at the ring, but loose meshes such as signs and plaques pop at the ring instead of folding.
+6. **People are procedural.** They have smooth skinned bodies and painted faces, but no facial animation or lip sync, and clothing is coloured by body region rather than modelled garment by garment. All dialogue is subtitled text with no recorded voices.
+7. **Only the nearest gas lamps light the street.** In 1897 the four lamps nearest the camera are real lights. The rest are glows with pools painted on the ground, and the lamp lights cast no shadows. Low quality has no lamp lights. Sun shadows are on Medium quality and above.
+8. **Rooms behind windows are generic.** Interior mapping gives every window bay a room of the same size (about 3 × 3 × 4 m, or 6 m deep for shops and offices). Rooms do not line up with real floor plans, and the arched, lancet and round windows are not set back into the wall.
+9. **In the narrowest alleys the camera can end up very close.** It cranes up and swings aside first. At under 0.9 m it hides Robin rather than clipping through, but the view is cramped.
+10. **Time-wave transition.** Buildings and props fold and unfold at the ring, but loose meshes such as signs and plaques pop at the ring instead of folding.
 
 ### People, traffic and police
 
-10. **Police AI is basic.** Constables follow the pavement graph with A* and cars follow the lane graph. There are no roadblocks or flanking, and units can be lost easily through the walk-through passages (Waxhouse Gate, Half Moon Yard).
-11. **AI traffic has no junction priority or traffic lights.** It stops for people in front of it, but queues can bunch and overlap at junctions.
-12. **Pedestrians separate from each other but sometimes overlap in dense crowds**, such as the 1897 Jubilee crowd by the Town Hall.
-13. **The chase cart follows a fixed route** from the Town Hall to Romeland. It overtakes traffic and eases off when tired, but does not react to the player. If you stand still during the chase, the police catch you and the chase restarts.
+11. **Police AI is basic.** Constables follow the pavement graph with A* and cars follow the lane graph. There are no roadblocks or flanking, and units can be lost easily through the walk-through passages (Waxhouse Gate, Half Moon Yard).
+12. **AI traffic has no junction priority or traffic lights.** It stops for people in front of it, but queues can bunch and overlap at junctions.
+13. **Pedestrians separate from each other but sometimes overlap in dense crowds**, such as the 1897 Jubilee crowd by the Town Hall.
+14. **The chase cart follows a fixed route** from the Town Hall to Romeland. It overtakes traffic and eases off when tired, but does not react to the player. If you stand still during the chase, the police catch you and the chase restarts.
 
 ### Story and saving
 
-14. **The mission is linear between checkpoints.** Reloading mid-chase resumes at the start of the 1897 search (`b2`), by design.
-15. **Save codes are long** (about 1–2 KB of base64). They are checksummed and validated, but awkward to type by hand; copy and paste is expected.
-16. **Only `fund_outcome` drives what you see.** `crabbe_fate` and `josiah_cleared` always change together with it in this mission, and `met_young_edie` is set on every playthrough, so none of them has effects of its own yet (see the revised note in [`DESIGN.md`](DESIGN.md#consequence-flags-opening-mission)).
+15. **The mission is linear between checkpoints.** Reloading mid-chase resumes at the start of the 1897 search (`b2`), by design.
+16. **Save codes are long** (about 1–2 KB of base64). They are checksummed and validated, but awkward to type by hand; copy and paste is expected.
+17. **Only `fund_outcome` drives what you see.** `crabbe_fate` and `josiah_cleared` always change together with it in this mission, and `met_young_edie` is set on every playthrough, so none of them has effects of its own yet (see the revised note in [`DESIGN.md`](DESIGN.md#consequence-flags-opening-mission)).
 
 ### History and data
 
-17. The **research gaps** listed in [`RESEARCH.md`](RESEARCH.md#gaps-to-verify-before-expanding) still apply. They are the 1897 dial, the date the Worley fountain was removed, the lamp pattern, 1964 police-car warning equipment, the town's own Jubilee programme, shop-level detail, and kerbs and steps from a finer terrain model.
-18. Shop names and characters are invented and placed according to the documented use of each frontage where that was known. Nothing represents a real current business.
+18. The **research gaps** listed in [`RESEARCH.md`](RESEARCH.md#gaps-to-verify-before-expanding) still apply. They are the 1897 dial, the date the Worley fountain was removed, the lamp pattern, 1964 police-car warning equipment, the town's own Jubilee programme, shop-level detail, and kerbs and steps from a finer terrain model.
+19. Shop names and characters are invented and placed according to the documented use of each frontage where that was known. Nothing represents a real current business.
 
 ## Fixed during verification
 
@@ -105,7 +106,7 @@ The areas, in order:
 
 ### 5. History pass
 
-- Close the research gaps (see item 17 above) using the Hertfordshire Archives and the St Albans Museums collections.
+- Close the research gaps (see item 18 above) using the Hertfordshire Archives and the St Albans Museums collections.
 - Upgrade the Clock Tower dial and the 1897 street lighting once the sources are confirmed.
 
 ### 6. Tooling

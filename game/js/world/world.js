@@ -659,6 +659,7 @@
     SA.Buildings.finish(ctx, { facade: mats.facade, roof: mats.roof, sign: mats.signMat, chimney: mats.chimney }, group);
     // props, barriers, lamps
     const props = SA.Props.build(eraId, group, col, flags, mats, signAtlas);
+    SA.RoadMarks && SA.RoadMarks.build(eraId, group, mats);
     // all signs are drawn: upload the (cropped) atlas
     signAtlas.finish();
     for (const k of ['signMat', 'signPlain', 'signAlpha']) {

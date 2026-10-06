@@ -16,6 +16,32 @@ This milestone covers the following:
 
 The game runs on three.js in the browser with no build step. Everything it needs is inside the `game/` folder, and it makes no network calls while running.
 
+### What it looks and sounds like
+
+- **Rendering:**
+  - Physically based materials lit by each year's own sky. The sun and moon positions are computed for the real date and time.
+  - Post-processing: ambient occlusion (N8AO), bloom, a film-style colour grade, SMAA, and depth of field in conversations.
+  - Four quality tiers with dynamic resolution.
+- **Surfaces:**
+  - Brick, stucco, render, clay tile, slate, York stone, setts, asphalt and grass are CC0 photo scans from Poly Haven, used at their real size and recoloured to each building's paint or brick.
+  - The knapped flint of the Clock Tower is generated.
+- **Windows:**
+  - Every window is set back into the wall and has a room behind it, rendered by interior mapping: wallpaper, furniture, curtains and shop shelves.
+  - By day the glass reflects the sky. On Jubilee night the lit rooms glow and the nearest gas lamps cast real light.
+- **People:**
+  - Smooth procedural humans, skinned on the GPU in instanced batches, with painted faces, hair, era clothing, dresses and frock coats.
+  - Blended walk, run, idle, sitting, cycling and gesture animations. People turn their heads to look at you.
+- **Vehicles:** rounded bodies with glass, rims, chrome, lamps and UK plates, from a 2026 police estate in Battenburg livery to a 1964 Mini and a spoked-wheel hansom cab.
+- **Life:**
+  - Branching trees with swaying leaf crowns, falling October leaves and chimney smoke.
+  - Pigeons that scatter when you run at them.
+  - Jubilee fireworks over 1897. Each burst lights the town, and its bang arrives late at the speed of sound.
+- **Sound:**
+  - An adaptive synthesised score: piano in 2026, guitar and walking bass in 1964, a parlour waltz in 1897, and a chase cue when the police are after you.
+  - Street reverb, footsteps and era ambience.
+
+All of it is made in code at load time except the surface scans. [`docs/ASSETS.md`](docs/ASSETS.md) lists every asset and licence.
+
 | 2026 | 1964 | 1897 |
 |---|---|---|
 | ![The Clock Tower in 2026](docs/screenshots/eras/2026-clock-tower.jpg) | ![The Clock Tower in 1964](docs/screenshots/eras/1964-clock-tower.jpg) | ![The Clock Tower on Jubilee night, 1897](docs/screenshots/eras/1897-clock-tower.jpg) |
@@ -107,10 +133,14 @@ There are two alternatives. You can copy the `game/` folder to the phone and ser
 | **Eras** | Era-specific buildings: Christopher Place / 1964 rubble car park / 1897 Gentle's Yard; Heritage Close / department store; plot subdivision | Done |
 | | Shopfronts and signage per era (fictional names), lighting, fog, sky, colour grade | Done |
 | | Street furniture per era (gas lamps, limes/planes, K6, Penfold box, Belisha beacons, market stalls, bunting) | Done |
-| | Ambient sound per era (procedural: traffic, crowds, hooves, swifts, brass band, radio, pigeons) | Done |
-| **People** | Instanced pedestrians with era clothing, gawping at anachronisms, comic knock-downs | Done |
-| | Story characters with subtitles for every line | Done (no recorded voices) |
-| **Vehicles** | 2026 hatchback/estate/SUV/van/taxi/bus; 1964 saloons/small car/bakery van/green bus/scooter; 1897 safety bicycle, baker's cart, hansom, dray | Done |
+| | Ambient sound per era (procedural: traffic, crowds, hooves, swifts, brass band, radio, pigeons), street reverb and footsteps | Done |
+| | Adaptive synthesised score (era themes, chase cue, title theme) | Done |
+| | Trees with leaf crowns, falling leaves, chimney smoke, pigeons, Jubilee fireworks | Done |
+| **Rendering** | Physically based materials, scanned surfaces, image-based lighting from the era's sky, AO, bloom, colour grade, SMAA, quality tiers and dynamic resolution | Done |
+| | Interior-mapped rooms behind every window, glass reflections, gas-lamp lights in 1897 | Done |
+| **People** | Skinned procedural humans in instanced batches, with faces, hair, era clothing and blended animation; they gawp at anachronisms and get comically knocked down | Done |
+| | Story characters with subtitles for every line and a cinematic conversation camera | Done (no recorded voices) |
+| **Vehicles** | 2026 hatchback/estate/SUV/van/taxi/bus; 1964 saloons/small car/bakery van/green bus/scooter; 1897 safety bicycle, baker's cart, hansom, dray, all with rounded bodies, glass, rims and lamps | Done |
 | | Enter/exit, arcade handling with real slopes, collisions | Done |
 | | Simple AI traffic that keeps left, stops for people, honks | Done |
 | **Police** | Wanted level that escalates and can be escaped; per-era units (2026 patrol cars and officers; 1964 constables, Noddy bike, bell car; 1897 City Police constables, whistles, sergeant on a bicycle) | Done (basic AI) |
@@ -129,6 +159,7 @@ There are two alternatives. You can copy the `game/` folder to the phone and ser
 - [`docs/RESEARCH.md`](docs/RESEARCH.md): sources, the reasons for each year, and every feature marked documented, inferred or invented.
 - [`docs/KNOWN_ISSUES.md`](docs/KNOWN_ISSUES.md): known issues and a prioritised list of next steps.
 - [`docs/VERIFICATION.md`](docs/VERIFICATION.md): the test checklist, results and screenshots.
+- [`docs/ASSETS.md`](docs/ASSETS.md): the scanned textures, libraries and their licences.
 
 ## Running the checks (developers)
 
@@ -162,6 +193,7 @@ dist/                 curfew-st-albans-m1.zip (the game folder plus docs)
 
 - **Map data** © OpenStreetMap contributors, ODbL 1.0 (openstreetmap.org/copyright). The processed extract is `game/js/data/mapdata.js`; the raw extract is `tools/data/district.osm.gz`.
 - **Terrain** is derived from the Mapzen/AWS Terrain Tiles, which include UK Environment Agency LIDAR (Open Government Licence) and SRTM.
-- **three.js** (MIT) is bundled in `game/vendor/`.
-- All textures, models and sounds are generated in code.
+- **three.js** (MIT), **postprocessing** (Zlib) and **N8AO** (CC0) are bundled in `game/vendor/`.
+- **Surface textures** are CC0 photo scans from Poly Haven (polyhaven.com), credited in [`docs/ASSETS.md`](docs/ASSETS.md). `tools/fetch_textures.py` rebuilds the pack.
+- Everything else (people, vehicles, trees, signs, sounds and music) is generated in code.
 - All characters and businesses are fictional.

@@ -48,6 +48,7 @@ async function main() {
     opts = opts || {};
     const ctx = await browser.newContext({ viewport: { width: opts.w || 960, height: opts.h || 540 }, deviceScaleFactor: 1, hasTouch: !!opts.touch, isMobile: !!opts.touch });
     const page = await ctx.newPage();
+    page.setDefaultNavigationTimeout(180000); // software WebGL loads slowly
     watchRequests(page);
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
@@ -407,6 +408,7 @@ async function main() {
       Object.defineProperty(window, 'localStorage', { get() { throw new Error('denied'); } });
     });
     const page = await ctx.newPage();
+    page.setDefaultNavigationTimeout(180000); // software WebGL loads slowly
     watchRequests(page);
     await page.goto(`http://127.0.0.1:${port}/index.html`);
     const ok = await page.waitForFunction(() => window.SA && SA.Game && SA.Game.state === 'title', null, { timeout: 180000 }).then(() => true).catch(() => false);
@@ -460,6 +462,7 @@ async function main() {
   {
     const ctx = await browser.newContext({ viewport: { width: 960, height: 540 } });
     const page = await ctx.newPage();
+    page.setDefaultNavigationTimeout(180000); // software WebGL loads slowly
     watchRequests(page);
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
