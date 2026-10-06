@@ -132,6 +132,10 @@ async function main() {
         SA.debug.era(era);
         SA.Police.clear();
         SA.Traffic.clearEra(); // no AI traffic in the way, so runs are repeatable
+        // and none spawned while the check runs: traffic tops itself up at random, and a new car
+        // can appear in the test vehicle's path
+        const spawnOne = SA.Traffic.spawnOne;
+        SA.Traffic.spawnOne = () => null;
         // George Street, on the centre line of its long straight stretch (about 100 m between the
         // bend below the High Street junction and Romeland), heading downhill towards Romeland
         const nr = SA.World.nearestRoad(-94, -15, (rd) => rd.n === 'George Street', 20);
@@ -192,6 +196,7 @@ async function main() {
         const exited = !SA.Player.vehicle;
         const stand = SA.World.current.col.isFree(SA.Player.ch.x, SA.Player.ch.z, 0.3, 'walk');
         SA.Vehicles.remove(v);
+        SA.Traffic.spawnOne = spawnOne;
         SA.Traffic.spawnEra(era);
         const f = (x) => +x.toFixed(2);
         return { grade: f((SA.Terrain.height(s.x - ux * 8, s.z - uz * 8) - SA.Terrain.height(s.x + ux * 8, s.z + uz * 8)) / 16 * 100) + '%', entered, creep: f(creep), coastDown: f(coastDown), coastUp: f(coastUp), maxSpeed: f(maxSpeed), dropped: f(dropped), climbed: f(climbed), offGround, stopped, exited, standFree: stand };

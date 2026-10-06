@@ -180,19 +180,41 @@
       return g;
     };
     const mergeH = (list) => THREE.BufferGeometryUtils.mergeGeometries(list.map(strip));
+    const lathe = (pts, n) => new THREE.LatheGeometry(pts.map((q) => new THREE.Vector2(q[0], q[1])), n);
+    const bump = (d, w) => Math.exp(-(d / w) * (d / w));
+    function horseBarrel() {
+      let g = lathe([[0, -1.0], [0.17, -0.95], [0.27, -0.86], [0.33, -0.7], [0.355, -0.5], [0.345, -0.25], [0.34, 0], [0.345, 0.25], [0.35, 0.5], [0.33, 0.7], [0.27, 0.85], [0.16, 0.95], [0, 0.99]], 18).rotateX(Math.PI / 2);
+      g.deleteAttribute('uv');
+      g.deleteAttribute('normal');
+      g = THREE.BufferGeometryUtils.mergeVertices(g, 1e-4);
+      const p = g.attributes.position;
+      for (let i = 0; i < p.count; i++) {
+        const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+        const r = Math.hypot(x, y) || 1;
+        const top = 0.08 * bump(z - 0.45, 0.22) - 0.03 * bump(z, 0.3) + 0.05 * bump(z + 0.55, 0.25);
+        const bot = -0.05 * bump(z - 0.35, 0.3) + 0.09 * bump(z + 0.42, 0.17);
+        const ny = y * 1.12 + (y > 0 ? top * (y / r) : bot * (-y / r));
+        p.setXYZ(i, x * 0.88, ny, z);
+      }
+      g.computeVertexNormals();
+      return g;
+    }
     V.horses = {
-      // the barrel: one smooth lathe from chest to rump, deeper than it is wide
-      body: mk(new THREE.LatheGeometry([[0.0, -0.98], [0.2, -0.92], [0.3, -0.75], [0.34, -0.45], [0.35, -0.1], [0.34, 0.2], [0.33, 0.45], [0.3, 0.7], [0.22, 0.88], [0.0, 0.97]].map((q) => new THREE.Vector2(q[0], q[1])), 16).rotateX(Math.PI / 2).scale(0.92, 1.18, 1), 12),
-      neck: mk(new THREE.CylinderGeometry(0.11, 0.24, 0.95, 12).translate(0, 0.47, 0), 12),
+      // the body: one smooth barrel, then shaped along its length (withers, a slight dip in the
+      // back, the croup; a deep girth and the tuck-up in front of the hind legs), with the
+      // shoulders and thighs the legs hang from
+      body: mk(mergeH([horseBarrel(), sphere(0.11, 0.26, 0.17, 0.17, -0.14, 0.56), sphere(0.11, 0.26, 0.17, -0.17, -0.14, 0.56), sphere(0.12, 0.29, 0.22, 0.18, -0.1, -0.6), sphere(0.12, 0.29, 0.22, -0.18, -0.1, -0.6)]), 12),
+      // the neck: deep from front to back and narrow across, thick where it meets the chest
+      neck: mk(lathe([[0, -0.08], [0.27, -0.04], [0.25, 0.15], [0.2, 0.4], [0.155, 0.65], [0.13, 0.86], [0.12, 0.96], [0, 1.0]], 12).scale(0.6, 1, 1), 12),
       // head: poll, broad cheeks, a long nose and a soft muzzle, narrower than it is deep; ears
-      head: mk(mergeH([new THREE.LatheGeometry([[0, 0.06], [0.1, 0.03], [0.13, -0.08], [0.125, -0.2], [0.09, -0.36], [0.085, -0.5], [0.095, -0.58], [0.06, -0.64], [0, -0.65]].map((q) => new THREE.Vector2(q[0], q[1])), 12).scale(0.72, 1, 1), new THREE.ConeGeometry(0.035, 0.13, 6).translate(0.055, 0.1, -0.02), new THREE.ConeGeometry(0.035, 0.13, 6).translate(-0.055, 0.1, -0.02)]), 12),
+      head: mk(mergeH([lathe([[0, 0.07], [0.1, 0.04], [0.14, -0.06], [0.14, -0.16], [0.115, -0.28], [0.09, -0.42], [0.085, -0.52], [0.097, -0.59], [0.07, -0.65], [0, -0.67]], 14).scale(0.62, 1, 1.0), sphere(0.085, 0.15, 0.1, 0, -0.17, -0.07), new THREE.ConeGeometry(0.035, 0.14, 6).translate(0.05, 0.11, -0.02), new THREE.ConeGeometry(0.035, 0.14, 6).translate(-0.05, 0.11, -0.02)]), 12),
       joint: mk(new THREE.SphereGeometry(0.055, 8, 6), 48),
       mane: mk(new THREE.BoxGeometry(0.05, 0.85, 0.09).translate(0, 0.45, -0.1), 12),
       collar: mk(new THREE.TorusGeometry(0.24, 0.06, 6, 14).rotateX(Math.PI / 2), 12),
-      upper: mk(new THREE.CylinderGeometry(0.085, 0.06, 0.48, 8).translate(0, -0.24, 0), 48),
+      upper: mk(new THREE.CylinderGeometry(0.105, 0.055, 0.48, 10).scale(0.85, 1, 1.15).translate(0, -0.24, 0), 48),
       lower: mk(new THREE.CylinderGeometry(0.042, 0.04, 0.42, 7).translate(0, -0.21, 0), 48),
       hoof: mk(new THREE.CylinderGeometry(0.05, 0.065, 0.07, 8).translate(0, -0.035, 0), 48),
-      tail: mk(new THREE.CylinderGeometry(0.06, 0.1, 0.7, 7).translate(0, -0.35, 0), 12),
+      tail: mk(new THREE.CylinderGeometry(0.05, 0.12, 0.75, 8).translate(0, -0.37, 0), 12),
     };
     // police lights (flashing) as small emissive boxes
     const lm = new THREE.MeshBasicMaterial({ color: 0x3a7bff });
@@ -576,7 +598,7 @@
     hput(H.neck, base, 0, 1.42 + bob, o + 0.6, na, col);
     hput(H.mane, base, 0, 1.42 + bob, o + 0.6, na, dark);
     hput(H.collar, base, 0, 1.42 + 0.22 * Math.cos(na) + bob, o + 0.6 + 0.22 * Math.sin(na), na, '#3a2618');
-    hput(H.head, base, 0, 1.42 + 0.92 * Math.cos(na) + bob, o + 0.6 + 0.92 * Math.sin(na), -1.05 + nod, col);
+    hput(H.head, base, 0, 1.42 + 0.92 * Math.cos(na) + bob, o + 0.6 + 0.92 * Math.sin(na), -0.62 + nod, col);
     hput(H.tail, base, 0, 1.52 + bob, o - 1.0, 0.35 + Math.sin(ph * 0.5) * 0.12, dark);
     // legs: the upper bone swings from the shoulder or hip; the lower one folds back at the knee
     // in front and forward at the hock behind as the leg comes through

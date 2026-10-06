@@ -50,7 +50,7 @@
       "detail": {
         "era": 1964,
         "stage": "a1",
-        "rest": 30,
+        "rest": 29,
         "slips": [
           {
             "era": 1964,
@@ -128,8 +128,8 @@
         "maxWanted": 1,
         "units": 1,
         "sameCart": true,
-        "cartNode": 6,
-        "cartSpeed": 4.5
+        "cartNode": 7,
+        "cartSpeed": 4.8
       }
     },
     {
@@ -224,7 +224,7 @@
       "detail": {
         "cont": true,
         "era": 2026,
-        "stage": null,
+        "stage": "free",
         "flags": {
           "clockStopped1897": true,
           "met_young_edie": true,
@@ -242,5 +242,5 @@
       "detail": []
     }
   ],
-  "wallSeconds": 1025
+  "wallSeconds": 1282
 }

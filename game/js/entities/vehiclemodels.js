@@ -152,6 +152,13 @@
     for (let i = 0; i < 12; i++) T.push(finish(at(new THREE.BoxGeometry(0.025, r - 0.05, 0.025).translate(0, (r - 0.05) / 2, 0), x, y, z, (i / 12) * Math.PI * 2), color || '#2a1e14', S.wood));
   }
   VM.spokedWheel = spokedWheel;
+  // a pair of wheels on one axle in dark wheel arches. The body has no cut-outs, so each arch is
+  // the end of a dark drum just proud of the body side; the tyres stand 3 cm proud of the arch so
+  // the rims and spokes show in front of it
+  function axle(T, half, y, z, r, w, style, archR) {
+    T.push(finish(at(cyl(archR, archR, half * 2, 22), 0, y, z, 0, 0, Math.PI / 2), '#0b0b0b', S.rubber));
+    for (const sx of [-1, 1]) wheel(T, sx * (half + 0.03 - w / 2), y, z, r, w, style);
+  }
 
   // a motor car from a handful of measurements
   function car(o) {
@@ -187,8 +194,7 @@
     if (o.bPillar !== false) pillar((c0 + c1) / 2 + (o.bShift || 0), (t0 + t1) / 2 + (o.bShift || 0), 0.08); // B
     // wheel arches (dark openings) and wheels
     for (const wz of o.wheels) {
-      T.push(finish(at(cyl(o.wr + 0.06, o.wr + 0.06, W + 0.005, 22), 0, o.wr, wz, 0, 0, Math.PI / 2), '#0b0b0b', S.rubber));
-      for (const sx of [-1, 1]) wheel(T, sx * (W / 2 - 0.11), o.wr, wz, o.wr, o.ww || 0.2, o.rim);
+      axle(T, W / 2 + 0.0025, o.wr, wz, o.wr, o.ww || 0.2, o.rim, o.wr + 0.06);
     }
     // bumpers
     const chromeB = o.bumper === 'chrome';
@@ -237,8 +243,8 @@
     extra: (P, T) => {
       // Battenburg livery and a roof light bar
       for (let i = 0; i < 6; i++) {
-        const z = -2.0 + i * 0.8;
-        for (const sx of [-1, 1]) for (const row of [0, 1]) T.push(finish(at(new THREE.BoxGeometry(0.01, 0.2, 0.78), sx * 0.915, 0.52 + row * 0.2, z + 0.4), (i + row) % 2 ? '#1d3fb3' : '#e7ff1c', S.paint));
+        const z = -2.1 + i * 0.7;
+        for (const sx of [-1, 1]) for (const row of [0, 1]) T.push(finish(at(new THREE.BoxGeometry(0.01, 0.2, 0.68), sx * 0.915, 0.52 + row * 0.2, z + 0.35), (i + row) % 2 ? '#1d3fb3' : '#e7ff1c', S.paint));
       }
       T.push(finish(at(rbox(1.15, 0.12, 0.3, 0.05), 0, 1.6, -0.25), '#20242a', S.plastic));
       for (const sx of [-1, 1]) T.push(finish(at(rbox(0.5, 0.1, 0.26, 0.04), sx * 0.3, 1.63, -0.25), sx < 0 ? '#2457d6' : '#2457d6', S.amber));
@@ -255,8 +261,7 @@
     T.push(finish(at(rbox(1.84, 0.62, 0.05, 0.03), 0, 1.6, 1.55, -0.62), '#121820', S.glass));
     for (const sx of [-1, 1]) T.push(finish(at(new THREE.BoxGeometry(0.01, 0.48, 0.8), sx * 0.985, 1.62, 1.0), '#121820', S.glass));
     for (const wz of [1.85, -1.8]) {
-      T.push(finish(at(cyl(0.44, 0.44, 2.005, 22), 0, 0.38, wz, 0, 0, Math.PI / 2), '#0b0b0b', S.rubber));
-      for (const sx of [-1, 1]) wheel(T, sx * 0.89, 0.38, wz, 0.38, 0.24, 'steel');
+      axle(T, 1.0025, 0.38, wz, 0.38, 0.24, 'steel', 0.44);
     }
     for (const sz of [1, -1]) T.push(finish(at(rbox(2.04, 0.22, 0.14, 0.06), 0, 0.4, sz * 2.69), '#1d1f22', S.plastic));
     for (const sx of [-1, 1]) {
@@ -277,8 +282,7 @@
     T.push(finish(at(new THREE.BoxGeometry(1.5, 0.24, 0.04), 0, 2.98, 5.5), '#ff9a1a', S.sign));
     T.push(finish(at(rbox(2.52, 0.34, 10.8, 0.08), 0, 0.42, 0), '#1d1f22', S.plastic));
     for (const wz of [3.6, -3.4]) {
-      T.push(finish(at(cyl(0.56, 0.56, 2.51, 22), 0, 0.5, wz, 0, 0, Math.PI / 2), '#0b0b0b', S.rubber));
-      for (const sx of [-1, 1]) wheel(T, sx * 1.1, 0.5, wz, 0.5, 0.3, 'steel');
+      axle(T, 1.255, 0.5, wz, 0.5, 0.3, 'steel', 0.56);
     }
     for (const sx of [-1, 1]) {
       T.push(finish(at(rbox(0.3, 0.14, 0.06, 0.03), sx * 0.95, 0.75, 5.5), '#f4f6f8', S.lamp));
@@ -308,8 +312,7 @@
     for (const sx of [-1, 1]) T.push(finish(at(new THREE.BoxGeometry(0.01, 0.4, 0.55), sx * 0.81, 1.38, 1.1), '#121820', S.glass));
     T.push(finish(at(rbox(1.72, 0.3, 2.3, 0.08), 0, 1.66, -0.6), '#8a3a2a', S.paint));
     for (const wz of [1.4, -1.4]) {
-      T.push(finish(at(cyl(0.38, 0.38, 1.705, 22), 0, 0.32, wz, 0, 0, Math.PI / 2), '#0b0b0b', S.rubber));
-      for (const sx of [-1, 1]) wheel(T, sx * 0.76, 0.32, wz, 0.32, 0.18, 'chromeCap');
+      axle(T, 0.8525, 0.32, wz, 0.32, 0.18, 'chromeCap', 0.38);
     }
     for (const sx of [-1, 1]) {
       T.push(finish(at(cyl(0.09, 0.09, 0.06, 16), sx * 0.55, 0.85, 2.13, Math.PI / 2), '#d8d8d8', S.chrome));
@@ -326,8 +329,7 @@
     T.push(finish(at(rbox(2.43, 0.24, 8.3, 0.08), 0, 2.62, 0), '#e8dcb0', S.paint));
     T.push(finish(at(new THREE.BoxGeometry(1.2, 0.22, 0.04), 0, 4.05, 4.21), '#f0e6c0', S.sign));
     for (const wz of [2.8, -2.6]) {
-      T.push(finish(at(cyl(0.58, 0.58, 2.41, 22), 0, 0.52, wz, 0, 0, Math.PI / 2), '#0b0b0b', S.rubber));
-      for (const sx of [-1, 1]) wheel(T, sx * 1.05, 0.5, wz, 0.5, 0.3, 'steel');
+      axle(T, 1.205, 0.5, wz, 0.5, 0.3, 'steel', 0.58);
     }
     for (const sx of [-1, 1]) T.push(finish(at(cyl(0.12, 0.12, 0.06, 16), sx * 0.85, 1.0, 4.22, Math.PI / 2), '#fffbe6', S.lamp));
     T.push(finish(at(rbox(1.4, 0.45, 0.05, 0.04), 0, 0.85, 4.22), '#cfcfcf', S.chrome));

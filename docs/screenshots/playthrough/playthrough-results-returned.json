@@ -82,7 +82,7 @@
       "detail": {
         "veh": "scooter",
         "stage": "a3",
-        "speed": 4.3
+        "speed": 4.6
       }
     },
     {
@@ -128,8 +128,8 @@
         "maxWanted": 1,
         "units": 1,
         "sameCart": true,
-        "cartNode": 7,
-        "cartSpeed": 4.8
+        "cartNode": 6,
+        "cartSpeed": 4.4
       }
     },
     {
@@ -159,7 +159,7 @@
       "pass": true,
       "detail": {
         "wanted": 0,
-        "secondsToLose": 27,
+        "secondsToLose": 19,
         "stage": "b5"
       }
     },
@@ -242,5 +242,5 @@
       "detail": []
     }
   ],
-  "wallSeconds": 715
+  "wallSeconds": 748
 }

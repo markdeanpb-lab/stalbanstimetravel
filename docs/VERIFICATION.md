@@ -20,7 +20,8 @@ The checks were re-run after each stage of the visual upgrade, and all passed ev
 - the rendering pipeline and scanned surfaces;
 - the skinned people, interior-mapped windows and trees;
 - the new vehicles, effects, conversation camera and score;
-- the road markings, gas-lamp lights, height fog, reshaped horses, street reflections in the windows, lighter vehicle meshes, strand-shaded hair and stocked shop shelves.
+- the road markings, gas-lamp lights, height fog, street reflections in the windows, lighter vehicle meshes, strand-shaded hair and stocked shop shelves;
+- wheels that show in their arches, a corrected police livery, and horses rebuilt with a shaped body, neck and head.
 
 The upgrade made software-rendered screenshots slower, up to a minute or more for a frame mid-transition. The tools now allow 180 s per screenshot instead of Playwright's default 30 s.
 
@@ -49,19 +50,19 @@ Figures are per era, at five places: the Clock Tower, St Peter's Street, the Hig
 
 | Preset | Year | Draw calls | Triangles | Step (ms) | People / vehicles |
 |---|---|---|---|---|---|
-| **Phone**: 915 × 412, Low (no shadows, pixel ratio 1) | 2026 | 58–106 | 333k–376k | 0.6–0.7 | 32 / 12 |
-| | 1964 | 57–103 | 326k–378k | 0.6–0.8 | 35 / 12 |
-| | 1897 | 70–110 | 247k–320k | 0.8–1.2 | 59 / 7 |
-| **Desktop**: 1280 × 720, High (with shadows) | 2026 | 156–216 | 710k–794k | 0.7–1.0 | 46 / 15 |
-| | 1964 | 148–204 | 689k–798k | 0.8–1.1 | 50 / 15 |
-| | 1897 | 176–209 | 579k–742k | 1.0–1.4 | 76 / 10 |
+| **Phone**: 915 × 412, Low (no shadows, pixel ratio 1) | 2026 | 57–105 | 335k–378k | 0.5–0.8 | 32 / 12 |
+| | 1964 | 60–106 | 322k–378k | 0.6–0.9 | 35 / 12 |
+| | 1897 | 68–107 | 242k–324k | 0.8–1.3 | 59 / 7 |
+| **Desktop**: 1280 × 720, High (with shadows) | 2026 | 152–212 | 722k–806k | 0.7–1.0 | 46 / 15 |
+| | 1964 | 148–202 | 700k–808k | 0.7–1.0 | 50 / 15 |
+| | 1897 | 176–215 | 588k–743k | 1.0–1.5 | 76 / 10 |
 
 - On the desktop preset, the draw calls and triangles include the shadow-map pass.
 - The visual upgrade roughly tripled the triangle counts. Most of the increase is the skinned people, the trees, the rounded vehicles and the kerbs. Vehicle meshes were then simplified, which took about a third off each car.
 - GPU memory estimate, with all three years resident:
   - Low: geometry 59 MB, textures 81 MB, render targets 4 MB.
   - High: geometry 60 MB, textures 149 MB, render targets 50 MB (the post-processing buffers).
-- Loading to the title screen takes about 7 s (phone preset) to 9 s (desktop preset) in headless Chromium. This includes decoding the scanned surfaces and compiling every shader up front, so the first jump to each year doesn't stall.
+- Loading to the title screen takes about 7 s (phone preset) to 10 s (desktop preset) in headless Chromium. This includes decoding the scanned surfaces and compiling every shader up front, so the first jump to each year doesn't stall.
 
 Rendering time itself can't be measured meaningfully with software WebGL, so these numbers are the inputs that determine it.
 

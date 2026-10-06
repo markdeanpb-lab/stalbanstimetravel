@@ -8,8 +8,8 @@ These could not be checked in the build environment, which has no GPU, speakers,
 
 | Area | What was done instead | What still needs doing |
 |---|---|---|
-| **Frame rate on a mid-range Android phone (target 30 fps)** | Measured what drives the frame rate in headless Chromium, using the phone preset (915 × 412, Low quality). The results were 57–110 draw calls, 247k–378k triangles, and about 1 ms or less of simulation per step on the test machine. See `tools/perf.js`. The visual upgrade roughly tripled the triangles. | Play for 10 minutes on a real mid-range phone with the counter on (**Settings → Show frame rate**). The heaviest scenes are the Clock Tower in 2026 and 1964, and 1897 with the Jubilee crowd. If Low struggles, cut the number of people and trees first. |
-| **Frame rate on desktop (target 60 fps)** | The same measurements on the High preset: 148–216 draw calls with shadows and 579k–798k triangles, plus full-screen ambient occlusion, bloom and anti-aliasing. | Check on integrated graphics (an Intel Iris/UHD class laptop). |
+| **Frame rate on a mid-range Android phone (target 30 fps)** | Measured what drives the frame rate in headless Chromium, using the phone preset (915 × 412, Low quality). The results were 57–107 draw calls, 242k–378k triangles, and about 1 ms of simulation per step on the test machine. See `tools/perf.js`. The visual upgrade roughly tripled the triangles. | Play for 10 minutes on a real mid-range phone with the counter on (**Settings → Show frame rate**). The heaviest scenes are the Clock Tower in 2026 and 1964, and 1897 with the Jubilee crowd. If Low struggles, cut the number of people and trees first. |
+| **Frame rate on desktop (target 60 fps)** | The same measurements on the High preset: 148–215 draw calls with shadows and 588k–808k triangles, plus full-screen ambient occlusion, bloom and anti-aliasing. | Check on integrated graphics (an Intel Iris/UHD class laptop). |
 | **Audio** | All sound is procedural Web Audio and was not played back here (no audio device). | Listen to each era's ambience, the bell (Gabriel), sirens and whistles, engines and hooves, and check the mix levels. |
 | **Gamepad** | The standard Gamepad API mapping is implemented. | Try an Xbox or PlayStation pad in Chrome and Firefox. |
 | **Touch on a physical phone** | Emulated touch through Chrome DevTools: the stick moves the player, dragging turns the camera, the Key button winds. | Check thumb comfort, two-thumb use (stick and look together), notches and safe areas, and the browser's own gestures (pull to refresh, back swipe). |
@@ -22,7 +22,7 @@ Issues are grouped by area and roughly ordered by how noticeable they are.
 
 ### Performance and memory
 
-1. **All three eras are built at start-up and stay in memory.** Loading to the title screen takes about 7–9 s in headless Chromium on the test machine, including compiling every shader, and will be longer on a phone. Geometry is about 60 MB. Textures are an estimated 81 MB on Low and 149 MB on High: the scanned surfaces, the three sign atlases and the ground paint. High also uses about 50 MB for post-processing buffers. Building an era only when you first wind to it would cut geometry and the era textures by about a third.
+1. **All three eras are built at start-up and stay in memory.** Loading to the title screen takes about 7–10 s in headless Chromium on the test machine, including compiling every shader, and will be longer on a phone. Geometry is about 60 MB. Textures are an estimated 81 MB on Low and 149 MB on High: the scanned surfaces, the three sign atlases and the ground paint. High also uses about 50 MB for post-processing buffers. Building an era only when you first wind to it would cut geometry and the era textures by about a third.
 2. **Quality never changes tier by itself.** The game picks Low on touch devices and High elsewhere. Dynamic resolution lowers the render scale to as little as 60–75% while the frame rate stays below target (30 fps on Low, 60 elsewhere), but it never drops to a lower tier. Change the tier under **Settings → Quality**.
 3. **WebGL context loss is not handled.** If a phone browser discards the GPU context, for example after a long time in the background, the page needs a reload.
 
@@ -63,6 +63,7 @@ These were found by the checks in [`VERIFICATION.md`](VERIFICATION.md) and fixed
 - **Market stalls and phone boxes on St Peter's Street could be walked through.** Their colliders used absolute heights, so they sat below the ground on the uphill end. They are now relative to the ground.
 - **A crime report could follow you through time.** The delayed "passer-by reports you" used a real-time timer. All state-changing delays now run on game time, pause with the game and are dropped when you change year.
 - **The chase cart stalled behind slow traffic and started facing the wrong way.** Traffic on the escape route is now cleared, the cart overtakes, and it joins the route ahead of itself.
+- **The vehicle slope check could fail at random.** The check clears AI traffic first, but traffic tops itself back up at random, so a new car sometimes appeared in the test car's path. The check now holds traffic back while it runs, and gives the same figures on every run.
 - **The Town Hall portico columns were bunched together**, and **the flint looked like camouflage**. The portico now spans the real projecting front, and flint is drawn as packed nodules in lime mortar.
 
 ## Next steps, in priority order
