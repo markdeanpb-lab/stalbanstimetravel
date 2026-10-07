@@ -1,0 +1,86 @@
+/* LAST SPACE - words. All drivers, neighbours and commentators are fictional. */
+window.LS = window.LS || {};
+LS.TEXT = {
+  drivers: [
+    { name: 'Colin Pargeter', short: 'Colin', persona: 'confident', vehicle: 'suv', paint: '#20304a', bio: 'Owns two Montague Excesses. Needs both.' },
+    { name: 'Gary Strood', short: 'Gary', persona: 'bully', vehicle: 'van', paint: '#eeeeea', livery: 'G. STROOD & SON - PLUMBING & HEATING', bio: 'Has a van. Has opinions.' },
+    { name: 'Deborah Fenwick-Hythe', short: 'Deborah', persona: 'nearest', vehicle: 'estate', paint: '#7d93a3', bio: "Chair of the residents' association (self-appointed)." },
+    { name: 'Priya Okonedo', short: 'Priya', persona: 'quiet', vehicle: 'hatch', paint: '#2f7d4f', bio: 'Just wants to get in before The Archers.' },
+    { name: 'Malcolm Ashby', short: 'Malcolm', persona: 'nearest', vehicle: 'hatch', paint: '#b0302c', bio: 'Has lived here since 1987 and will tell you.' },
+    { name: 'Linda Marchmont', short: 'Linda', persona: 'bully', vehicle: 'suv', paint: '#cdbb9b', bio: "Runs the 'Grange Street Parking Watch' group." },
+    { name: 'Trevor Baskerville', short: 'Trevor', persona: 'quiet', vehicle: 'estate', paint: '#5c3b2a', bio: 'Indicates for everything. Including stopping.' },
+    { name: 'Sandra Okafor-Lowe', short: 'Sandra', persona: 'confident', vehicle: 'estate', paint: '#7a2a4a', bio: 'Has a dashcam on both ends and a lawyer on speed dial.' },
+  ],
+  playerNames: ['You', 'Player 2'],
+  paints: { hatch: '#d8a01a', estate: '#3d6fb0', suv: '#2a2a2e', van: '#e8e8e2' },
+
+  neighbours: ['Mrs Cotterill, No. 12', 'Mr Haines, No. 31', 'Bob from the corner', 'A man in a dressing gown', 'Sheila, No. 4', 'Someone behind a net curtain', 'The lady with the Labrador', 'A teenager on a scooter'],
+
+  // situational remarks. {name} = the driver it is about
+  remarks: {
+    outside_house: ["That's directly outside my house.", "That's outside MY house. I can see my kettle from here."],
+    both_cars: ['We actually need both cars.', 'We need both cars. One is for the school run.', "It's not a second car, it's a SPARE car."],
+    indicating: ['I was indicating.', 'I was INDICATING.', 'I had my indicator on, actually.'],
+    permit: ["The permit doesn't guarantee a space.", "The permit doesn't guarantee a space, Linda.", "Read the back of the permit. It doesn't guarantee a space."],
+    residents_group: ["I'm putting this on the residents' group.", "This is going on the residents' group. With photos.", "I'm posting this. I'm posting this right now."],
+    cant_leave: ["You can't leave it there."],
+    bin: ["That's my bin!", "It's collection day tomorrow!", "You don't even pay for the garden waste!", 'Somebody pick that bin up.'],
+    resident: ["That's our second car!", "I've only just had that resprayed.", 'Mind the Montague!', "Oi! That's parked!"],
+    pavement: ["That's a pavement, not a lay-by!", 'There are pushchairs on this street!', 'Get off the pavement!'],
+    horn: ['Some of us have children asleep!', 'Was that horn really necessary?', 'Lovely. Very neighbourly.'],
+    big_hit: ["I'm getting my dashcam footage.", "That's coming off your no-claims.", "I heard that from the bath."],
+    overturned: ["Well, that's not parked either.", 'Is that... on its side?', "That's not how you use a dropped kerb."],
+    recovered: ['Lovely. Now do it again, slower.', 'Oh, here we go again.'],
+    lost_space: ['I was there first!', "I'd literally just reversed into that!", 'I was THERE.'],
+    parked: ["Textbook.", 'And breathe.', "Don't anybody look at me."],
+    suv_push: ['Have you SEEN the size of that thing?', 'That is not a car, that is a postcode.'],
+    small_car: ["It's a Nippa, it fits anywhere. Allegedly."],
+  },
+
+  commentary: {
+    intro: ["Good evening, and welcome to LAST SPACE, live from St Albans, where it's quarter past six and everyone is home.", "Eight drivers. Seven spaces. Four streets. One very long evening."],
+    round: ['Round {round}. {drivers} drivers, {spaces} spaces.', "Round {round}: {spaces} spaces for {drivers} cars. Somebody's walking from the station tonight."],
+    music_stop: ["THE MUSIC'S STOPPED! Spaces are live!", "And the radio cuts out - GO, GO, GO!", "Silence on Verulam Sound! Find a space!"],
+    parked: ['{name} is in - {space}!', '{name} tucks the {vehicle} into {space}.', 'Lovely work from {name}. {space}.'],
+    dislodged: ['{name} has been shunted clean out of {space}!', "Oh, {name}'s been evicted from {space}!", '{by} turfs {name} out of {space}!'],
+    big_hit: ['Oof. That will need a courtesy car.', 'Heavy contact.', "That's a claim.", 'Somewhere an insurer has just sat up in bed.'],
+    horn: ["THERE'S THE HORN!", 'HORN! Hands off the wheel!'],
+    eliminated: ['{name} is out. Catherine Street and a long walk.', "{name} has to park at the station. Brutal.", "{name} is eliminated - and it's raining by the station."],
+    final: ['Two drivers. One space. This is what the whole street has been waiting for.', "It's the final. One space. Grange Street holds its breath."],
+    sudden: ["Nobody parked! It's SUDDEN DEATH. First to hold a space for three seconds takes it all."],
+    winner: ['{name} wins LAST SPACE!', '{name} is the last one parked on the street tonight!'],
+    overturned: ["{name}'s on its side!", "That's not a park, {name}."],
+    extra_space: ['The council has quietly unsuspended another bay.'],
+  },
+
+  radio: ['Verulam Sound FM - Drivetime with Barry', "Verulam Sound FM - traffic: it's bad, sorry", 'Verulam Sound FM - the hits, and Barry'],
+
+  tickets: [
+    ['01X', 'Parked with excessive smugness.'],
+    ['47', "Front wheel 3 cm into a neighbour's sense of entitlement."],
+    ['12B', 'Engine idling while making eye contact.'],
+    ['99', 'Leaving a gap of less than one Nippa.'],
+    ['23', 'Hazard lights used as an apology.'],
+    ['62', 'Vehicle wider than the conversation.'],
+    ['08', 'Mounting the pavement in a tone of voice.'],
+    ['31', 'Owning a second car without a second space.'],
+    ['77', 'Reversing with intent.'],
+    ['50', 'Wheelie bin used as a parking sensor.'],
+    ['14', 'Failure to display a permit, a conscience, or a front bumper.'],
+    ['88', 'Horn sounded after 6 pm in a tone that suggested 7 pm.'],
+  ],
+  fines: ['£70 (£35 if paid within 14 days)', '£70 (£35 with a written apology to No. 12)', '£130 (bus lane rates, for the attitude)', '£70 (reduced if you put the bins back)'],
+
+  awards: {
+    bins: ['The Wheelie Bin Lifetime Achievement Award', '{n} bins. The council has been informed.'],
+    damage: ['Most Battered Vehicle', 'Held together by a residents\' permit.'],
+    pavement: ['The Highway Code Is More Of A Guideline Award', '{n} seconds on the pavement.'],
+    gears: ['The Twelve-Point Turn Medal', '{n} changes of direction. And of heart.'],
+    horn: ['Loudest Opinion', 'Used the horn {n} times. Every one of them was personal.'],
+    shunt: ['Biggest Shunt', 'A {n} mph impact of pure neighbourliness.'],
+    fastest: ['Fastest Park', 'In with {n} seconds of the battle gone. Insufferable.'],
+    restraint: ['The Restraint Award', 'Hit almost nothing. Deeply suspicious.'],
+    residents: ["Residents' Dodgems Cup", '{n} parked cars shunted. Those are people\'s second cars.'],
+    recoveries: ['Most Time Spent Upside Down', 'Needed recovering {n} times.'],
+  },
+};
