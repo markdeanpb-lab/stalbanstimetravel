@@ -185,7 +185,7 @@
       this.world.step(h);
       this.handleImpacts();
       this.drainFx();
-      if (this.phase === 'battle' || this.phase === 'sudden') {
+      if (this.phase === 'battle' || this.phase === 'sudden' || this.phase === 'free') {
         this.parking.time = this.time;
         this.parking.update(h, this.cars, (ev, d) => this.emit(ev, d));
       }
@@ -204,10 +204,10 @@
       } else if (P === 'sudden') {
         this.timeLeft = this.phaseT;
         this.extraT += h;
-        if (this.extraT > 30) { this.extraT = 0; if (this.parking.addActive(this.cars)) this.emit('extraSpace', {}); }
+        if (this.extraT > 20) { this.extraT = 0; if (this.parking.addActive(this.cars)) this.emit('extraSpace', {}); }
         const done = this.alive.find((c) => c.park.parked);
         if (done) this.declareWinner(done);
-        else if (this.phaseT > 150) {
+        else if (this.phaseT > 100) {
           // stalemate guard: whoever came closest wins on a technicality
           const best = this.alive.slice().sort((a, b) => b.park.best - a.park.best || a.damage.total - b.damage.total)[0];
           this.technicality = true;

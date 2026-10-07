@@ -272,7 +272,6 @@
       this.pool.visible = !c.overturned;
       this.shadow.visible = !c.overturned;
       if (this.fade < 1) { g.visible = this.fade > 0.02; }
-      this.badge.visible = c.status === 'active';
     }
     setOpacity(o) {
       if (this._op === o) return; this._op = o;
