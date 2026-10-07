@@ -1,3 +1,4 @@
 node_modules/
 *.log
 .DS_Store
+lastspace/dist/last-space-artifact.html

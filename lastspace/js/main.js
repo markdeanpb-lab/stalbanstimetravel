@@ -278,13 +278,16 @@
     // final freeze-frame: the winner's battered car, perfectly parked
     finaleCam(dt) {
       const F = this.finale, c = F.car; F.t += dt;
-      if (F.t > 1.6 && !F.frozen) { F.frozen = true; document.body.classList.add('freeze'); this.tv.announce(c.name.toUpperCase(), 'WINNER · LAST SPACE: ST ALBANS', 'winner', 6); }
+      if (F.t > 1.6 && !F.frozen) { F.frozen = true; this.tv.big.classList.remove('show'); document.body.classList.add('freeze'); this.tv.announce(c.name.toUpperCase(), 'WINNER · LAST SPACE: ST ALBANS', 'winner', 6); }
       // orbit on the street side of the space, never through the front gardens
       const st = c.park.space, ap = st ? st.sp.access : null;
       const base = ap ? Math.atan2(ap.y - c.y, ap.x - c.x) : c.a + 2.3;
       for (const v of this.views) {
-        const ang = base + Math.sin(F.t * 0.35) * 0.7, R = 6.5 + c.spec.L * 0.35;
-        v.cam.position.set(c.x + Math.cos(ang) * R, 2.2, -(c.y + Math.sin(ang) * R));
+        const ang = base + Math.sin(F.t * 0.35) * 0.7;
+        let R = 6.5 + c.spec.L * 0.35;
+        // pull in until nothing (another car, a wall) sits between the camera and the winner
+        while (R > 3 && this.match.world.raycast(c.x + Math.cos(ang) * (c.spec.L / 2 + 0.3), c.y + Math.sin(ang) * (c.spec.L / 2 + 0.3), c.x + Math.cos(ang) * R, c.y + Math.sin(ang) * R, (o) => o !== c.body && o.kind !== 'bin', true)) R -= 0.5;
+        v.cam.position.set(c.x + Math.cos(ang) * R, 3.2, -(c.y + Math.sin(ang) * R));
         v.cam.lookAt(c.x, 0.7, -c.y);
       }
       if (this.state !== 'play') this.finale = null;
