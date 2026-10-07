@@ -180,7 +180,7 @@
       }
 
       // ---- tyres
-      const hold = Math.abs(drive) < 0.05 && brake < 0.05 && speed < 0.7 && !this.overturned; // auto handbrake when stopped
+      const hold = Math.abs(drive) < 0.05 && brake < 0.05 && speed < 0.7 && !this.overturned && !this.noHold; // auto handbrake when stopped
       const fd = this.steerAngle, cf = Math.cos(b.a + fd), sf = Math.sin(b.a + fd);
       const fx = b.x + c * ha, fy = b.y + s * ha, rx = b.x - c * ha, ry = b.y - s * ha;
       const mu = sp.grip * surfaceGrip;
@@ -199,7 +199,11 @@
         const usedF = Math.abs(lf.J) / (mu * N * dt + 1e-9), usedR = Math.abs(lr.J) / (mu * N * dt + 1e-9);
         const latF = mu * N * dt * Math.sqrt(Math.max(0.05, 1 - usedF * usedF * 0.7));
         let latR = mu * N * dt * Math.sqrt(Math.max(0.05, 1 - usedR * usedR * 0.7));
-        if (hb && speed > 2) latR *= 0.32;
+        if (hb && speed > 2) {
+          latR *= 0.2;
+          // arcade kick: a handbrake with lock on swings the tail out properly
+          b.w += Math.sign(this.steerAngle) * Math.min(1, Math.abs(this.steerAngle) / 0.3) * 3.2 * dt * Math.min(1, speed / 9) * Math.sign(vF || 1);
+        }
         const tf = axleImpulse(b, fx, fy, -sf, cf, latF);
         const tr = axleImpulse(b, rx, ry, -s, c, latR);
         this.skid[0] = tf.sat && Math.abs(tf.u) > 1.6 ? Math.min(1, Math.abs(tf.u) / 8) : (lf.sat && Math.abs(lf.u) > 2 ? 0.6 : 0);
@@ -209,7 +213,7 @@
         b.vx -= b.vx * drag; b.vy -= b.vy * drag;
       }
       // yaw damping (keeps the arcade feel stable)
-      b.w *= 1 - Math.min(0.5, (this.overturned ? 3 : 0.6) * dt);
+      b.w *= 1 - Math.min(0.5, (this.overturned ? 3 : hb ? 0.15 : 0.6) * dt);
 
       // ---- visual suspension: pitch from acceleration, roll from cornering
       const aLong = (vF - (this._vF || 0)) / dt; this._vF = vF;

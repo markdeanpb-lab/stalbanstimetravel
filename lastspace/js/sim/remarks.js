@@ -57,6 +57,11 @@
           const c = d.car, sp = d.space.sp;
           const data = { name: c.short, space: d.space.sp.name || d.space.sp.label.replace(/^(\w)(\w*)/, (a, x, y) => x + y.toLowerCase()), vehicle: c.spec.class.toLowerCase() };
           if (c.home && U.dist(c.home.x, c.home.y, sp.x, sp.y) < 22) { this.say('driver', 'outside_house', c, data, { force: true }); break; }
+          // it is always outside somebody's house: the nearest front door has views
+          if (this.rand() < 0.4) {
+            let h = null, bd = 1e9; for (const q of m.arena.houses) { const dd = U.dist(q.x, q.y, sp.x, sp.y); if (dd < bd) { bd = dd; h = q; } }
+            if (h && bd < 16 && this.say('neighbour', 'outside_house', null, data, { cool: 20, neighbour: `No. ${h.num}, ${h.street}` })) break;
+          }
           if (!this.say('commentary', 'parked', c, data, { cool: 10 })) this.say('driver', 'parked', c, data, { p: 0.3 });
           if ((c.spec.type === 'suv' || c.spec.type === 'van') && this.rand() < 0.35) this.say('driver', 'both_cars', c, data, { cool: 60 });
           break;

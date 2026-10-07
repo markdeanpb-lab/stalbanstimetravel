@@ -36,7 +36,7 @@
       const p = e.line.at(s);
       this.box = { x: p.x, y: p.y, a: p.heading };
       const d = this.dummy = new LS.Car({ index: 6, type: 'hatch', name: 'Practice car', short: 'Practice', paint: '#b8bcc2', x: p.x, y: p.y, a: p.heading + Math.PI / 2 * 0.15 });
-      d.body.setMass(900);
+      d.body.setMass(900); d.noHold = true; // left in neutral, as practice cars are
       this.m.addCar(d);
       LS.Game.addCarView(d);
       LS.Game.tutorialMarker(p.x, p.y, 'box', p.heading);
