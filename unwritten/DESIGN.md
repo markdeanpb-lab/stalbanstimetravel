@@ -231,7 +231,7 @@ All scene logic is a deterministic fixed-step simulation (20 ticks per second) s
 **Thin barrier:** the café's side wall.
 
 **Routines:**
-- **Len:** tea until about 98 s, pays, walks to the cab, warms the engine, then pulls across the junction from about 136 s to 156 s.
+- **Len:** tea until about 106 s, pays, walks to the cab, warms the engine, then pulls across the junction (in it from about 140 s to 155 s).
 - **Iris:** paces between the kiosk and the kerb. When she sees headlights (about 128 s) she runs into the road if the car is still at least 4 s away.
 - **The car:** reaches the junction at 150 s.
 - **Bert:** stays behind the counter.
@@ -247,7 +247,7 @@ All scene logic is a deterministic fixed-step simulation (20 ticks per second) s
 
 **Solutions:**
 - **Iris:** ring the kiosk between about 126 s and 134 s, so she is inside answering silence until it's too late to run out. Or whisper her to a point away from the road at the right moment.
-- **Len:** he needs at least 13 s of delay. A whisper toward the back of the lorry plus the banging café door is enough. **The café wireless alone is enough** ("Hang about, is that the Cooper fight?"), but it exists only if Hal lived. This is the **changed solution**.
+- **Len:** he needs about 10 s of delay. A whisper toward the back of the lorry plus the banging café door is enough. **The café wireless alone is enough** ("Hang about, is that the Cooper fight?"), but it exists only if Hal lived. This is the **changed solution**.
 - **Misread cause:** stopping only the lorry (the cause everyone blames) still kills her, because she swerves into the pole. Len's account at the grave ("she swerved first, like something was in the road") and the clipping ("skid marks show the car swerved left before impact") point to the girl in the road.
 
 ### Scene C: Brin Lane underpass, Fri 22 Sep 1961, from 5.58 pm (countdown about 2 min)
@@ -266,7 +266,7 @@ All scene logic is a deterministic fixed-step simulation (20 ticks per second) s
 
 **Routines:**
 - **Cyril:** trapped, sounding the horn every 12 s.
-- **Kath:** pushes her bicycle along Brin Lane, reaches the mouth at about 42 s, wades in, and works the jammed door for 25 s. She gets Cyril to the west steps, catches her breath for about 5 s, then goes back for the parcel, which is drifting to the grate.
+- **Kath:** pushes her bicycle along Brin Lane, reaches the mouth at about 39 s, wades in, and works the jammed door for 25 s. She gets Cyril to the west steps, catches her breath for about 5 s, then goes back for the parcel, which is drifting to the grate.
 - **The water:** rises about 0.034 per second. At level 4 or above at the grate, she is pinned. Pinned for 8 s means she drowns.
 
 **Solutions:**

@@ -403,10 +403,10 @@ const A_MAP = [
   '#wwwwwwwwww_a_',
   '#wwwwwwwwww_a_',
   '#_____+_____a_',
-  '#ccccccccccccc',
-  '#ccccccccccccc',
-  '#ccccccccccccc',
-  '#ccccccccccccc',
+  '_ccccccccccccc',
+  '_ccccccccccccc',
+  '_ccccccccccccc',
+  '_ccccccccccccc',
 ];
 const AP = {
   BOOK: [9, 2], BENCH: [8, 2], SHELF: [2, 2], COUNTER: [2, 5], PHONE: [1, 5], FUSE: [10, 1],
@@ -2396,6 +2396,7 @@ function drawFloor() {
     const pts = [iso(x - 0.5, y - 0.5, z), iso(x + 0.5, y - 0.5, z), iso(x + 0.5, y + 0.5, z), iso(x - 0.5, y + 0.5, z)];
     poly(pts, floorColor(pal, ch, x, y));
     if (ch === 'r' && LOC.id === 'B' && ((y === 7 || y === 8) && x % 2 === 0 && (x < 6 || x > 9))) { const [mx, my] = iso(x, 7.5); ctx.fillStyle = 'rgba(220,215,190,.25)'; ctx.fillRect(mx - 6, my - 1, 12, 2); }
+    if (ch === 't') { ctx.strokeStyle = 'rgba(30,30,28,.55)'; ctx.lineWidth = 1; for (let k = 1; k < 4; k++) { const a = iso(x - 0.5, y - 0.5 + k / 4), b = iso(x + 0.5, y - 0.5 + k / 4); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); } }
     if (ch === 'p' || ch === 'c') { ctx.fillStyle = 'rgba(0,0,0,.08)'; const [mx, my] = iso(x + (hash(x, y) - 0.5) * 0.5, y + (hash(y, x) - 0.5) * 0.5); ctx.fillRect(mx, my, 2, 1); }
     if (ch === 'g' && LOC.kind === 'cemetery' && hash(x, y) > 0.7) { const [mx, my] = iso(x + hash(y, x) - 0.5, y + hash(x + 1, y) - 0.5); ctx.strokeStyle = 'rgba(120,140,100,.35)'; ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(mx - 1, my - 4); ctx.moveTo(mx + 2, my); ctx.lineTo(mx + 3, my - 3); ctx.stroke(); }
     if (LOC.id === 'C' && c === 'l') { // dip walls
@@ -2486,6 +2487,12 @@ function sceneDynamics(spr) {
   }
   if (LOC.id === 'C') {
     spr.push({ d: 9.5 + 6 + 0.05, f: () => cCar(s) });
+    spr.push({ d: 15.5, f: () => { // rails along the top of the embankment
+      ctx.strokeStyle = 'rgba(150,150,150,.55)'; ctx.lineWidth = 1.2;
+      for (const rx of [8.55, 9.45]) { const a = iso(rx, -0.5, 70), b = iso(rx, 4.5, 70); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+      ctx.strokeStyle = 'rgba(70,60,50,.6)'; ctx.lineWidth = 2;
+      for (let yy = -0.3; yy < 4.5; yy += 0.45) { const a = iso(8.35, yy, 70), b = iso(9.65, yy, 70); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+    } });
     const p = s.parcel;
     if (p.state === 'water') spr.push({ d: p.x + p.y + 0.2, f: () => { const zs = -(4.4 - s.L) * 5; const [x, y] = iso(p.x, p.y, zs + 1); ctx.fillStyle = '#a07a4a'; ctx.fillRect(x - 5, y - 4 + (RM() ? 0 : Math.sin(RS.time * 3) * 1.2), 10, 6); ctx.strokeStyle = '#6a4a2a'; ctx.strokeRect(x - 5, y - 4, 10, 6); } });
     const trainK = s.t >= 30 && s.t <= 39 ? (s.t - 30) / 9 : null;
@@ -2819,14 +2826,22 @@ const HINTS = {
   whisper: () => `${ico('whisper')} Press <kbd>Q</kbd> (or tap Whisper) to whisper to the nearest person. They'll turn and come to look at where you are. It doesn't control them.`,
   scene: () => `Time is frozen. ${ico('inspect')} Inspect everything. When you're ready, press <b>Begin</b> (<kbd>Enter</kbd>): then you can ${ico('possess')} possess and ${ico('whisper')} whisper. <b>Restart</b> (<kbd>R</kbd>) is free and unlimited. Returning to the cemetery makes what happened permanent.`,
 };
+// Hints queue up and show one at a time, each until dismissed or for ~14 seconds.
+const hintQueue = [];
 function hint(id, force) {
   if (!G.know || (G.know.hints[id] && !force)) return;
   G.know.hints[id] = 1; save();
+  hintQueue.push(id); pumpHints();
+}
+function pumpHints() {
+  if (!$('hint').classList.contains('hidden') || !hintQueue.length) return;
+  const id = hintQueue.shift();
   $('hintText').innerHTML = HINTS[id]();
   $('hint').classList.remove('hidden');
-  clearTimeout(hint.tm); hint.tm = setTimeout(() => $('hint').classList.add('hidden'), 16000);
+  clearTimeout(hint.tm); hint.tm = setTimeout(closeHint, id === 'scene' ? 20000 : 14000);
 }
-$('hintX').onclick = () => $('hint').classList.add('hidden');
+function closeHint() { $('hint').classList.add('hidden'); setTimeout(pumpHints, 600); }
+$('hintX').onclick = closeHint;
 
 /* ============================================================ HUD */
 function updateHUD() {
@@ -2884,7 +2899,7 @@ function openModal(html, onBind) {
   if (onBind) onBind($('modalCard'));
   const f = $('modalCard').querySelector('.btn.primary') || $('modalCard').querySelector('.btn'); if (f) setTimeout(() => f.focus(), 30);
 }
-function closeModal() { $('modal').classList.add('hidden'); G.modal = false; }
+function closeModal() { if ($('modal').contains(document.activeElement)) document.activeElement.blur(); $('modal').classList.add('hidden'); G.modal = false; }
 function btns(list) { return '<div class="row">' + list.map((b, i) => `<button class="btn ${b.cls || ''}" data-i="${i}">${b.label}</button>`).join('') + '</div>'; }
 function choice(title, bodyHtml, list) {
   openModal(`<h2>${title}</h2>${bodyHtml}${btns(list)}`, (card) => {
@@ -2893,7 +2908,7 @@ function choice(title, bodyHtml, list) {
 }
 
 /* ======================================================== CONTEXT MENU */
-function closeCtx() { $('ctx').classList.add('hidden'); G.ctxOpen = null; }
+function closeCtx() { const c = $('ctx'); if (c.contains(document.activeElement)) document.activeElement.blur(); c.classList.add('hidden'); G.ctxOpen = null; }
 function actionsFor(t) {
   const acts = [];
   const inScene = LOC.kind === 'scene';
@@ -3125,7 +3140,7 @@ function startScene(id) {
   const def = Core.SCENES[id];
   LOC = { kind: 'scene', id, map: def.map, pal: PAL[id], things: def.objects };
   // where the ghost appears
-  const start = { A: [4, 5], B: [3, 8], C: [6, 4] }[id];
+  const start = { A: [4, 5], B: [3, 8], C: [3, 5] }[id];
   G.ghost.x = start[0]; G.ghost.y = start[1]; G.ghost.path = null; G.ghost.pending = null; G.snapCam = true;
   Audio.stopAll(); G.cemRadio = false;
   Audio.ambience(id === 'A' ? ['room', 'wind'] : id === 'B' ? ['fog', 'wind'] : ['rain', 'wind']);
@@ -3565,7 +3580,8 @@ window.addEventListener('keydown', (e) => {
     if (!$('modal').classList.contains('hidden')) { if (G.mode === 'scene' && G.scene.phase === 'resolved') return; closeModal(); return; }
     openPause(); return;
   }
-  if ((k === 'Enter' || k === 'Space') && document.activeElement && document.activeElement.tagName === 'BUTTON') return;
+  const fe = document.activeElement;
+  if ((k === 'Enter' || k === 'Space') && fe && fe.tagName === 'BUTTON' && fe.offsetParent !== null) return;
   if (G.ctxOpen && /^Digit[1-9]$/.test(k)) { const i = +k.slice(5) - 1; const a = G.ctxOpen.acts[i]; if (a && !a.disabled) { const t = G.ctxOpen.t; closeCtx(); doAct(t, a); } e.preventDefault(); return; }
   if (k === 'KeyJ') { e.preventDefault(); if (!$('journal').classList.contains('hidden')) closeJournal(); else if (!G.modal) openJournal(); return; }
   if (k === 'KeyR' && G.mode === 'scene' && $('pause').classList.contains('hidden') && $('journal').classList.contains('hidden')) { e.preventDefault(); restartScene(); return; }
@@ -3606,7 +3622,10 @@ $('pbtn').onclick = () => openPause();
 $('begin').onclick = () => beginCountdown();
 $('tWhisper').onclick = () => whisper(nearestPerson());
 $('tRestart').onclick = () => restartScene();
-document.addEventListener('click', (e) => { if (!$('ctx').contains(e.target) && e.target !== cv) closeCtx(); });
+document.addEventListener('click', (e) => {
+  if (!$('ctx').contains(e.target) && e.target !== cv) closeCtx();
+  const hb = e.target.closest && e.target.closest('.hbtn, #begin, #touchbar button'); if (hb) hb.blur(); // keys go back to the game
+});
 
 /* --------------------------------------------------------- ghost motion */
 function ghostPassable(x, y) { return locPassableGhost(Math.round(x), Math.round(y)); }
@@ -3676,6 +3695,7 @@ function tryMove(g, dx, dy) {
 /* ---------------------------------------------- cemetery ambient logic */
 function cemeteryTick(dt) {
   if (G.mode !== 'cemetery' || G.modal) return;
+  pumpHints();
   observeAround();
   // record what each grave looked like (the ghost remembers every timeline)
   for (const person of ['hal', 'ashdown', 'kath', 'iris']) {

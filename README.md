@@ -1,5 +1,7 @@
 # CURFEW: St Albans Across Time (Milestone 1)
 
+> Also in this repository: **[The Unwritten: Chapter One](unwritten/README.md)**, a separate narrative ghost game in a single `unwritten/index.html`.
+
 *Curfew* is an open-world game set in the centre of St Albans, Hertfordshire. You play it in the third person in a web browser. You can walk, ride, drive and get chased around a recognisable St Albans in three years:
 
 - **2026**: Monday 5 October, 4.40 pm.

@@ -34,7 +34,7 @@ const ok = (c, m) => { if (c) { pass++; console.log('  ✓ ' + m); } else { fail
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   const ev = (f, a) => page.evaluate(f, a);
   const wait = (ms) => page.waitForTimeout(ms);
-  const shot = async (n) => { if (SHOTS) await page.screenshot({ path: path.join(SHOTS, n + '.png') }); };
+  const shot = async (n) => { if (SHOTS) await page.screenshot({ path: path.join(SHOTS, n + '.jpg'), type: 'jpeg', quality: 80 }); };
   const st = () => ev(() => { const U = window.__unwritten, G = U.G; return {
     mode: G.mode, phase: G.scene && G.scene.phase, t: G.scene ? G.scene.sim.s.t : 0, sig: G.world.signature, charges: G.progress.charges,
     journeys: G.progress.journeys.map(j => j.scene), people: G.cem.people.map(p => p.id), things: G.cem.things.map(t => t.id),
@@ -279,7 +279,7 @@ const ok = (c, m) => { if (c) { pass++; console.log('  ✓ ' + m); } else { fail
   ok(await m.isVisible('#touchbar') && await m.isVisible('#jbtn') && await m.isVisible('#pbtn'), 'touch: on-screen journal, pause and whisper buttons');
   await m.tap('#view', { position: { x: 200, y: 520 } }); await m.waitForTimeout(800);
   ok(await m.evaluate(() => { const g = window.__unwritten.G.ghost; return Math.hypot(g.x - 7, g.y - 11.2) > 0.3; }), 'tap to move');
-  if (SHOTS) await m.screenshot({ path: path.join(SHOTS, '12-mobile.png') });
+  if (SHOTS) await m.screenshot({ path: path.join(SHOTS, '12-mobile.jpg'), type: 'jpeg', quality: 80 });
 
   ok(errors.length === 0, 'no page errors' + (errors.length ? ': ' + errors.slice(0, 5).join(' | ') : ''));
   console.log(`\n${fail ? 'FAILED' : 'PASSED'}: ${pass} passed, ${fail} failed`);
