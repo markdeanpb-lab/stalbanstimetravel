@@ -75,8 +75,11 @@
         const ws = cands.map((s) => {
           let dmin = 1e9;
           for (const c of live) dmin = Math.min(dmin, U.dist(c.x, c.y, s.sp.x, s.sp.y));
-          let w = Math.pow(U.clamp((dmin - 6) / 20, 0.03, 1), 2);
+          let w = Math.pow(U.clamp((dmin - 5) / 12, 0.03, 1), 2); // nobody can simply sit on a space
           if (preferStreet && s.sp.street === preferStreet) w *= 5;
+          // spread the live spaces round the neighbourhood so no corner is left without one
+          let dc = 1e9; for (const q of chosen) dc = Math.min(dc, U.dist(q.sp.x, q.sp.y, s.sp.x, s.sp.y));
+          if (chosen.length) w *= Math.pow(U.clamp(dc / 70, 0.1, 1), 1.5);
           return w;
         });
         let tot = ws.reduce((a, b) => a + b, 0), u = this.rand() * tot, i = 0;

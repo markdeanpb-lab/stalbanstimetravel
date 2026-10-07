@@ -75,10 +75,14 @@ if (has('--park')) {
     let ok = 0, n = 0, tsum = 0; const fails = [];
     for (const sp of arena.spaces) {
       if (only && !sp.label.includes(only)) continue;
+      let any = false;
       for (const seed of [1, 2]) {
         const r = soloPark(t, sp, seed + sp.id * 7);
-        n++; if (r.ok) { ok++; tsum += r.t; } else fails.push(`${sp.label}(${sp.kind})s${seed}:${r.state} out ${r.measure.out.toFixed(2)} ang ${(r.measure.align * 57.3).toFixed(0)}`);
+        n++; if (r.ok) { ok++; tsum += r.t; any = true; } else fails.push(`${sp.label}(${sp.kind})s${seed}:${r.state} out ${r.measure.out.toFixed(2)} ang ${(r.measure.align * 57.3).toFixed(0)}`);
       }
+      // physically possible for every vehicle: keep trying other approaches until one works
+      for (let seed = 3; !any && seed < 11; seed++) { const r = soloPark(t, sp, seed + sp.id * 7); if (r.ok) any = true; }
+      if (!any) { failures++; fails.push('NEVER PARKED IN ' + sp.label); }
     }
     tally[t] = ok / n;
     console.log(`  ${t.padEnd(7)} ${ok}/${n} parked, mean ${(tsum / Math.max(ok, 1)).toFixed(1)} s`);
@@ -108,6 +112,80 @@ if (has('--match')) {
     console.log(`  match ${k} seed ${seed0 + k}: ${ok ? 'OK' : 'FAIL'} ${(m.time / 60).toFixed(2)} min, ${m.round} rounds, winner ${res && res.winner ? res.winner.name + ' (' + res.winner.spec.type + ', ' + res.winner.bot.kind + ')' : '-'}${res && res.technicality ? ' (technicality)' : ''}; parks ${parks}, dislodged ${dislodged}, impacts ${impacts} (${big} big), recoveries ${recov}, remarks ${remarks}; sim ${((Date.now() - t0) / 1000).toFixed(1)} s`);
     console.log('     ' + log.join(' | '));
   }
+}
+
+if (has('--rules')) {
+  console.log('== parking rules and collisions ==');
+  const check = (name, ok, extra) => { console.log(`  ${ok ? 'PASS' : 'FAIL'} ${name}${extra ? ' (' + extra + ')' : ''}`); if (!ok) failures++; };
+  const setup = (type, dx, da) => {
+    const m = new LS.Match({ seed: 9, arena, mode: 'test', botCount: 0, players: [] });
+    const sp = arena.spaces.find((s) => s.kind === 'wide');
+    const car = new LS.Car({ index: 0, type, name: 'T', x: sp.x + Math.cos(sp.a) * (dx || 0), y: sp.y + Math.sin(sp.a) * (dx || 0), a: sp.a + (da || 0) });
+    m.addCar(car);
+    for (const st of m.parking.spaces) st.status = st.sp === sp ? 'active' : 'idle';
+    // clear residents' cars from round the space so the test cars have room
+    for (const b of m.world.bodies) if (b.kind === 'parked' && Math.hypot(b.x - sp.x, b.y - sp.y) < 11) b.enabled = false;
+    m.phase = 'battle'; m.battleLen = 1e9;
+    return { m, car, sp };
+  };
+  const run = (m, s, fn) => { for (let t = 0; t < s; t += 1 / 120) { if (fn) fn(t); m.substep(1 / 120); } };
+  { const { m, car } = setup('hatch'); run(m, 1.5); check('not parked before 2 s', !car.park.parked, 'progress ' + car.park.progress.toFixed(2)); run(m, 0.7); check('parked after 2 s below walking pace', car.park.parked); }
+  { const { m, car } = setup('hatch', 0, 0.4); run(m, 3); check('23 deg off the kerb line is not parked', !car.park.parked, car.park.hint); }
+  { const { m, car, sp } = setup('estate', sp0 => 0); run(m, 0, () => {}); car.body.x += Math.cos(arena.spaces.find((s) => s.kind === 'wide').a) * 1.6; run(m, 3); check('estate overhanging the end line is not parked', !car.park.parked, 'out ' + (car.park.measure ? car.park.measure.out.toFixed(2) : '?') + ' m'); }
+  { const { m, car } = setup('hatch'); car.input.throttle = 1; run(m, 3); check('driving through at speed never parks', !car.park.parked); }
+  // shove a parked hatch with an SUV: a nudge keeps it, a proper shove ends it
+  for (const [label, speed, expectOut] of [['gentle 1 m/s nudge from behind', 1.0, false], ['12 m/s side ram by an SUV', 12, true]]) {
+    const { m, car, sp } = setup('hatch'); run(m, 2.3);
+    const side = expectOut;
+    const suv = new LS.Car({ index: 1, type: 'suv', name: 'S', x: 0, y: 0, a: 0 });
+    m.addCar(suv);
+    const ax = Math.cos(sp.a), ay = Math.sin(sp.a), nx = -ay, ny = ax;
+    // approach from the lane side (towards the kerb) or from behind
+    const lane = (sp.access.x - sp.x) * nx + (sp.access.y - sp.y) * ny > 0 ? 1 : -1;
+    if (side) { suv.body.x = sp.x + nx * lane * 4.0 + ax * 1.2; suv.body.y = sp.y + ny * lane * 4.0 + ay * 1.2; suv.body.setAngle(Math.atan2(-ny * lane, -nx * lane)); }
+    else { suv.body.x = sp.x - ax * 5.3; suv.body.y = sp.y - ay * 5.3; suv.body.setAngle(sp.a); }
+    suv.body.vx = Math.cos(suv.body.a) * speed; suv.body.vy = Math.sin(suv.body.a) * speed;
+    let lost = false; m.on('dislodged', (d) => { if (d.car === car) lost = true; });
+    run(m, 2.5, () => { suv.input.throttle = side ? 1 : 0; });
+    check(label + (expectOut ? ' dislodges' : ' keeps the park'), expectOut ? lost && !car.park.parked : car.park.parked, 'hatch dv ' + car.stats.biggest.toFixed(1) + ' m/s');
+  }
+}
+
+if (has('--impacts')) {
+  console.log('== impacts depend on mass, speed and angle ==');
+  const W = () => { const w = new LS.Physics.World(); return w; };
+  const pair = (ta, tb, speed, layout) => {
+    const w = W(), a = new LS.Car({ index: 0, type: ta, name: 'A', x: 0, y: 0, a: 0 }), b = new LS.Car({ index: 1, type: tb, name: 'B', x: 0, y: 0, a: 0 });
+    w.add(a.body); w.add(b.body);
+    const flat = { kerb: () => -5, kerbGrad: () => [0, 1] };
+    if (layout === 'tbone') { a.body.x = -6; b.body.x = 0; b.body.y = 0; b.body.setAngle(Math.PI / 2); }
+    if (layout === 'headon') { a.body.x = -6; b.body.x = 6; b.body.setAngle(Math.PI); b.body.vx = -speed; }
+    if (layout === 'corner') { a.body.x = -6; a.body.y = 0; b.body.x = 0; b.body.y = 1.7; b.body.setAngle(Math.PI / 2); }
+    a.body.vx = speed;
+    let worst = { a: 0, b: 0 };
+    for (let t = 0; t < 1.5; t += 1 / 120) {
+      a.step(1 / 120, flat, t); b.step(1 / 120, flat, t);
+      w.step(1 / 120);
+      for (const ev of w.events) {
+        if (ev.A === a.body) a.takeHit(ev, ev.dvA, -ev.nx, -ev.ny, b, t); if (ev.B === a.body) a.takeHit(ev, ev.dvB, ev.nx, ev.ny, b, t);
+        if (ev.A === b.body) b.takeHit(ev, ev.dvA, -ev.nx, -ev.ny, a, t); if (ev.B === b.body) b.takeHit(ev, ev.dvB, ev.nx, ev.ny, a, t);
+        if (ev.A === a.body || ev.B === a.body) worst.a = Math.max(worst.a, ev.A === a.body ? ev.dvA : ev.dvB); if (ev.A === b.body || ev.B === b.body) worst.b = Math.max(worst.b, ev.A === b.body ? ev.dvA : ev.dvB); }
+    }
+    return { a, b, worst, bMoved: Math.hypot(b.body.x - (layout === 'headon' ? 6 : 0), b.body.y - (layout === 'corner' ? 1.7 : 0)), bSpin: Math.abs(b.body.a - (layout === 'headon' ? Math.PI : Math.PI / 2)) };
+  };
+  const r1 = pair('suv', 'hatch', 10, 'tbone'), r2 = pair('hatch', 'suv', 10, 'tbone');
+  console.log(`  SUV T-bones hatch at 10 m/s: hatch shoved ${r1.bMoved.toFixed(1)} m, hatch dv ${r1.worst.b.toFixed(1)}, SUV dv ${r1.worst.a.toFixed(1)}`);
+  console.log(`  hatch T-bones SUV at 10 m/s: SUV shoved ${r2.bMoved.toFixed(1)} m, SUV dv ${r2.worst.b.toFixed(1)}, hatch dv ${r2.worst.a.toFixed(1)}`);
+  if (!(r1.bMoved > r2.bMoved * 1.8)) failures++;
+  const s5 = pair('estate', 'estate', 5, 'tbone'), s15 = pair('estate', 'estate', 15, 'tbone');
+  console.log(`  estate into estate: 5 m/s shoves ${s5.bMoved.toFixed(1)} m, 15 m/s shoves ${s15.bMoved.toFixed(1)} m; damage ${s5.b.damage.total.toFixed(2)} vs ${s15.b.damage.total.toFixed(2)}`);
+  if (!(s15.bMoved > s5.bMoved * 2 && s15.b.damage.total > s5.b.damage.total * 3)) failures++;
+  const c = pair('estate', 'estate', 10, 'corner'), t = pair('estate', 'estate', 10, 'tbone');
+  console.log(`  rear-corner hit spins the victim ${(c.bSpin * 57.3).toFixed(0)} deg vs centre hit ${(t.bSpin * 57.3).toFixed(0)} deg`);
+  if (!(c.bSpin > t.bSpin + 0.3)) failures++;
+  const h = pair('estate', 'estate', 9, 'headon');
+  console.log(`  head-on at 9 + 9 m/s: both stop (A ${Math.abs(h.a.forward).toFixed(1)} m/s after), dv ${h.worst.a.toFixed(1)} m/s, front damage ${h.a.damage.front.toFixed(2)}, bumper ${h.a.parts.bumperF ? 'on' : 'off'}`);
+  if (!(h.worst.a > 7)) failures++;
 }
 
 process.exitCode = failures ? 1 : 0;

@@ -226,8 +226,10 @@
         const ca = A.user && A.user.car, cb = B.user && B.user.car;
         // severity is what a car felt (a 14 kg bin flying off at 20 m/s is not a 20 m/s crash)
         const sev = Math.max(ca ? ev.dvA : 0, cb ? ev.dvB : 0, (!ca && !cb) ? Math.max(ev.dvA, ev.dvB) : 0);
-        if (ca) ca.takeHit(ev, ev.dvA, -ev.nx, -ev.ny, cb || null, this.time);
-        if (cb) cb.takeHit(ev, ev.dvB, ev.nx, ev.ny, ca || null, this.time);
+        // a car pinned against a wall can see solver impulses bigger than the real closing speed
+        const cap = ev.approach * 1.5 + 1.5;
+        if (ca) ca.takeHit(ev, Math.min(ev.dvA, cap), -ev.nx, -ev.ny, cb || null, this.time);
+        if (cb) cb.takeHit(ev, Math.min(ev.dvB, cap), ev.nx, ev.ny, ca || null, this.time);
         if (ca && cb) {
           const agg = Math.hypot(A.vx, A.vy) > Math.hypot(B.vx, B.vy) ? ca : cb;
           const vic = agg === ca ? cb : ca;

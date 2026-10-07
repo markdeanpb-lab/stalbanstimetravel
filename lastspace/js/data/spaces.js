@@ -35,5 +35,5 @@ LS.SPACE_POOL = [
   // Grange Court residents' car park (perpendicular bays)
   { kind: 'bay', side: -1, slot: 1, label: 'COURT 1' },
   { kind: 'bay', side: -1, slot: 3, label: 'COURT 2' },
-  { kind: 'bay', side: 1, slot: 3, label: 'COURT 3' },
+  { kind: 'bay', side: -1, slot: 2, label: 'COURT 3' },
 ];

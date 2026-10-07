@@ -503,6 +503,8 @@
             it.beacon.material.color.set(o.identity.color); it.fillMat.opacity = 0.75;
           } else { it.owner.visible = false; it.beacon.material.color.set(0x6fb8ff); }
         }
+        const fin = LS.Game.match && LS.Game.match.phase === 'finale';
+        it.icon.visible = !fin; if (fin) it.beacon.visible = false;
         if (s === 'active') { it.beacon.material.opacity = parked ? 0.1 : 0.14 + Math.sin(t * 4) * 0.05; it.icon.position.y = 3.6 + Math.sin(t * 3 + st.sp.id) * 0.15; }
         if (s === 'candidate') it.icon.position.y = 3.4 + Math.sin(t * 2 + st.sp.id) * 0.2;
       }

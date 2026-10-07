@@ -84,7 +84,7 @@ body.bighud .vhud { font-size: 19px; }
 .lowerthird span { color: var(--dim); font-size: 0.9em; }
 
 /* ---------------------------------------------------------------- menus */
-.overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(6, 8, 12, 0.55); overflow: auto; padding: 16px; }
+.overlay { position: fixed; inset: 0; display: flex; align-items: safe center; justify-content: center; background: rgba(6, 8, 12, 0.55); overflow: auto; padding: 16px; }
 .overlay.title { background: linear-gradient(90deg, rgba(6,8,12,0.92) 0%, rgba(6,8,12,0.55) 55%, rgba(6,8,12,0) 100%); justify-content: flex-start; }
 .title-card { max-width: 620px; margin-left: 4vw; }
 .kicker { color: var(--accent); letter-spacing: 0.2em; font-size: 0.8em; font-weight: bold; }

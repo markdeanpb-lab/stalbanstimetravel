@@ -279,8 +279,11 @@
     finaleCam(dt) {
       const F = this.finale, c = F.car; F.t += dt;
       if (F.t > 1.6 && !F.frozen) { F.frozen = true; document.body.classList.add('freeze'); this.tv.announce(c.name.toUpperCase(), 'WINNER · LAST SPACE: ST ALBANS', 'winner', 6); }
+      // orbit on the street side of the space, never through the front gardens
+      const st = c.park.space, ap = st ? st.sp.access : null;
+      const base = ap ? Math.atan2(ap.y - c.y, ap.x - c.x) : c.a + 2.3;
       for (const v of this.views) {
-        const ang = c.a + 2.3 + F.t * 0.12, R = 7 + c.spec.L * 0.4;
+        const ang = base + Math.sin(F.t * 0.35) * 0.7, R = 6.5 + c.spec.L * 0.35;
         v.cam.position.set(c.x + Math.cos(ang) * R, 2.2, -(c.y + Math.sin(ang) * R));
         v.cam.lookAt(c.x, 0.7, -c.y);
       }
@@ -307,6 +310,7 @@
   // debug / test hooks (used by tools/browser-check.js)
   LS.debug = {
     sim(seconds) { const m = G.match; const n = Math.round(seconds * 30); for (let i = 0; i < n; i++) { m.step(1 / 30); if (G.tutorial) G.tutorial.update(1 / 30); } G.updateVisuals(1 / 30, performance.now() / 1000, true); G.render(); },
+    autopilot(persona) { const m = G.match; for (const c of m.humans) { const b = new LS.Bot(c, m, persona || 'nearest', LS.U.rng(5 + c.player), 'normal'); m.bots.push(b); c.bot = b; } },
     state() { const m = G.match; return m && { phase: m.phase, round: m.round, time: m.time, alive: m.alive.length, cars: m.cars.map((c) => ({ name: c.short, status: c.status, parked: c.park.parked, damage: +c.damage.total.toFixed(2) })) }; },
   };
 

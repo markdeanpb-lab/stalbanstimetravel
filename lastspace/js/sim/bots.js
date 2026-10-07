@@ -51,7 +51,7 @@
     navTo(x, y) {
       const c = this.car;
       const pen = (e) => (this.edgePenalty.get(e.id) || 0);
-      const tp = { hatch: 45, estate: 65, suv: 85, van: 95 }[c.spec.type]; // reversing back to a junction is slow; big cars more so
+      const tp = { hatch: 110, estate: 140, suv: 170, van: 190 }[c.spec.type]; // reversing back to a junction is slow; big cars more so
       const r = this.m.arena.navPath(c.x, c.y, x, y, { penalty: pen, heading: c.gear === -1 && c.forward < -1 ? c.a + Math.PI : c.a, turnPenalty: tp });
       const pts = r.pts.slice();
       pts.push([x, y]);
@@ -108,7 +108,7 @@
           for (let q = best + 2; q < Math.min(P.length, best + 45); q += 1) if (Math.abs(U.wrap(P.at(q).heading - back)) > 0.9) { sTurn = q; break; }
           const nearJ = this.m.arena.junctions.some((j) => U.dist(j.x, j.y, c.x, c.y) < 16);
           if (sTurn != null) this.revLeg = { until: sTurn + c.spec.L * 0.55 + 1.5 };
-          else if (nearJ || this.m.arena.streetAt(c.x, c.y) === this.m.arena.byName['Grange Court']) { this.turn = { head: pd, t: 0, dir: 1, legT: 0, side: 0 }; return remain; }
+          else if (nearJ || this.m.arena.streetAt(c.x, c.y) === this.m.arena.byName['Grange Court']) { this.turn = { why: 'junction', head: pd, t: 0, dir: 1, legT: 0, side: 0 }; return remain; }
           else this.revLeg = { until: Math.min(P.length, best + 30) };
           return remain;
         }
@@ -265,7 +265,7 @@
           }
         }
       }
-      if (this.state === 'choose' || (this.state === 'goto' && this.stateT > 5) || this.replan) {
+      if (this.state === 'choose' || (this.state === 'goto' && this.stateT > 12 && this.stateT % 6 < 0.4) || this.replan) {
         this.replan = false;
         const best = this.pickSpace(act);
         if (best && best.attack) { this.startAttack(best.attack, best.st); return; }
@@ -279,8 +279,12 @@
       const ratio = c.spec.mass / victim.spec.mass;
       const late = this.m.timeLeft < 22;
       const free = this.m.parking.active.filter((s) => !(s.owner && s.owner.park.parked)).length;
-      if (free === 0) return this.p.attackBias >= 0; // nothing else to do: everyone becomes a bully
-      return (this.p.attackBias >= 1 && ratio > 0.85) || (this.p.ram >= 1 && ratio > 1.2) || (late && ratio > 1.4 && this.p.attackBias > 0);
+      const d = U.dist(c.x, c.y, victim.x, victim.y);
+      if (free === 0) return this.p.attackBias >= 0 && d < 120; // nothing else to do: everyone becomes a bully
+      if (d > 70) return false;
+      // the bully prefers a vulnerable parked car to a free space once spaces are scarce or time is short
+      const scarce = free <= 1 || this.m.timeLeft < 26;
+      return (this.p.attackBias >= 1 && ratio > 0.85 && scarce) || (this.p.ram >= 1 && ratio > 1.2 && scarce) || (late && ratio > 1.4 && this.p.attackBias > 0);
     }
     pickSpace(act) {
       const c = this.car, M = this.m, now = M.time;
@@ -290,20 +294,20 @@
         const own = st.owner;
         const occupied = own && own !== c && own.park.parked && own.park.space === st;
         const d = U.dist(c.x, c.y, st.sp.x, st.sp.y);
-        const tp = { hatch: 45, estate: 65, suv: 85, van: 95 }[c.spec.type];
+        const tp = { hatch: 110, estate: 140, suv: 170, van: 190 }[c.spec.type];
         const route = this.m.arena.navPath(c.x, c.y, st.sp.access.x, st.sp.access.y, { heading: c.a, turnPenalty: tp, penalty: (e) => this.edgePenalty.get(e.id) || 0 }).length;
         let cost = route / (9 * this.speedMul);
         // entry difficulty for this vehicle
         const slack = (st.sp.hl * 2 - c.spec.L);
         cost += slack < 0.8 ? 6 : slack < 1.6 ? 3 : 0;
         if (st.sp.kind === 'wide' && this.kind === 'confident') cost -= 3;
-        if (st.sp.kind === 'bay') cost += 2;
+        if (st.sp.kind === 'bay') cost += c.spec.type === 'hatch' ? 2 : 7;
         // others closer to it
         for (const o of M.cars) {
           if (o === c || o.status !== 'active') continue;
           const od = U.dist(o.x, o.y, st.sp.x, st.sp.y);
           if (od < d) cost += this.p.contest * (od < 15 ? 1.5 : 0.6);
-          if (o.bot && o.bot.target === st && od < d + 10) cost += 2.5 + this.p.contest * 0.5;
+          if (o.bot && o.bot.target === st && od < d + 10) cost += 9 + this.p.contest * 0.6; // already claimed by someone nearer
           if (this.kind === 'quiet' && od < 30) cost += 6;
         }
         if (occupied) {
@@ -329,6 +333,7 @@
           const d = U.dist(c.x, c.y, s.sp.x, s.sp.y);
           let v = 0;
           if (d < 15) v += 100; // move on from where we are
+          for (const o of M.bots) if (o !== this && o.cruiseGoal && U.dist(o.cruiseGoal.x, o.cruiseGoal.y, s.sp.access.x, s.sp.access.y) < 25) v += 70; // spread out
           if (this.kind === 'nearest') v += d;
           else if (this.kind === 'quiet') { v += d * 0.4; for (const o of M.cars) if (o !== c && o.status === 'active' && U.dist(o.x, o.y, s.sp.x, s.sp.y) < 35) v += 40; }
           else if (this.kind === 'confident') v += Math.abs(d - 90) + this.rand() * 60;
@@ -375,7 +380,6 @@
         const tx = -side * ax0, ty = -side * ay0; // travel direction along the aisle, past the bay
         const wb = c.spec.wb / 2;
         const aisleOff = Math.abs((cp.x - sp.x) * ox + (cp.y - sp.y) * oy) + 1.0;
-        if (this.bayReverse === undefined) this.bayReverse = false;
         if (!this.bayReverse) {
           // nose in: from before the bay, swing in from the far side of the aisle
           const lead = 2.6 + c.spec.wb * 0.75;
@@ -414,6 +418,8 @@
       return { start, startHead: hd, pts: bezier(rs, hd + Math.PI, end, hd + Math.PI, len * 0.45, len * 0.5, 30), reverse: true, rearPath: true, finish: { dx, dy } };
     }
     beginApproach(st) {
+      if (this.target !== st) this.bayReverse = this.car.spec.type === 'van' && this.rand() < 0.5;
+      else if (st.sp.kind === 'bay') this.bayReverse = !this.bayReverse; // try the other way in
       this.target = st;
       const c = this.car, sp = st.sp, A = this.m.arena;
       let arrive = null, local = null;
@@ -494,7 +500,7 @@
       }
       if (this.state === 'cruise' || this.state === 'choose') {
         if (!this.path) { this.thinkCruise(); }
-        const rem = this.follow(Math.min(cruise * 0.85, slow + 2), { offset });
+        const rem = this.follow(Math.min(cruise * 0.85, slow + 2), { offset: offset + (this.lastAvoid || 0) });
         this.avoid(cruise);
         if (this.state !== 'cruise' && this.state !== 'choose') return;
         if (rem < 4) this.cruiseGoal = null, this.thinkCruise();
@@ -505,13 +511,13 @@
         const dist = U.dist(c.x, c.y, s[0], s[1]);
         const near = dist < 9;
         const rem = this.reverse ? this.follow(Math.min(4.2, 1.2 + dist * 0.4), { stopAtEnd: true, look: 3.2 })
-          : this.follow(near ? Math.min(4.5, 1.6 + dist * 0.35) : Math.min(cruise, slow + 3), { offset: near ? 0 : offset, stopAtEnd: near });
+          : this.follow(near ? Math.min(4.5, 1.6 + dist * 0.35) : Math.min(cruise, slow + 3), { offset: near ? 0 : offset + (this.lastAvoid || 0), stopAtEnd: near });
         if (!near && !this.reverse) this.avoid(cruise);
         if (this.state !== 'goto' || !this.plan) return;
         const hd = Math.abs(U.wrap(c.a - this.plan.startHead));
         if ((dist < 2.2 && hd < 0.45) || (rem < 0.8 && dist < 3.0 && hd < 0.55)) { this.beginManeuver(); return; }
         if (this.plan.loose && dist < 5.5 && hd < 1.3 && !this.reverse) { this.beginManeuver(); return; }
-        if (dist < 4 && hd > 1.2 && c.speed < 2 && !this.turn) { this.turn = { head: this.plan.startHead, t: 0, dir: 1, legT: 0, side: 0 }; }
+        if (dist < 4 && hd > 1.2 && c.speed < 2 && !this.turn) { this.turn = { why: 'start', head: this.plan.startHead, t: 0, dir: 1, legT: 0, side: 0 }; }
         if (rem < 0.5 && dist > 2.6) { this.goes = (this.goes || 0) + 1; if (this.goes > 4) { this.goes = 0; this.abandon(10); } else this.beginApproach(this.target); }
         if (this.stateT > 30) this.abandon(10);
         return;
@@ -536,19 +542,20 @@
       if (this.state === 'attack') return this.doAttack(dt);
     }
 
-    // what is in our way along the path ahead? returns distance to it (or maxD)
+    // what is in our way along the path ahead? Shift within the lane to squeeze past things that
+    // stick out (badly parked SUVs, oncoming cars); returns the distance to anything we cannot pass.
     pathObstacle(maxD, ignoreCars) {
       const c = this.car, P = this.path;
+      this.avoidOffset = 0; this.blockCar = null;
       if (!P) return maxD;
-      const hw = c.spec.W / 2, s0 = this.pathS;
-      let best = maxD;
+      const hw = c.spec.W / 2 + 0.18, s0 = this.pathS;
+      const obs = [];
       for (const B of this.m.world.bodies) {
         if (!B.enabled || B === c.body) continue;
         if (B.kind !== 'car' && B.kind !== 'parked') continue;
         if (ignoreCars && B.kind === 'car') continue;
         const dx = B.x - c.x, dy = B.y - c.y;
         if (dx * dx + dy * dy > (maxD + 6) * (maxD + 6)) continue;
-        // project onto the path ahead (sampled every 2 m)
         let bl = 1e9, bs = 0, bh = 0;
         for (let q = s0; q <= Math.min(P.length + 6, s0 + maxD + 4); q += 2) {
           const p = q <= P.length ? P.at(q) : (() => { const e = P.at(P.length); return { x: e.x + e.tx * (q - P.length), y: e.y + e.ty * (q - P.length), heading: e.heading, tx: e.tx, ty: e.ty }; })();
@@ -559,11 +566,26 @@
         const phi = B.a - bh;
         const ext = Math.abs(Math.sin(phi)) * B.hx + Math.abs(Math.cos(phi)) * B.hy;
         const extL = Math.abs(Math.cos(phi)) * B.hx + Math.abs(Math.sin(phi)) * B.hy;
-        if (Math.abs(bl) < hw + ext + 0.12) {
-          const d = bs - s0 - c.spec.L / 2 - extL;
-          if (d < best) best = Math.max(0, d);
-        }
+        const d = bs - s0 - c.spec.L / 2 - extL;
+        if (d < -1) continue;
+        const inner = Math.abs(bl) - ext; // gap between the path and the obstacle's near side
+        if (inner > hw + 1.4) continue;
+        obs.push({ side: Math.sign(bl), inner, d: Math.max(0, d), moving: B.kind === 'car' && Math.hypot(B.vx, B.vy) > 1.5, car: B.kind === 'car' ? B.user.car : null });
       }
+      // shift away from intrusions on one side, as long as the other side leaves room
+      let left = 0, right = 0;
+      for (const o of obs) { const need = hw - o.inner; if (need <= 0) continue; if (o.side < 0) left = Math.max(left, need); else right = Math.max(right, need); }
+      let offset = U.clamp(left - right, -1.6, 1.6);
+      let best = maxD;
+      for (const o of obs) {
+        // distance from our shifted corridor to the obstacle
+        const gap = o.side > 0 ? o.inner - offset : o.inner + offset;
+        if (gap < hw - 0.05 && o.d < best) { best = o.d; this.blockCar = o.car; }
+      }
+      // a kerb or wall is just as solid: don't shift beyond the carriageway
+      const pt = P.at(Math.min(P.length, s0 + 4));
+      if (this.m.arena.kerb(pt.x + pt.nx * (offset + Math.sign(offset) * hw), pt.y + pt.ny * (offset + Math.sign(offset) * hw)) > 0.2) offset *= 0.5;
+      this.avoidOffset = offset;
       return best;
     }
     // slow down for anything actually in our lane
@@ -574,11 +596,18 @@
       const barge = this.kind === 'confident' && this.m.phase !== 'circulation';
       const look = Math.max(6, c.speed * 1.6 + 4);
       const d = this.pathObstacle(look, barge);
+      this.lastAvoid = U.approach(this.lastAvoid || 0, this.avoidOffset, 0.05);
       // stuck in a queue behind something that is not moving: shove it, or find another way round
       if (d < 2.2 && c.speed < 0.6) this.blockedT = (this.blockedT || 0) + 1 / 60; else this.blockedT = Math.max(0, (this.blockedT || 0) - 1 / 30);
       if (this.blockedT > 2.2) {
         this.blockedT = 0;
-        if (this.p.ram >= 0.8 || (this.p.ram > 0 && this.rand() < 0.5)) { this.pushT = 1.8; if (this.hornCool <= 0) { c.input.horn = 1; this.hornCool = 3; } return; }
+        const other = this.blockCar;
+        if (this.p.ram >= 0.8 || (this.p.ram > 0 && this.rand() < 0.5) || (other && other.spec.mass < c.spec.mass * 0.7)) { this.pushT = 1.8; if (this.hornCool <= 0) { c.input.horn = 1; this.hornCool = 3; } return; }
+        if (other && other.status === 'active') {
+          // stand-off with another driver: one of you has to back up (the one who is not "confident" does)
+          if (!(other.bot && other.bot.unstickT > 0)) { this.unstickDir = -1; this.unstickSteer = (this.rand() < 0.5 ? 1 : -1) * 0.7; this.unstickT = 1.4 + this.rand(); if (this.hornCool <= 0) { c.input.horn = 1; this.hornCool = 4; } }
+          return;
+        }
         if (this.target && U.dist(c.x, c.y, this.target.sp.x, this.target.sp.y) < 18 && this.state === 'goto') { this.abandon(8); return; }
         const pr = this.m.arena.navProject(c.x, c.y);
         this.edgePenalty.set(pr.e.id, (this.edgePenalty.get(pr.e.id) || 0) + 140);
