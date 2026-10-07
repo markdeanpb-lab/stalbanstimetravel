@@ -1,6 +1,6 @@
 # Test results
 
-Both suites were run on the committed `index.html` on 7 October 2026, using Node 22 and Playwright 1.56 with headless Chromium. The full logs are in `resolver.log` and `playthrough.log`.
+Both suites were run on the committed `index.html` on 7 October 2026, using Node 22 and Playwright 1.56 with headless Chromium. Rerunning either command reproduces its full output; the logs themselves are git-ignored.
 
 | Suite | Result |
 |---|---|
