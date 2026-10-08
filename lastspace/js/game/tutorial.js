@@ -19,6 +19,16 @@
         { title: 'Parking', text: 'Park in the live space (blue stripes, <b>P</b>). Your whole car must be inside the lines, straight along the kerb, below walking pace for 2 seconds. Press <kbd>C</kbd> for the parking camera: it shows where your wheels will go.', start: () => this.openSpace(), done: () => car.park.parked },
         { title: 'Hold it, horn and recovery', text: 'Parked is not safe: anyone can shove you out and you lose it. Sound your horn with <kbd>H</kbd>. If you are ever overturned or wedged, hold <kbd>R</kbd> to recover (you are vulnerable while it happens, and it never drops you into a space).', start: () => {}, done: () => car.hornCount > 0 },
       ];
+      // the same steps in touch-screen words
+      const touchText = [
+        'Press <b>GO</b> (higher up the pedal for more) and drag the <b>STEER</b> pad left or right. Drive up Dalton Street to the flag.',
+        'Press <b>BRAKE</b>. Keep pressing once you have stopped and you will reverse. Reverse 8 metres.',
+        'Get up some speed, steer, and press <b>HANDBRAKE</b>. The back end steps out. Junctions give you more room.',
+        'That silver hatch is in the red box. Shove it out. Heavier cars push lighter ones; hitting a corner spins them.',
+        'Park in the live space (blue stripes, <b>P</b>). Your whole car must be inside the lines, straight along the kerb, below walking pace for 2 seconds. Tap <b>CAM</b> for the parking camera: it shows where your wheels will go.',
+        'Parked is not safe: anyone can shove you out and you lose it. Press <b>HORN</b>. If you are ever overturned or wedged, a <b>RECOVER</b> button appears: hold it (you are vulnerable while it happens, and it never drops you into a space).',
+      ];
+      this.steps.forEach((st, i) => { st.touchText = touchText[i]; });
       match.tutorialTitle = 'TUTORIAL';
       this.next();
     }
@@ -54,7 +64,7 @@
       if (this.step >= this.steps.length) { this.finished = true; LS.Game.tutorialDone(); return; }
       const s = this.steps[this.step];
       s.start();
-      LS.Game.tutorialText(this.step, this.steps.length, s.title, s.text);
+      LS.Game.tutorialText(this.step, this.steps.length, s.title, LS.Touch && LS.Touch.wanted() ? s.touchText : s.text);
       LS.Audio.beep(880, 0.15, 0.2);
     }
     update(dt) {

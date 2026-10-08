@@ -3,12 +3,17 @@
 (function (LS) {
   'use strict';
   const U = LS.U;
-  const DEFAULTS = { shake: true, voices: true, music: 0.6, sfx: 0.9, quality: 'high', split: 'auto', difficulty: 'normal', bighud: false, lastPicks: ['hatch', 'suv'] };
+  const DEFAULTS = { shake: true, voices: true, music: 0.6, sfx: 0.9, quality: 'high', split: 'auto', difficulty: 'normal', bighud: false, lastPicks: ['hatch', 'suv'], touch: 'auto' };
+  const COARSE = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
 
   const G = LS.Game = {
     settings: Object.assign({}, DEFAULTS),
     state: 'title', paused: false, cfg: null,
-    loadSettings() { try { const s = JSON.parse(localStorage.getItem('lastspace.settings') || '{}'); Object.assign(this.settings, s); } catch (e) { /* storage blocked */ } },
+    loadSettings() {
+      // phones and tablets start on a lighter graphics setting
+      if (COARSE) this.settings.quality = 'low';
+      try { const s = JSON.parse(localStorage.getItem('lastspace.settings') || '{}'); Object.assign(this.settings, s); } catch (e) { /* storage blocked */ }
+    },
     saveSettings() { try { localStorage.setItem('lastspace.settings', JSON.stringify(this.settings)); } catch (e) { /* storage blocked */ } },
     applySettings() {
       const S = this.settings, A = LS.Audio;
@@ -22,7 +27,7 @@
       let renderer;
       try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }); }
       catch (e) { document.getElementById('ui').innerHTML = '<div class="overlay"><div class="panel"><h2>WebGL is not available</h2><p>LAST SPACE needs a browser with WebGL 2 (recent Chrome, Edge, Firefox or Safari).</p></div></div>'; return; }
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, COARSE ? 1.5 : 2));
       renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
       renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
       renderer.autoClear = false;
@@ -191,6 +196,7 @@
     frame(now) {
       const dt = Math.min(0.05, (now - this.last) / 1000); this.last = now;
       LS.Input.update(dt);
+      if (LS.Touch) { const me = this.match && this.match.humans[0]; LS.Touch.update(this.state === 'play' && !this.paused && !!me && me.status === 'active' && LS.Touch.wanted(), me); }
       LS.Menus.navigate();
       const m = this.match; if (!m) return;
       const t = now / 1000;

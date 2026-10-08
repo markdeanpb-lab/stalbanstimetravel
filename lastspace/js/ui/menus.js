@@ -35,7 +35,7 @@
         <div class="streets">Bernard Street · Grange Street · Dalton Street · Church Street</div>
         <div class="menu-buttons">
           <button data-act="solo" data-focus>SOLO MATCH <small>you vs seven residents</small></button>
-          <button data-act="duo">TWO-PLAYER SPLIT-SCREEN <small>plus six residents</small></button>
+          <button data-act="duo">TWO-PLAYER SPLIT-SCREEN <small>${LS.Touch && LS.Touch.wanted() ? 'player 2 needs a gamepad or keyboard' : 'plus six residents'}</small></button>
           <button data-act="tutorial">TUTORIAL <small>driving, shunting, parking</small></button>
           <button data-act="settings">SETTINGS</button>
           <button data-act="controls">CONTROLS</button>
@@ -64,7 +64,7 @@
     };
     let html = `<div class="setup"><h2>${players === 1 ? 'SOLO MATCH' : 'TWO-PLAYER SPLIT-SCREEN'}</h2>`;
     for (let p = 0; p < players; p++) {
-      html += `<div class="pick"><h3><span class="glyph" style="color:${LS.IDENTITY[p].color}">${LS.IDENTITY[p].glyph}</span> PLAYER ${p + 1} <small>${players === 2 ? (p === 0 ? 'W A S D · Space · Q horn · E camera · R recover' : '↑ ↓ ← → · / handbrake · . horn · , camera · L recover') : 'WASD or arrows · Space handbrake · H horn · C parking camera · R recover'}</small></h3><div class="vcards">${LS.VEHICLE_ORDER.map((t) => card(t, p)).join('')}</div></div>`;
+      html += `<div class="pick"><h3><span class="glyph" style="color:${LS.IDENTITY[p].color}">${LS.IDENTITY[p].glyph}</span> PLAYER ${p + 1} <small>${LS.Touch && LS.Touch.wanted() && p === 0 ? 'Touch: steering pad on the left, pedals on the right' : players === 2 ? (p === 0 ? 'W A S D · Space · Q horn · E camera · R recover' : '↑ ↓ ← → · / handbrake · . horn · , camera · L recover') : 'WASD or arrows · Space handbrake · H horn · C parking camera · R recover'}</small></h3><div class="vcards">${LS.VEHICLE_ORDER.map((t) => card(t, p)).join('')}</div></div>`;
     }
     html += `<div class="setup-row"><label>Residents <select id="diff"><option value="easy">Polite</option><option value="normal">Entitled</option><option value="hard">Unhinged</option></select></label>
       <button data-act="go" data-focus>START THE EVENING ▶</button><button data-act="back">BACK</button></div></div>`;
@@ -87,14 +87,15 @@
       <label class="row"><span>Effects volume</span><input type="range" id="sfx" min="0" max="1" step="0.05" value="${S.sfx}"></label>
       <label class="row"><span>Graphics</span><select id="quality"><option value="high">High (shadows)</option><option value="medium">Medium</option><option value="low">Low (no shadows)</option></select></label>
       <label class="row"><span>Split-screen layout</span><select id="split"><option value="auto">Automatic</option><option value="horizontal">Top / bottom</option><option value="vertical">Side by side</option></select></label>
+      <label class="row"><span>Touch controls</span><select id="touchc"><option value="auto">Automatic</option><option value="on">Always on</option><option value="off">Off</option></select></label>
       <label class="row"><span>Larger HUD text</span><input type="checkbox" id="bighud" ${S.bighud ? 'checked' : ''}></label>
       <p class="fine">Spaces and drivers always use shapes, patterns and labels as well as colour. Graphics changes apply to the next match.</p>
       <button data-act="back" data-focus>DONE</button></div>`);
     const R = M.root;
-    R.querySelector('#quality').value = S.quality; R.querySelector('#split').value = S.split;
+    R.querySelector('#quality').value = S.quality; R.querySelector('#split').value = S.split; R.querySelector('#touchc').value = S.touch || 'auto';
     const save = () => {
       S.shake = R.querySelector('#shake').checked; S.voices = R.querySelector('#voices').checked; S.music = +R.querySelector('#music').value; S.sfx = +R.querySelector('#sfx').value;
-      S.quality = R.querySelector('#quality').value; S.split = R.querySelector('#split').value; S.bighud = R.querySelector('#bighud').checked;
+      S.quality = R.querySelector('#quality').value; S.split = R.querySelector('#split').value; S.bighud = R.querySelector('#bighud').checked; S.touch = R.querySelector('#touchc').value;
       LS.Game.saveSettings(); LS.Game.applySettings();
     };
     R.querySelectorAll('input,select').forEach((i) => i.addEventListener('change', save));
@@ -114,6 +115,7 @@
       <tr><td>Recover (when stuck, hold)</td><td>R</td><td>R</td><td>L or Num 2</td><td>X</td></tr>
       <tr><td>Pause</td><td colspan="3">Esc or P</td><td>Start</td></tr></table>
       <p>With one gamepad in split-screen, player 2 uses the pad and player 1 the keyboard.</p>
+      <p><b>Touch screens:</b> hold the phone sideways. Drag the <b>STEER</b> pad with your left thumb; how far you drag is how much lock you get. Press <b>GO</b> and <b>BRAKE</b> with your right thumb, higher up the pedal for more, and keep holding BRAKE once stopped to reverse. <b>HANDBRAKE</b> is above the pedals; <b>HORN</b>, <b>CAM</b> and <b>LOOK BACK</b> are above the steering pad; <b>RECOVER</b> appears when you are stuck; <b>❚❚</b> pauses. Settings can force touch controls on or off.</p>
       <h3>The rules</h3>
       <ul><li>While the radio plays, circulate. <b>?</b> markers show where spaces <i>might</i> appear.</li>
       <li>When the music stops, live spaces light up (blue, striped, <b>P</b>, numbered). You have 45 seconds.</li>

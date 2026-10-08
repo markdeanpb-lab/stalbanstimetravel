@@ -11,6 +11,7 @@ The game runs in a web browser (three.js, WebGL, no build step). Everything is g
 | ![Title screen over a live attract-mode match](docs/screenshots/01-title.png) | ![Circulating while the radio plays](docs/screenshots/02-circulation.png) |
 | ![The music stops: live spaces and a 45-second battle](docs/screenshots/03-battle.png) | ![The optional parking camera with wheel-path guides](docs/screenshots/04-parkcam.png) |
 | ![Two-player split-screen](docs/screenshots/05-split.png) | ![Results: standings, awards and penalty charge notices](docs/screenshots/07-results.png) |
+| ![On a phone: steering pad, pedals and handbrake](docs/screenshots/09-phone.png) | |
 
 ## Playing it
 
@@ -32,7 +33,16 @@ The game runs in a web browser (three.js, WebGL, no build step). Everything is g
 | Recover when stuck or overturned (hold) | R | R | L or Num 2 | X |
 | Pause | Esc or P | | | Start |
 
-With one gamepad in split-screen, player 2 uses the pad and player 1 the keyboard. Menus work with the mouse, keyboard (Tab/Enter) or a gamepad (D-pad and A). Tab cycles the camera between surviving drivers once you are out.
+With one gamepad in split-screen, player 2 uses the pad and player 1 the keyboard.
+
+**Phones and tablets** get touch controls automatically (Settings → Touch controls can force them on or off). Hold the phone sideways:
+
+- **Left thumb:** drag the **STEER** pad. How far you drag sets how much lock you get, and it springs back to centre when you let go.
+- **Right thumb:** **GO** and **BRAKE** pedals. Press higher up a pedal for more; keep holding BRAKE once stopped to reverse. **HANDBRAKE** is the bar above them.
+- **Above the steering pad:** **HORN**, **CAM** (parking camera) and **LOOK BACK** (hold). **RECOVER** appears only when you are overturned or stuck (hold it).
+- **❚❚** in the top-right corner pauses.
+
+Steering and pedals track separate fingers, so you can steer and accelerate at the same time. On touch screens the HUD rearranges so nothing sits under your thumbs, the tutorial speaks in touch terms, and graphics start on the Low setting. Split-screen on a single phone isn't practical; player 2 needs a gamepad or keyboard. Menus work with the mouse, keyboard (Tab/Enter) or a gamepad (D-pad and A). Tab cycles the camera between surviving drivers once you are out.
 
 ## The match
 
@@ -116,6 +126,7 @@ node tools/sim.js --fit --park --rules --impacts --match 12
 node tools/browser-check.js out/check          # boot, solo, split-screen, tutorial screenshots
 node tools/browser-match.js out/match hatch    # a whole match in the browser, to the results screen
 node tools/browser-tutorial.js out/tutorial    # the tutorial, every step
+node tools/browser-touch.js out/touch          # phone emulation: multi-touch steering, pedals, reverse
 node tools/build-single.js                     # dist/last-space-st-albans.html
 python3 tools/build_map.py                     # regenerate js/data/mapdata.js from the OSM extract
 ```
@@ -127,7 +138,7 @@ python3 tools/build_map.py                     # regenerate js/data/mapdata.js f
 - **Cars are low-poly procedural models.** Dents are vertex displacement, not a full soft-body simulation.
 - **Physics is 2D on the road plane.** Kerbs, speed cushions, body roll, pitch and overturning are modelled on top, but cars can't climb on each other.
 - **Online multiplayer** is a later milestone. The fixed-step simulation is deterministic per seed, which is a good basis for lockstep or rollback networking.
-- **Performance** was checked in software-rendered headless Chromium only. Not yet profiled on low-end laptops or phones, and there are no touch controls yet.
+- **Performance** was checked in software-rendered headless Chromium only. It hasn't been profiled on low-end laptops or real phones, and the touch controls have been tested in phone emulation rather than on a physical device.
 
 ## Layout
 

@@ -68,11 +68,13 @@ What the sections mean:
 | Two-player split-screen with six bots | `browser-check.js` | Pass |
 | Tutorial: all six steps, scripted inputs | `browser-tutorial.js` | Pass ("TUTORIAL COMPLETE", no errors) |
 | Full solo match, player on autopilot, to the results screen | `browser-match.js` | Pass (3.8 min, finale freeze-frame, results, no errors) |
+| Phone (844 × 390, touch, landscape): menus by tap, then GO held while dragging STEER, then BRAKE held | `browser-touch.js` | Pass: car drove 7.6 m and turned right, then reversed; tutorial shows touch wording; no errors |
 | Single-file build boots and runs a match | `build-single.js` + manual load | Pass |
 | Staged head-on crash: hatch hit by an SUV at 15 m/s | ad hoc | Front damage 100%, front bumper detached as debris, headlight broken, hatch shoved backwards |
 
 ## Not verified here
 
 - Real-time frame rate on real hardware (software rendering is far too slow to judge).
+- Touch controls on a physical phone (tested in Chromium's phone emulation with real multi-touch events).
 - Gamepads and speech synthesis on real devices (the code paths run, but there is no device in the test container).
 - Long play sessions by people. The balance of the four vehicles against human players needs playtesting.

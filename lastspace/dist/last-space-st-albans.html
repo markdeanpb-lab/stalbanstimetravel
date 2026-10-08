@@ -2,7 +2,9 @@
 <html lang="en-GB">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>LAST SPACE: ST ALBANS</title>
 <meta name="description" content="A parking-space demolition derby on Bernard Street, Grange Street, Dalton Street and Church Street, St Albans, at 6.15 pm on a weekday.">
 <style>
@@ -159,6 +161,82 @@ table.stand tr.me { background: rgba(255,212,0,0.12); }
 .vhud.compact .drow .dveh { display: none; }
 .vhud.compact .phasebox { min-width: 240px; padding: 4px 12px; }
 
+/* ---------------------------------------------------------------- touch controls (phones, tablets) */
+#touch { position: fixed; inset: 0; pointer-events: none; display: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+body.touch-play #touch { display: block; }
+body.touch-play #game, #touch * { touch-action: none; }
+#touch > div, #touch .t-btn, #touch .t-pedal, #touch .t-steer { pointer-events: auto; }
+#touch .t-pedals, #touch .t-side, #touch .t-top { pointer-events: none; }
+.t-steer { position: absolute; left: calc(14px + env(safe-area-inset-left, 0px)); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); width: min(40vw, 340px); height: min(30vh, 132px); border-radius: 18px; background: rgba(12, 16, 24, 0.42); border: 2px solid rgba(255, 255, 255, 0.22); }
+.t-steer.on { border-color: var(--accent); }
+.t-track { position: absolute; left: 12%; right: 12%; top: 50%; height: 6px; margin-top: -3px; background: rgba(255,255,255,0.25); border-radius: 3px; }
+.t-track i { position: absolute; top: -12px; font-style: normal; color: rgba(255,255,255,0.45); font-size: 18px; }
+.t-track .t-l { left: -28px; } .t-track .t-r { right: -28px; }
+.t-knob { position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; background: rgba(255, 212, 0, 0.85); box-shadow: 0 2px 8px rgba(0,0,0,0.5); transition: transform 0.12s; }
+.t-steer.on .t-knob { transition: none; }
+.t-cap { position: absolute; left: 0; right: 0; bottom: 6px; text-align: center; font: bold 11px var(--font); letter-spacing: 0.2em; color: rgba(255,255,255,0.55); }
+.t-pedals { position: absolute; right: calc(12px + env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+.t-row { display: flex; gap: 10px; align-items: flex-end; }
+.t-pedal { position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 10px; border-radius: 16px; border: 2px solid rgba(255,255,255,0.3); background: rgba(12, 16, 24, 0.5); color: #fff; }
+.t-pedal b { position: relative; z-index: 1; font: bold 20px var(--cond); letter-spacing: 0.08em; }
+.t-pedal small { position: relative; z-index: 1; font-size: 9px; color: rgba(255,255,255,0.7); text-align: center; line-height: 1.2; padding: 0 4px; }
+.t-fill { position: absolute; left: 0; right: 0; bottom: 0; height: 0; opacity: 0.55; }
+.t-go { width: min(14vw, 116px); height: min(46vh, 190px); } .t-go .t-fill { background: var(--green); } .t-go.on { border-color: var(--green); }
+.t-brake { width: min(12vw, 100px); height: min(36vh, 150px); } .t-brake .t-fill { background: var(--red); } .t-brake.on { border-color: var(--red); }
+.t-btn { font: bold 12px var(--font); letter-spacing: 0.08em; color: #fff; background: rgba(12, 16, 24, 0.55); border: 2px solid rgba(255,255,255,0.28); border-radius: 12px; padding: 0; text-align: center; }
+.t-btn.on { border-color: var(--accent); background: rgba(255, 212, 0, 0.35); }
+.t-hand { height: 44px; }
+.t-side { position: absolute; left: calc(14px + env(safe-area-inset-left, 0px)); bottom: calc(min(30vh, 132px) + 26px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 8px; }
+.t-small { width: 62px; height: 44px; font-size: 11px; line-height: 1.15; }
+.t-recover { display: none; width: 92px; border-color: var(--accent); background: rgba(232, 64, 42, 0.6); animation: pulse 0.6s infinite alternate; }
+.t-recover.show { display: block; }
+.t-top { position: absolute; top: calc(8px + env(safe-area-inset-top, 0px)); right: calc(8px + env(safe-area-inset-right, 0px)); }
+.t-top .t-small { width: 46px; height: 40px; font-size: 14px; }
+
+/* the HUD moves out from under your thumbs */
+body.touch-play .vhud { font-size: 12px; }
+body.touch-play .minimap { left: auto; right: calc(60px + env(safe-area-inset-right, 0px)); top: 8px; bottom: auto; width: 112px; height: 112px; }
+/* drivers as a single row of shapes under the round info: shape, number, and a mark for parked/out */
+body.touch-play .drivers { top: 70px; left: 14px; right: auto; width: auto; display: flex; padding: 2px 4px; gap: 2px; }
+body.touch-play .drow { display: flex; flex-direction: column; align-items: center; padding: 1px 3px; min-width: 22px; }
+body.touch-play .drow .dveh, body.touch-play .drow .dname { display: none; }
+body.touch-play .drow .dnum { font-size: 9px; }
+body.touch-play .drow .dst { font-size: 0; text-align: center; }
+body.touch-play .drow.parked .dst::after { content: 'P'; font-size: 10px; color: #7cff8a; }
+body.touch-play .drow.out .dst::after { content: '✖'; font-size: 10px; color: var(--red); }
+body.touch-play .dash { left: 14px; right: auto; bottom: auto; top: 118px; padding: 4px 8px; }
+body.touch-play .dash .dmg { width: 40px; height: 62px; }
+body.touch-play .speed b { font-size: 1.8em; } body.touch-play .gear { font-size: 1.3em; }
+body.touch-play .phasebox { min-width: 200px; padding: 3px 10px; }
+body.touch-play .phase-timer { font-size: 2em; } body.touch-play .phase-sub { display: none; }
+body.touch-play .arrow { top: 72px; }
+body.touch-play .parkbox { top: 46%; width: 220px; }
+body.touch-play .parkbox .ring { width: 80px; height: 80px; }
+body.touch-play .prompt { bottom: auto; top: 30%; }
+body.touch-play .camhint { bottom: auto; top: 64px; }
+body.touch-play .captions { bottom: auto; top: 68px; width: min(440px, 46vw); gap: 4px; }
+body.touch-play .cap { padding: 3px 8px; font-size: 12px; }
+body.touch-play .cap:nth-last-child(n+3) { display: none; }
+body.touch-play .lowerthird { display: none; }
+body.touch-play .vignette { padding-bottom: 45vh; }
+body.touch-play #tutpanel { top: 8px; bottom: auto; width: min(520px, 58vw); padding: 8px 12px; font-size: 13px; }
+body.touch-play #tutpanel h3 { font-size: 1.2em; }
+body.touch-play:has(#tutpanel) .phasebox, body.touch-play:has(#tutpanel) .tvbug, body.touch-play:has(#tutpanel) .roundinfo { display: none; }
+body.touch-play:has(#tutpanel) .captions { top: 46%; }
+@media (max-height: 520px) {
+  .bigmsg { font-size: 2.4em; } .bigmsg.winner { font-size: 2.8em; }
+  .title-card { margin-left: 2vw; }
+  .title-card h1 { font-size: 40px; } .tag { font-size: 0.95em; margin: 4px 0; } .streets, .title-card .fine { display: none; }
+  .title-card .menu-buttons { display: grid; grid-template-columns: 1fr 1fr; max-width: 560px; gap: 6px; }
+  .menu-buttons button { padding: 7px 12px; }
+  .overlay { padding: 10px; }
+  .panel { padding: 12px 16px; gap: 4px; } .panel h2, .setup h2, .results h2 { font-size: 1.5em; }
+  .vcards { grid-template-columns: repeat(4, 1fr); gap: 6px; } .vblurb, .vsize { display: none; } .vimg { height: 34px; }
+  .setup { padding: 10px 14px; } .pick h3 { margin: 4px 0; }
+}
+#rotate { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; text-align: center; padding: 24px; background: #0d1016; color: var(--ink); font: bold 1.4em var(--cond); letter-spacing: 0.08em; z-index: 50; }
+@media (orientation: portrait) { body.touch-play #rotate { display: flex; } }
+
 </style>
 </head>
 <body>
@@ -166,6 +244,7 @@ table.stand tr.me { background: rgba(255,212,0,0.12); }
 <div id="hud"></div>
 <div id="tvlayer"></div>
 <div id="ui"></div>
+<div id="rotate">Turn your phone sideways to play</div>
 <noscript><p style="color:#fff;padding:2em">LAST SPACE needs JavaScript and WebGL.</p></noscript>
 <script>/* vendor/three.min.js */
 /* three.js r186.1 (MIT, three.LICENSE.txt) + BufferGeometryUtils, SkeletonUtils, Sky; postprocessing 6.39.5 (Zlib, postprocessing.LICENSE.txt) as THREE.PP; n8ao 2.0.1 (CC0, n8ao.LICENSE.txt). Bundled once as a classic-script global THREE by tools/vendor-three.sh. Not a runtime build step. */
@@ -9677,6 +9756,7 @@ LS.TEXT = {
           for (let k = 0; k < 16; k++) P.prevPad[k] = is(k);
         }
         o.throttle = thr; o.brake = brk; o.steer = U.clamp(steer, -1, 1); o.handbrake = hand; o.horn = horn; o.recover = rec; o.look = look; o.camToggle = cam; o.pause = pause;
+        if (i === 0 && LS.Touch) LS.Touch.apply(o);
       }
       // menu navigation from any pad
       this.menu = { up: false, down: false, left: false, right: false, ok: false, back: false };
@@ -11336,8 +11416,9 @@ LS.TEXT = {
       let prompt = '';
       if (car.status === 'active') {
         if (car.recovering) prompt = 'RECOVERING… you are vulnerable';
+        else if (car.canRecover && LS.Touch && LS.Touch.active && this.view.idx === 0) prompt = 'Stuck? Hold <b>RECOVER</b>';
         else if (car.canRecover) prompt = `<kbd>${this.view.idx === 0 && m.humans.length < 2 ? 'R' : this.view.idx === 0 ? 'R' : 'L'}</kbd> / <kbd>X</kbd> hold to recover`;
-      } else if (car.status === 'eliminated' && m.phase !== 'results' && m.phase !== 'finale') prompt = `Spectating ${tgt.short} · <kbd>Tab</kbd> next driver · <kbd>Esc</kbd> menu`;
+      } else if (car.status === 'eliminated' && m.phase !== 'results' && m.phase !== 'finale') prompt = LS.Touch && LS.Touch.wanted() ? `Spectating ${tgt.short} · tap ❚❚ for the menu` : `Spectating ${tgt.short} · <kbd>Tab</kbd> next driver · <kbd>Esc</kbd> menu`;
       this.prompt.innerHTML = prompt; this.prompt.style.display = prompt ? 'block' : 'none';
       this.out.style.display = car.status === 'eliminated' && P !== 'finale' && P !== 'results' ? 'block' : 'none';
       this.out.innerHTML = `ELIMINATED<small>${car.place ? 'Finished ' + ordinal(car.place) : ''}</small>`;
@@ -11465,7 +11546,7 @@ LS.TEXT = {
         <div class="streets">Bernard Street · Grange Street · Dalton Street · Church Street</div>
         <div class="menu-buttons">
           <button data-act="solo" data-focus>SOLO MATCH <small>you vs seven residents</small></button>
-          <button data-act="duo">TWO-PLAYER SPLIT-SCREEN <small>plus six residents</small></button>
+          <button data-act="duo">TWO-PLAYER SPLIT-SCREEN <small>${LS.Touch && LS.Touch.wanted() ? 'player 2 needs a gamepad or keyboard' : 'plus six residents'}</small></button>
           <button data-act="tutorial">TUTORIAL <small>driving, shunting, parking</small></button>
           <button data-act="settings">SETTINGS</button>
           <button data-act="controls">CONTROLS</button>
@@ -11494,7 +11575,7 @@ LS.TEXT = {
     };
     let html = `<div class="setup"><h2>${players === 1 ? 'SOLO MATCH' : 'TWO-PLAYER SPLIT-SCREEN'}</h2>`;
     for (let p = 0; p < players; p++) {
-      html += `<div class="pick"><h3><span class="glyph" style="color:${LS.IDENTITY[p].color}">${LS.IDENTITY[p].glyph}</span> PLAYER ${p + 1} <small>${players === 2 ? (p === 0 ? 'W A S D · Space · Q horn · E camera · R recover' : '↑ ↓ ← → · / handbrake · . horn · , camera · L recover') : 'WASD or arrows · Space handbrake · H horn · C parking camera · R recover'}</small></h3><div class="vcards">${LS.VEHICLE_ORDER.map((t) => card(t, p)).join('')}</div></div>`;
+      html += `<div class="pick"><h3><span class="glyph" style="color:${LS.IDENTITY[p].color}">${LS.IDENTITY[p].glyph}</span> PLAYER ${p + 1} <small>${LS.Touch && LS.Touch.wanted() && p === 0 ? 'Touch: steering pad on the left, pedals on the right' : players === 2 ? (p === 0 ? 'W A S D · Space · Q horn · E camera · R recover' : '↑ ↓ ← → · / handbrake · . horn · , camera · L recover') : 'WASD or arrows · Space handbrake · H horn · C parking camera · R recover'}</small></h3><div class="vcards">${LS.VEHICLE_ORDER.map((t) => card(t, p)).join('')}</div></div>`;
     }
     html += `<div class="setup-row"><label>Residents <select id="diff"><option value="easy">Polite</option><option value="normal">Entitled</option><option value="hard">Unhinged</option></select></label>
       <button data-act="go" data-focus>START THE EVENING ▶</button><button data-act="back">BACK</button></div></div>`;
@@ -11517,14 +11598,15 @@ LS.TEXT = {
       <label class="row"><span>Effects volume</span><input type="range" id="sfx" min="0" max="1" step="0.05" value="${S.sfx}"></label>
       <label class="row"><span>Graphics</span><select id="quality"><option value="high">High (shadows)</option><option value="medium">Medium</option><option value="low">Low (no shadows)</option></select></label>
       <label class="row"><span>Split-screen layout</span><select id="split"><option value="auto">Automatic</option><option value="horizontal">Top / bottom</option><option value="vertical">Side by side</option></select></label>
+      <label class="row"><span>Touch controls</span><select id="touchc"><option value="auto">Automatic</option><option value="on">Always on</option><option value="off">Off</option></select></label>
       <label class="row"><span>Larger HUD text</span><input type="checkbox" id="bighud" ${S.bighud ? 'checked' : ''}></label>
       <p class="fine">Spaces and drivers always use shapes, patterns and labels as well as colour. Graphics changes apply to the next match.</p>
       <button data-act="back" data-focus>DONE</button></div>`);
     const R = M.root;
-    R.querySelector('#quality').value = S.quality; R.querySelector('#split').value = S.split;
+    R.querySelector('#quality').value = S.quality; R.querySelector('#split').value = S.split; R.querySelector('#touchc').value = S.touch || 'auto';
     const save = () => {
       S.shake = R.querySelector('#shake').checked; S.voices = R.querySelector('#voices').checked; S.music = +R.querySelector('#music').value; S.sfx = +R.querySelector('#sfx').value;
-      S.quality = R.querySelector('#quality').value; S.split = R.querySelector('#split').value; S.bighud = R.querySelector('#bighud').checked;
+      S.quality = R.querySelector('#quality').value; S.split = R.querySelector('#split').value; S.bighud = R.querySelector('#bighud').checked; S.touch = R.querySelector('#touchc').value;
       LS.Game.saveSettings(); LS.Game.applySettings();
     };
     R.querySelectorAll('input,select').forEach((i) => i.addEventListener('change', save));
@@ -11544,6 +11626,7 @@ LS.TEXT = {
       <tr><td>Recover (when stuck, hold)</td><td>R</td><td>R</td><td>L or Num 2</td><td>X</td></tr>
       <tr><td>Pause</td><td colspan="3">Esc or P</td><td>Start</td></tr></table>
       <p>With one gamepad in split-screen, player 2 uses the pad and player 1 the keyboard.</p>
+      <p><b>Touch screens:</b> hold the phone sideways. Drag the <b>STEER</b> pad with your left thumb; how far you drag is how much lock you get. Press <b>GO</b> and <b>BRAKE</b> with your right thumb, higher up the pedal for more, and keep holding BRAKE once stopped to reverse. <b>HANDBRAKE</b> is above the pedals; <b>HORN</b>, <b>CAM</b> and <b>LOOK BACK</b> are above the steering pad; <b>RECOVER</b> appears when you are stuck; <b>❚❚</b> pauses. Settings can force touch controls on or off.</p>
       <h3>The rules</h3>
       <ul><li>While the radio plays, circulate. <b>?</b> markers show where spaces <i>might</i> appear.</li>
       <li>When the music stops, live spaces light up (blue, striped, <b>P</b>, numbered). You have 45 seconds.</li>
@@ -11583,6 +11666,113 @@ LS.TEXT = {
 })(window.LS);
 
 </script>
+<script>/* js/ui/touch.js */
+/* LAST SPACE - touch controls for phones and tablets (player 1).
+   Left thumb: a steering pad (drag left/right; how far you drag is how much lock you get).
+   Right thumb: GO and BRAKE / REVERSE pedals (press higher up the pedal for more), with a
+   handbrake button above them. Small buttons for horn, parking camera, look behind, recover, pause.
+   Every control tracks its own pointer, so steering and pedals work at the same time. */
+(function (LS) {
+  'use strict';
+  const U = LS.U;
+  const T = LS.Touch = {
+    state: { steer: 0, throttle: 0, brake: 0, handbrake: 0, horn: 0, recover: 0, look: 0, cam: false, pause: false },
+    active: false, built: false, used: false,
+    // auto: on for coarse pointers (phones/tablets) or as soon as someone touches the screen
+    wanted() {
+      const s = LS.Game && LS.Game.settings ? LS.Game.settings.touch : 'auto';
+      if (s === 'on') return true;
+      if (s === 'off') return false;
+      return T.used || (window.matchMedia && matchMedia('(pointer: coarse)').matches) || ('ontouchstart' in window && navigator.maxTouchPoints > 0);
+    },
+    build() {
+      if (T.built) return;
+      T.built = true;
+      const root = T.root = document.createElement('div');
+      root.id = 'touch';
+      root.innerHTML = `
+        <div class="t-steer" id="t-steer" aria-label="Steering pad: drag left or right"><div class="t-track"><i class="t-l">◀</i><i class="t-r">▶</i></div><div class="t-knob"></div><span class="t-cap">STEER</span></div>
+        <div class="t-pedals">
+          <button class="t-btn t-hand" id="t-hand" aria-label="Handbrake">HANDBRAKE</button>
+          <div class="t-row">
+            <div class="t-pedal t-brake" id="t-brake" aria-label="Brake, hold to reverse"><b>BRAKE</b><small>hold to reverse</small><span class="t-fill"></span></div>
+            <div class="t-pedal t-go" id="t-go" aria-label="Accelerate"><b>GO</b><small>press higher for more</small><span class="t-fill"></span></div>
+          </div>
+        </div>
+        <div class="t-top">
+          <button class="t-btn t-small" id="t-pause" aria-label="Pause">❚❚</button>
+        </div>
+        <div class="t-side">
+          <button class="t-btn t-small" id="t-horn" aria-label="Horn">HORN</button>
+          <button class="t-btn t-small" id="t-cam" aria-label="Parking camera">CAM</button>
+          <button class="t-btn t-small" id="t-look" aria-label="Look behind">LOOK<br>BACK</button>
+          <button class="t-btn t-small t-recover" id="t-recover" aria-label="Recover the car">HOLD TO<br>RECOVER</button>
+        </div>`;
+      document.getElementById('ui').appendChild(root);
+      const S = T.state;
+      // steering pad: relative drag from where the thumb lands
+      const pad = root.querySelector('#t-steer'), knob = pad.querySelector('.t-knob');
+      let sp = null;
+      const steerFrom = (e) => {
+        const w = Math.max(60, pad.clientWidth * 0.32);
+        const v = U.clamp((e.clientX - sp.x0) / w, -1, 1);
+        S.steer = Math.sign(v) * Math.pow(Math.abs(v), 1.25);
+        knob.style.transform = `translateX(${v * w}px)`;
+      };
+      pad.addEventListener('pointerdown', (e) => { e.preventDefault(); pad.setPointerCapture(e.pointerId); sp = { id: e.pointerId, x0: e.clientX }; pad.classList.add('on'); steerFrom(e); LS.Audio.init(); });
+      pad.addEventListener('pointermove', (e) => { if (sp && e.pointerId === sp.id) steerFrom(e); });
+      const steerEnd = (e) => { if (!sp || e.pointerId !== sp.id) return; sp = null; S.steer = 0; knob.style.transform = ''; pad.classList.remove('on'); };
+      pad.addEventListener('pointerup', steerEnd); pad.addEventListener('pointercancel', steerEnd);
+      // pedals: analogue by height
+      const pedal = (id, key) => {
+        const el = root.querySelector(id), fill = el.querySelector('.t-fill');
+        let pid = null;
+        const val = (e) => { const r = el.getBoundingClientRect(); const v = U.clamp(0.35 + 0.65 * (1 - (e.clientY - r.top) / r.height), 0.35, 1); S[key] = v; fill.style.height = Math.round(v * 100) + '%'; };
+        el.addEventListener('pointerdown', (e) => { e.preventDefault(); el.setPointerCapture(e.pointerId); pid = e.pointerId; el.classList.add('on'); val(e); LS.Audio.init(); });
+        el.addEventListener('pointermove', (e) => { if (e.pointerId === pid) val(e); });
+        const end = (e) => { if (e.pointerId !== pid) return; pid = null; S[key] = 0; fill.style.height = '0'; el.classList.remove('on'); };
+        el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+      };
+      pedal('#t-go', 'throttle'); pedal('#t-brake', 'brake');
+      // hold buttons and tap buttons
+      const hold = (id, key) => {
+        const el = root.querySelector(id); let pid = null;
+        el.addEventListener('pointerdown', (e) => { e.preventDefault(); el.setPointerCapture(e.pointerId); pid = e.pointerId; S[key] = 1; el.classList.add('on'); LS.Audio.init(); });
+        const end = (e) => { if (e.pointerId !== pid) return; pid = null; S[key] = 0; el.classList.remove('on'); };
+        el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+      };
+      hold('#t-hand', 'handbrake'); hold('#t-horn', 'horn'); hold('#t-look', 'look'); hold('#t-recover', 'recover');
+      const tap = (id, key) => root.querySelector(id).addEventListener('pointerdown', (e) => { e.preventDefault(); S[key] = true; LS.Audio.init(); });
+      tap('#t-cam', 'cam'); tap('#t-pause', 'pause');
+      root.addEventListener('contextmenu', (e) => e.preventDefault());
+    },
+    // called every frame by the game
+    update(show, car) {
+      if (show && !T.built) T.build();
+      if (!T.built) return;
+      T.active = !!show;
+      document.body.classList.toggle('touch-play', T.active);
+      if (!T.active) { for (const k in T.state) T.state[k] = typeof T.state[k] === 'boolean' ? false : 0; return; }
+      T.root.querySelector('#t-recover').classList.toggle('show', !!(car && (car.canRecover || car.recovering)));
+      T.root.querySelector('#t-cam').classList.toggle('on', !!(LS.Game.views && LS.Game.views[0] && LS.Game.views[0].mode === 'park'));
+    },
+    // merge into player 1's input; one-shot buttons are consumed here
+    apply(o) {
+      if (!T.active) return;
+      const S = T.state;
+      if (S.steer !== 0) o.steer = S.steer;
+      o.throttle = Math.max(o.throttle, S.throttle); o.brake = Math.max(o.brake, S.brake);
+      o.handbrake = Math.max(o.handbrake, S.handbrake); o.horn = Math.max(o.horn, S.horn);
+      o.recover = Math.max(o.recover, S.recover); o.look = Math.max(o.look, S.look);
+      if (S.cam) { o.camToggle = true; S.cam = false; }
+      if (S.pause) { o.pause = true; S.pause = false; }
+    },
+  };
+  window.addEventListener('touchstart', () => { T.used = true; document.body.classList.add('is-touch'); }, { passive: true, once: true });
+  if (window.matchMedia && matchMedia('(pointer: coarse)').matches) document.addEventListener('DOMContentLoaded', () => document.body.classList.add('is-touch'));
+})(window.LS);
+
+</script>
 <script>/* js/game/tutorial.js */
 /* LAST SPACE - interactive tutorial on Dalton Street: drive, reverse, handbrake turn, shunt,
    park validly, horn and recovery. Uses the same match, physics and parking rules as the game. */
@@ -11605,6 +11795,16 @@ LS.TEXT = {
         { title: 'Parking', text: 'Park in the live space (blue stripes, <b>P</b>). Your whole car must be inside the lines, straight along the kerb, below walking pace for 2 seconds. Press <kbd>C</kbd> for the parking camera: it shows where your wheels will go.', start: () => this.openSpace(), done: () => car.park.parked },
         { title: 'Hold it, horn and recovery', text: 'Parked is not safe: anyone can shove you out and you lose it. Sound your horn with <kbd>H</kbd>. If you are ever overturned or wedged, hold <kbd>R</kbd> to recover (you are vulnerable while it happens, and it never drops you into a space).', start: () => {}, done: () => car.hornCount > 0 },
       ];
+      // the same steps in touch-screen words
+      const touchText = [
+        'Press <b>GO</b> (higher up the pedal for more) and drag the <b>STEER</b> pad left or right. Drive up Dalton Street to the flag.',
+        'Press <b>BRAKE</b>. Keep pressing once you have stopped and you will reverse. Reverse 8 metres.',
+        'Get up some speed, steer, and press <b>HANDBRAKE</b>. The back end steps out. Junctions give you more room.',
+        'That silver hatch is in the red box. Shove it out. Heavier cars push lighter ones; hitting a corner spins them.',
+        'Park in the live space (blue stripes, <b>P</b>). Your whole car must be inside the lines, straight along the kerb, below walking pace for 2 seconds. Tap <b>CAM</b> for the parking camera: it shows where your wheels will go.',
+        'Parked is not safe: anyone can shove you out and you lose it. Press <b>HORN</b>. If you are ever overturned or wedged, a <b>RECOVER</b> button appears: hold it (you are vulnerable while it happens, and it never drops you into a space).',
+      ];
+      this.steps.forEach((st, i) => { st.touchText = touchText[i]; });
       match.tutorialTitle = 'TUTORIAL';
       this.next();
     }
@@ -11640,7 +11840,7 @@ LS.TEXT = {
       if (this.step >= this.steps.length) { this.finished = true; LS.Game.tutorialDone(); return; }
       const s = this.steps[this.step];
       s.start();
-      LS.Game.tutorialText(this.step, this.steps.length, s.title, s.text);
+      LS.Game.tutorialText(this.step, this.steps.length, s.title, LS.Touch && LS.Touch.wanted() ? s.touchText : s.text);
       LS.Audio.beep(880, 0.15, 0.2);
     }
     update(dt) {
@@ -11664,12 +11864,17 @@ LS.TEXT = {
 (function (LS) {
   'use strict';
   const U = LS.U;
-  const DEFAULTS = { shake: true, voices: true, music: 0.6, sfx: 0.9, quality: 'high', split: 'auto', difficulty: 'normal', bighud: false, lastPicks: ['hatch', 'suv'] };
+  const DEFAULTS = { shake: true, voices: true, music: 0.6, sfx: 0.9, quality: 'high', split: 'auto', difficulty: 'normal', bighud: false, lastPicks: ['hatch', 'suv'], touch: 'auto' };
+  const COARSE = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
 
   const G = LS.Game = {
     settings: Object.assign({}, DEFAULTS),
     state: 'title', paused: false, cfg: null,
-    loadSettings() { try { const s = JSON.parse(localStorage.getItem('lastspace.settings') || '{}'); Object.assign(this.settings, s); } catch (e) { /* storage blocked */ } },
+    loadSettings() {
+      // phones and tablets start on a lighter graphics setting
+      if (COARSE) this.settings.quality = 'low';
+      try { const s = JSON.parse(localStorage.getItem('lastspace.settings') || '{}'); Object.assign(this.settings, s); } catch (e) { /* storage blocked */ }
+    },
     saveSettings() { try { localStorage.setItem('lastspace.settings', JSON.stringify(this.settings)); } catch (e) { /* storage blocked */ } },
     applySettings() {
       const S = this.settings, A = LS.Audio;
@@ -11683,7 +11888,7 @@ LS.TEXT = {
       let renderer;
       try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }); }
       catch (e) { document.getElementById('ui').innerHTML = '<div class="overlay"><div class="panel"><h2>WebGL is not available</h2><p>LAST SPACE needs a browser with WebGL 2 (recent Chrome, Edge, Firefox or Safari).</p></div></div>'; return; }
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, COARSE ? 1.5 : 2));
       renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
       renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
       renderer.autoClear = false;
@@ -11852,6 +12057,7 @@ LS.TEXT = {
     frame(now) {
       const dt = Math.min(0.05, (now - this.last) / 1000); this.last = now;
       LS.Input.update(dt);
+      if (LS.Touch) { const me = this.match && this.match.humans[0]; LS.Touch.update(this.state === 'play' && !this.paused && !!me && me.status === 'active' && LS.Touch.wanted(), me); }
       LS.Menus.navigate();
       const m = this.match; if (!m) return;
       const t = now / 1000;

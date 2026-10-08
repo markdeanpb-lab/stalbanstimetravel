@@ -2,7 +2,9 @@
 <html lang="en-GB">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>LAST SPACE: ST ALBANS</title>
 <meta name="description" content="A parking-space demolition derby on Bernard Street, Grange Street, Dalton Street and Church Street, St Albans, at 6.15 pm on a weekday.">
 <link rel="stylesheet" href="css/style.css">
@@ -12,6 +14,7 @@
 <div id="hud"></div>
 <div id="tvlayer"></div>
 <div id="ui"></div>
+<div id="rotate">Turn your phone sideways to play</div>
 <noscript><p style="color:#fff;padding:2em">LAST SPACE needs JavaScript and WebGL.</p></noscript>
 <script src="vendor/three.min.js"></script>
 <script src="js/core/base.js"></script>
@@ -34,6 +37,7 @@
 <script src="js/render/view.js"></script>
 <script src="js/ui/hud.js"></script>
 <script src="js/ui/menus.js"></script>
+<script src="js/ui/touch.js"></script>
 <script src="js/game/tutorial.js"></script>
 <script src="js/main.js"></script>
 </body>

@@ -21,7 +21,7 @@ const out = process.argv[2] || 'out/check'; fs.mkdirSync(out, { recursive: true 
   const mode = process.argv[3] || 'all';
   if (mode === 'all' || mode === 'solo') {
     await page.evaluate(() => LS.Game.startMatch({ players: [{ type: 'hatch' }], difficulty: 'normal' }));
-    await step(6); await page.screenshot({ path: path.join(out, '02-circulation.png') });
+    await step(6); await page.screenshot({ path: path.join(out, '02-circulation.png'), timeout: 120000 });
     await page.evaluate(() => { const m = LS.Game.match; m.phaseLen = m.phaseT + 0.1; });
     await step(8); await page.screenshot({ path: path.join(out, '03-battle.png') });
     await page.evaluate(() => { LS.Game.views[0].mode = 'park'; });

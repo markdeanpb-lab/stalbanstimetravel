@@ -67,6 +67,7 @@
           for (let k = 0; k < 16; k++) P.prevPad[k] = is(k);
         }
         o.throttle = thr; o.brake = brk; o.steer = U.clamp(steer, -1, 1); o.handbrake = hand; o.horn = horn; o.recover = rec; o.look = look; o.camToggle = cam; o.pause = pause;
+        if (i === 0 && LS.Touch) LS.Touch.apply(o);
       }
       // menu navigation from any pad
       this.menu = { up: false, down: false, left: false, right: false, ok: false, back: false };

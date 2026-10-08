@@ -105,8 +105,9 @@
       let prompt = '';
       if (car.status === 'active') {
         if (car.recovering) prompt = 'RECOVERING… you are vulnerable';
+        else if (car.canRecover && LS.Touch && LS.Touch.active && this.view.idx === 0) prompt = 'Stuck? Hold <b>RECOVER</b>';
         else if (car.canRecover) prompt = `<kbd>${this.view.idx === 0 && m.humans.length < 2 ? 'R' : this.view.idx === 0 ? 'R' : 'L'}</kbd> / <kbd>X</kbd> hold to recover`;
-      } else if (car.status === 'eliminated' && m.phase !== 'results' && m.phase !== 'finale') prompt = `Spectating ${tgt.short} · <kbd>Tab</kbd> next driver · <kbd>Esc</kbd> menu`;
+      } else if (car.status === 'eliminated' && m.phase !== 'results' && m.phase !== 'finale') prompt = LS.Touch && LS.Touch.wanted() ? `Spectating ${tgt.short} · tap ❚❚ for the menu` : `Spectating ${tgt.short} · <kbd>Tab</kbd> next driver · <kbd>Esc</kbd> menu`;
       this.prompt.innerHTML = prompt; this.prompt.style.display = prompt ? 'block' : 'none';
       this.out.style.display = car.status === 'eliminated' && P !== 'finale' && P !== 'results' ? 'block' : 'none';
       this.out.innerHTML = `ELIMINATED<small>${car.place ? 'Finished ' + ordinal(car.place) : ''}</small>`;
