@@ -505,11 +505,25 @@
         }
         const fin = LS.Game.match && LS.Game.match.phase === 'finale';
         it.icon.visible = !fin; if (fin) it.beacon.visible = false;
-        if (s === 'active') { it.beacon.material.opacity = parked ? 0.1 : 0.14 + Math.sin(t * 4) * 0.05; it.icon.position.y = 3.6 + Math.sin(t * 3 + st.sp.id) * 0.15; }
+        if (s === 'active') { it._bb = parked ? 0.1 : 0.14 + Math.sin(t * 4) * 0.05; it.icon.position.y = 3.6 + Math.sin(t * 3 + st.sp.id) * 0.15; }
         if (s === 'candidate') it.icon.position.y = 3.4 + Math.sin(t * 2 + st.sp.id) * 0.2;
       }
     }
   }
 
+  // per viewport: the sign and beacon over a space you are in (or right next to) would fill the
+  // screen, so they step aside for that view; the painted markings stay
+  SpacesView.prototype.forView = function (car) {
+    for (const it of this.items) {
+      if (it.st.status === 'idle') continue;
+      const d = car ? Math.hypot(car.x - it.st.sp.x, car.y - it.st.sp.y) : 99;
+      const near = d < 11, k = U.clamp((d - 11) / 10, 0, 1);
+      if (it._baseIcon === undefined) it._baseIcon = true;
+      it.icon.material.opacity = near ? 0 : 0.35 + 0.65 * k;
+      it.icon.material.transparent = true;
+      it.beacon.material.opacity = near ? 0 : (it._bb != null ? it._bb : 0.14) * (0.3 + 0.7 * k);
+      it.owner.material.opacity = near ? 0.25 : 1;
+    }
+  };
   LS.World3D = World3D; LS.BinsView = BinsView; LS.SpacesView = SpacesView;
 })(window.LS);

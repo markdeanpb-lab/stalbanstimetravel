@@ -8,11 +8,13 @@
   class Remarks {
     constructor(match, rand) {
       this.m = match; this.rand = rand; this.T = LS.TEXT;
-      this.last = { driver: -99, neighbour: -99, commentary: -99 };
+      this.last = { driver: -99, neighbour: -99, commentary: -99, radio: -99 };
       this.used = new Map(); // text -> time last used
       this.keyT = new Map(); // key -> time
       match.on('*', (ev, d) => this.on(ev, d));
     }
+    // how the commentary refers to a driver: "You" is fine on your own screen but not on the telly
+    nm(c) { return c.human && c.short === LS.TEXT.playerNames[0] ? 'Player One' : c.short; }
     fmt(s, d) { return s.replace(/\{(\w+)\}/g, (_, k) => (d && d[k] != null ? d[k] : '')); }
     pick(list) {
       const now = this.m.time;
@@ -27,12 +29,13 @@
       if (!o.force && now - this.last[channel] < gap) return false;
       if (!o.force && now - (this.keyT.get(key + (who && who.index != null ? who.index : '')) ?? -999) < (o.cool || 25)) return false;
       if (!o.force && o.p != null && this.rand() > o.p) return false;
-      const pool = channel === 'commentary' ? this.T.commentary[key] : this.T.remarks[key];
+      const pool = channel === 'commentary' ? this.T.commentary[key] : channel === 'radio' ? this.T.dj[key] : this.T.remarks[key];
       if (!pool) return false;
       const text = this.fmt(this.pick(pool), data);
       this.last[channel] = now; this.keyT.set(key + (who && who.index != null ? who.index : ''), now);
       let speaker;
       if (channel === 'commentary') speaker = 'COMMENTARY';
+      else if (channel === 'radio') speaker = 'BARRY · VERULAM SOUND';
       else if (channel === 'neighbour') speaker = (o.neighbour || this.T.neighbours[Math.floor(this.rand() * this.T.neighbours.length)]).toUpperCase();
       else speaker = who ? who.name.toUpperCase() : 'RESIDENT';
       this.m.emit('remark', { channel, key, text, speaker, car: who || null, time: now });
@@ -50,12 +53,19 @@
             else this.say('commentary', 'round', null, { round: d.round, drivers: d.drivers, spaces: d.spaces }, { force: true });
           }
           if (d.phase === 'sudden') this.say('commentary', 'sudden', null, {}, { force: true });
+          // Barry chats over the music; if the radio is still on later he starts another link (and gets cut off)
+          if (d.phase === 'circulation' && m.mode === 'match') {
+            const round = m.round;
+            const live = () => m.phase === 'circulation' && m.round === round;
+            m.after(round === 1 ? 4.5 : 6.5, () => { if (live()) this.say('radio', 'open', null, {}, { force: true }); });
+            m.after(round === 1 ? 17 : 19, () => { if (live()) this.say('radio', 'more', null, {}, { force: true }); });
+          }
           break;
         case 'musicStop': this.say('commentary', 'music_stop', null, {}, { force: true }); break;
         case 'horn': this.say('commentary', 'horn', null, {}, { force: true }); break;
         case 'parked': {
           const c = d.car, sp = d.space.sp;
-          const data = { name: c.short, space: d.space.sp.name || d.space.sp.label.replace(/^(\w)(\w*)/, (a, x, y) => x + y.toLowerCase()), vehicle: c.spec.class.toLowerCase() };
+          const data = { name: this.nm(c), space: d.space.sp.name || d.space.sp.label.replace(/^(\w)(\w*)/, (a, x, y) => x + y.toLowerCase()), vehicle: c.spec.class.toLowerCase() };
           if (c.home && U.dist(c.home.x, c.home.y, sp.x, sp.y) < 22) { this.say('driver', 'outside_house', c, data, { force: true }); break; }
           // it is always outside somebody's house: the nearest front door has views
           if (this.rand() < 0.4) {
@@ -68,17 +78,26 @@
         }
         case 'dislodged': {
           const c = d.car, by = d.by;
-          const data = { name: c.short, by: by ? by.short : 'Someone', space: d.space ? (d.space.sp.name || d.space.sp.label) : 'the space' };
+          const data = { name: this.nm(c), by: by ? this.nm(by) : 'Someone', space: d.space ? (d.space.sp.name ? 'the space ' + d.space.sp.name : d.space.sp.label) : 'the space' };
           if (by) {
             if (!this.say('driver', 'permit', by, data, { cool: 30 })) this.say('commentary', 'dislodged', c, data, { cool: 8 });
           } else this.say('driver', 'lost_space', c, data, { p: 0.6 });
           if (by && by.spec.type === 'suv' && c.spec.type === 'hatch') this.say('neighbour', 'suv_push', null, data, { p: 0.5, cool: 50 });
           break;
         }
-        case 'eliminated':
-          this.say('driver', 'residents_group', d.car, { name: d.car.short }, { force: true });
-          setTimeoutish(m, 1.6, () => this.say('commentary', 'eliminated', d.car, { name: d.car.short }, { force: true }));
+        case 'eliminatedGroup': {
+          const cs = d.cars; if (!cs.length) break;
+          // one grumble per horn (a human's first, if one went out), and one line of commentary for the lot
+          const who = cs.find((c) => c.human) || cs[Math.floor(this.rand() * cs.length)];
+          this.say('driver', 'residents_group', who, { name: this.nm(who) }, { force: true });
+          if (cs.length === 1) setTimeoutish(m, 1.6, () => this.say('commentary', 'eliminated', cs[0], { name: this.nm(cs[0]) }, { force: true }));
+          else {
+            const names = cs.map((c) => this.nm(c)), list = names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
+            const n = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven'][cs.length] || String(cs.length);
+            setTimeoutish(m, 1.6, () => this.say('commentary', 'eliminated_many', null, { names: list, n }, { force: true }));
+          }
           break;
+        }
         case 'impact': {
           if (d.severity > 6.5) { if (!this.say('commentary', 'big_hit', null, {}, { cool: 12 })) this.say('neighbour', 'big_hit', null, {}, { p: 0.5, cool: 20 }); }
           if (d.aggressor && d.severity > 2.5 && Math.abs(d.aggressor.steerAngle) > 0.22) this.say('driver', 'indicating', d.aggressor, {}, { p: 0.55, cool: 40 });
@@ -90,11 +109,11 @@
           break;
         case 'pavement': this.say('neighbour', 'pavement', null, {}, { p: 0.5, cool: 30 }); break;
         case 'hornUse': this.say('neighbour', 'horn', null, {}, { p: 0.25, cool: 30 }); break;
-        case 'overturn': if (!this.say('commentary', 'overturned', d.car, { name: d.car.short }, { cool: 15 })) this.say('neighbour', 'overturned', null, {}, { p: 0.6 }); break;
+        case 'overturn': if (!this.say('commentary', 'overturned', d.car, { name: this.nm(d.car) }, { cool: 15 })) this.say('neighbour', 'overturned', null, {}, { p: 0.6 }); break;
         case 'recovered': this.say('neighbour', 'recovered', null, {}, { p: 0.3, cool: 30 }); break;
         case 'extraSpace': this.say('commentary', 'extra_space', null, {}, { force: true }); break;
         case 'winner':
-          this.say('commentary', 'winner', d.car, { name: d.car.short }, { force: true });
+          this.say('commentary', 'winner', d.car, { name: this.nm(d.car) }, { force: true });
           setTimeoutish(m, 2.2, () => this.say('neighbour', 'cant_leave', null, {}, { force: true, neighbour: 'Mrs Cotterill, No. 12' }));
           break;
       }

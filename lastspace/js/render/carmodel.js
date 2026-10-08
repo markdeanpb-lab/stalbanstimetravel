@@ -35,17 +35,18 @@
   }
 
   // parts: { paint: [geos], glass: [geos], dark: [geos], bumperF, bumperR, wheels: [{x,z,r,w}], lights: {...}, plates }
-  function buildParts(type, spec, paintRGB) {
+  function buildParts(type, spec, paintRGB, lod) {
     const P = PROFILES[type] || PROFILES.estate;
     const L = spec.L, W = spec.W, H = spec.H || P.roof;
     const scaleH = H / P.roof;
     const clear = P.clear, belt = P.belt * scaleH, roof = H;
     const hl = L / 2, hw = W / 2;
     const out = { paint: [], glass: [], dark: [], chrome: [], wheels: [], P };
+    const lo = lod === 'low'; // residents' parked cars: same shapes, far fewer triangles
 
     // lower body
     const bh = belt - clear;
-    const body = new THREE.BoxGeometry(L, bh, W, 14, 4, 6);
+    const body = lo ? new THREE.BoxGeometry(L, bh, W, 6, 2, 3) : new THREE.BoxGeometry(L, bh, W, 14, 4, 6);
     roundBox(body, hl, bh / 2, hw, Math.min(0.3, bh * 0.45));
     body.translate(0, clear + bh / 2, 0);
     // bonnet slopes down towards the nose; boot drops a little
@@ -58,7 +59,7 @@
     // cabin / greenhouse
     const cabF = hl - L * P.hood, cabR = -hl + L * (1 - P.cabEnd);
     const cabLen = cabF - cabR, cabH = roof - belt;
-    const cab = new THREE.BoxGeometry(cabLen, cabH, W * 0.96, 8, 2, 4);
+    const cab = new THREE.BoxGeometry(cabLen, cabH, W * 0.96, lo ? 6 : 8, 2, lo ? 2 : 4);
     { const p = cab.attributes.position;
       for (let i = 0; i < p.count; i++) {
         let x = p.getX(i), y = p.getY(i), z = p.getZ(i);
@@ -84,7 +85,7 @@
 
     // bumpers
     const bumpCol = P.bumper === 'body' ? paintRGB.map((v) => v * 0.92) : P.bumper === 'chrome' ? CHROME : DARK;
-    const mkBump = (end) => { const g = new THREE.BoxGeometry(0.24, 0.3, W + 0.04, 2, 2, 6); roundBox(g, 0.12, 0.15, W / 2 + 0.02, 0.1); g.translate(end * (hl + 0.04), clear + 0.2, 0); return setColors(g, bumpCol); };
+    const mkBump = (end) => { const g = new THREE.BoxGeometry(0.24, 0.3, W + 0.04, lo ? 1 : 2, lo ? 1 : 2, lo ? 2 : 6); roundBox(g, 0.12, 0.15, W / 2 + 0.02, 0.1); g.translate(end * (hl + 0.04), clear + 0.2, 0); return setColors(g, bumpCol); };
     out.bumperF = mkBump(1); out.bumperR = mkBump(-1);
 
     // wheels
@@ -294,11 +295,11 @@
       this.meshes = [];
       for (const [model, list] of this.byModel) {
         const spec = { L: list[0].hx * 2, W: list[0].hy * 2, H: PROFILES[model].roof, wb: list[0].hx * 2 * 0.6, track: list[0].hy * 2 - 0.25, type: model };
-        const parts = buildParts(model, spec, [1, 1, 1]);
+        const parts = buildParts(model, spec, [1, 1, 1], 'low');
         const paintGeo = THREE.BufferGeometryUtils.mergeGeometries([parts.body, parts.cab, parts.bumperF, parts.bumperR, ...parts.paint].map((g) => { g = g.clone(); if (g.index) g = g.toNonIndexed(); return g; }), false);
         // fixed parts: wheels (as boxes, cheap), lights, trim
         const fixed = [];
-        for (const w of parts.wheels) { const g = new THREE.CylinderGeometry(w.r, w.r, w.w, 12); g.rotateX(Math.PI / 2); g.translate(w.x, w.r, w.z); fixed.push(setColors(g, TYRE)); }
+        for (const w of parts.wheels) { const g = new THREE.CylinderGeometry(w.r, w.r, w.w, 8); g.rotateX(Math.PI / 2); g.translate(w.x, w.r, w.z); fixed.push(setColors(g, TYRE)); }
         for (const k of ['hl', 'hr', 'tl', 'tr']) { const d = parts.lights[k]; const g = new THREE.BoxGeometry(d.w, d.h, d.d); g.translate(d.x, d.y, d.z); fixed.push(setColors(g, k[0] === 'h' ? [0.9, 0.9, 0.8] : [0.5, 0.05, 0.05])); }
         for (const g of parts.dark.concat(parts.chrome)) fixed.push(g);
         const fixedGeo = THREE.BufferGeometryUtils.mergeGeometries(fixed.map((g) => (g.index ? g.toNonIndexed() : g)), false);

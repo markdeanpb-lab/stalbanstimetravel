@@ -6,13 +6,13 @@
 
   M.root = null;
   M.show = function (html, cls) {
-    M.hide();
+    if (M.root) { M.root.remove(); M.root = null; }
     const o = M.root = el('div', 'overlay ' + (cls || ''), document.getElementById('ui'), html);
     const first = o.querySelector('[data-focus]') || o.querySelector('button');
     if (first) setTimeout(() => first.focus(), 30);
     return o;
   };
-  M.hide = function () { if (M.root) { M.root.remove(); M.root = null; } };
+  M.hide = function () { if (M.root) { M.root.remove(); M.root = null; } M.current = null; };
   M.on = (sel, fn) => { M.root.querySelectorAll(sel).forEach((b) => b.addEventListener('click', (e) => { LS.Audio.init(); fn(e, b); })); };
   // gamepad / arrow navigation between buttons in the current overlay
   M.navigate = function () {
@@ -26,7 +26,10 @@
     if (I.ok && document.activeElement && items.includes(document.activeElement)) document.activeElement.click();
   };
 
+  // re-render the current screen when its wording depends on touch vs keys
+  M.refresh = function () { if (M.root && M.current) M.current(); };
   M.title = function () {
+    M.current = M.title;
     M.show(`
       <div class="title-card">
         <div class="kicker">LIVE · 18:15 · A WEEKDAY · ST ALBANS AL3</div>
@@ -35,7 +38,7 @@
         <div class="streets">Bernard Street · Grange Street · Dalton Street · Church Street</div>
         <div class="menu-buttons">
           <button data-act="solo" data-focus>SOLO MATCH <small>you vs seven residents</small></button>
-          <button data-act="duo">TWO-PLAYER SPLIT-SCREEN <small>${LS.Touch && LS.Touch.wanted() ? 'player 2 needs a gamepad or keyboard' : 'plus six residents'}</small></button>
+          <button data-act="duo">TWO-PLAYER SPLIT-SCREEN <small>${LS.Touch.label('player 2 needs a gamepad or keyboard', 'plus six residents')}</small></button>
           <button data-act="tutorial">TUTORIAL <small>driving, shunting, parking</small></button>
           <button data-act="settings">SETTINGS</button>
           <button data-act="controls">CONTROLS</button>
@@ -51,6 +54,7 @@
 
   const bars = (n) => '<span class="bar">' + '■'.repeat(n) + '<i>' + '■'.repeat(5 - n) + '</i></span>';
   M.setup = function (players) {
+    M.current = () => M.setup(players);
     const S = LS.Game.settings;
     const picks = (S.lastPicks || ['hatch', 'suv']).slice(0, players);
     while (picks.length < players) picks.push('estate');
@@ -64,7 +68,7 @@
     };
     let html = `<div class="setup"><h2>${players === 1 ? 'SOLO MATCH' : 'TWO-PLAYER SPLIT-SCREEN'}</h2>`;
     for (let p = 0; p < players; p++) {
-      html += `<div class="pick"><h3><span class="glyph" style="color:${LS.IDENTITY[p].color}">${LS.IDENTITY[p].glyph}</span> PLAYER ${p + 1} <small>${LS.Touch && LS.Touch.wanted() && p === 0 ? 'Touch: steering pad on the left, pedals on the right' : players === 2 ? (p === 0 ? 'W A S D · Space · Q horn · E camera · R recover' : '↑ ↓ ← → · / handbrake · . horn · , camera · L recover') : 'WASD or arrows · Space handbrake · H horn · C parking camera · R recover'}</small></h3><div class="vcards">${LS.VEHICLE_ORDER.map((t) => card(t, p)).join('')}</div></div>`;
+      html += `<div class="pick"><h3><span class="glyph" style="color:${LS.IDENTITY[p].color}">${LS.IDENTITY[p].glyph}</span> PLAYER ${p + 1} <small>${p === 0 && LS.Touch.wanted() ? 'Touch: steering pad on the left, pedals on the right' : players === 2 ? (p === 0 ? 'W A S D · Space · Q horn · E camera · R recover' : '↑ ↓ ← → · / handbrake · . horn · , camera · L recover') : 'WASD or arrows · Space handbrake · H horn · C parking camera · R recover'}</small></h3><div class="vcards">${LS.VEHICLE_ORDER.map((t) => card(t, p)).join('')}</div></div>`;
     }
     html += `<div class="setup-row"><label>Residents <select id="diff"><option value="easy">Polite</option><option value="normal">Entitled</option><option value="hard">Unhinged</option></select></label>
       <button data-act="go" data-focus>START THE EVENING ▶</button><button data-act="back">BACK</button></div></div>`;
@@ -82,7 +86,7 @@
     const S = LS.Game.settings;
     M.show(`<div class="panel"><h2>SETTINGS</h2>
       <label class="row"><span>Camera shake</span><input type="checkbox" id="shake" ${S.shake ? 'checked' : ''}></label>
-      <label class="row"><span>Neighbours' voices (speech synthesis)</span><input type="checkbox" id="voices" ${S.voices ? 'checked' : ''}></label>
+      <label class="row"><span>Spoken voices${LS.Audio.speechOK() ? '' : ' (not available in this browser)'}</span><select id="voices"><option value="all">Commentary, radio and residents</option><option value="commentary">Commentary and radio only</option><option value="off">Off</option></select></label>
       <label class="row"><span>Music volume</span><input type="range" id="music" min="0" max="1" step="0.05" value="${S.music}"></label>
       <label class="row"><span>Effects volume</span><input type="range" id="sfx" min="0" max="1" step="0.05" value="${S.sfx}"></label>
       <label class="row"><span>Graphics</span><select id="quality"><option value="high">High (shadows)</option><option value="medium">Medium</option><option value="low">Low (no shadows)</option></select></label>
@@ -92,9 +96,9 @@
       <p class="fine">Spaces and drivers always use shapes, patterns and labels as well as colour. Graphics changes apply to the next match.</p>
       <button data-act="back" data-focus>DONE</button></div>`);
     const R = M.root;
-    R.querySelector('#quality').value = S.quality; R.querySelector('#split').value = S.split; R.querySelector('#touchc').value = S.touch || 'auto';
+    R.querySelector('#quality').value = S.quality; R.querySelector('#split').value = S.split; R.querySelector('#touchc').value = S.touch || 'auto'; R.querySelector('#voices').value = S.voices || 'all';
     const save = () => {
-      S.shake = R.querySelector('#shake').checked; S.voices = R.querySelector('#voices').checked; S.music = +R.querySelector('#music').value; S.sfx = +R.querySelector('#sfx').value;
+      S.shake = R.querySelector('#shake').checked; S.voices = R.querySelector('#voices').value; if (S.voices === 'off') LS.Audio.cancelSpeech(); S.music = +R.querySelector('#music').value; S.sfx = +R.querySelector('#sfx').value;
       S.quality = R.querySelector('#quality').value; S.split = R.querySelector('#split').value; S.bighud = R.querySelector('#bighud').checked; S.touch = R.querySelector('#touchc').value;
       LS.Game.saveSettings(); LS.Game.applySettings();
     };

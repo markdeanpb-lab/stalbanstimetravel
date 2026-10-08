@@ -13,7 +13,7 @@
   const PERSONAS = {
     nearest: { label: 'Goes for the nearest space', contest: 2.5, speed: 1.0, cautious: 0.7, ram: 0.2, attackBias: 0.0 },
     bully: { label: 'Targets vulnerable parked cars', contest: 1.0, speed: 1.0, cautious: 0.3, ram: 0.8, attackBias: 1.0 },
-    quiet: { label: 'Avoids fights, looks for quiet streets', contest: 14, speed: 0.92, cautious: 1.0, ram: 0.0, attackBias: -1 },
+    quiet: { label: 'Avoids fights, looks for quiet streets', contest: 6, speed: 0.92, cautious: 1.0, ram: 0.0, attackBias: -1 },
     confident: { label: 'Unjustified confidence', contest: 0.0, speed: 1.12, cautious: 0.0, ram: 1.0, attackBias: 0.3 },
   };
 
@@ -265,6 +265,25 @@
           }
         }
       }
+      // two drivers fiddling about beside the same space: after a while one of them gives up and goes elsewhere
+      if (this.target && (this.state === 'goto' || this.state === 'maneuver' || this.state === 'settle')) {
+        const sp = this.target.sp, myD = U.dist(c.x, c.y, sp.x, sp.y);
+        this.nearT = myD < 12 ? (this.nearT || 0) + 0.3 : 0;
+        if (this.nearT > 5) {
+          for (const o of M.cars) {
+            if (o === c || o.status !== 'active' || (o.park.parked && o.park.space !== this.target)) continue;
+            const od = U.dist(o.x, o.y, sp.x, sp.y);
+            if (od > 9) continue;
+            const rival = o.bot ? o.bot.target === this.target && (o.bot.nearT || 0) > 2 : o.speed < 3;
+            if (!rival) continue;
+            // the one further from the space backs off (ties: the later car on the grid); a human is
+            // given way to after a longer stand-off unless you are that sort of driver
+            const yieldIt = o.bot ? myD > od + 0.6 || (Math.abs(myD - od) <= 0.6 && M.cars.indexOf(c) > M.cars.indexOf(o))
+              : this.nearT > 9 && this.p.ram < 1;
+            if (yieldIt) { this.nearT = 0; this.abandon(14); return; }
+          }
+        }
+      } else this.nearT = 0;
       if (this.state === 'choose' || (this.state === 'goto' && this.stateT > 12 && this.stateT % 6 < 0.4) || this.replan) {
         this.replan = false;
         const best = this.pickSpace(act);
@@ -286,17 +305,20 @@
       const scarce = free <= 1 || this.m.timeLeft < 26;
       return (this.p.attackBias >= 1 && ratio > 0.85 && scarce) || (this.p.ram >= 1 && ratio > 1.2 && scarce) || (late && ratio > 1.4 && this.p.attackBias > 0);
     }
-    pickSpace(act) {
+    pickSpace(act, anyway) {
       const c = this.car, M = this.m, now = M.time;
       let best = null, bestCost = 1e9;
       for (const st of act) {
-        if ((this.blacklist.get(st) || 0) > now) continue;
+        if (!anyway && (this.blacklist.get(st) || 0) > now) continue;
         const own = st.owner;
         const occupied = own && own !== c && own.park.parked && own.park.space === st;
         const d = U.dist(c.x, c.y, st.sp.x, st.sp.y);
         const tp = { hatch: 110, estate: 140, suv: 170, van: 190 }[c.spec.type];
         const route = this.m.arena.navPath(c.x, c.y, st.sp.access.x, st.sp.access.y, { heading: c.a, turnPenalty: tp, penalty: (e) => this.edgePenalty.get(e.id) || 0 }).length;
         let cost = route / (9 * this.speedMul);
+        // can we even get there before the horn? (narrow streets: about 6 m/s door to door, plus parking)
+        const eta = route / (6 * this.speedMul) + 6;
+        if (M.phase === 'battle' && eta > M.timeLeft) cost += 25 + (eta - M.timeLeft);
         // entry difficulty for this vehicle
         const slack = (st.sp.hl * 2 - c.spec.L);
         cost += slack < 0.8 ? 6 : slack < 1.6 ? 3 : 0;
@@ -307,7 +329,11 @@
           if (o === c || o.status !== 'active') continue;
           const od = U.dist(o.x, o.y, st.sp.x, st.sp.y);
           if (od < d) cost += this.p.contest * (od < 15 ? 1.5 : 0.6);
-          if (o.bot && o.bot.target === st && od < d + 10) cost += 9 + this.p.contest * 0.6; // already claimed by someone nearer
+          if (o.bot && o.bot.target === st && o.bot !== this) {
+            // already claimed; someone halfway into it has as good as got it
+            if (od < 14 && (o.bot.state === 'maneuver' || o.bot.state === 'settle' || o.bot.state === 'hold')) cost += 45;
+            else cost += od < d + 10 ? 16 + this.p.contest * 0.6 : 4;
+          } else if (!o.bot && od < 9 && o.speed < 3 && od < d) cost += 20; // a player lining up for it
           if (this.kind === 'quiet' && od < 30) cost += 6;
         }
         if (occupied) {
@@ -318,6 +344,8 @@
         if (st === this.target) { cost *= 0.6; cost -= 3; this.curCost = cost; } // commitment
         if (cost < bestCost) { bestCost = cost; best = occupied ? { st, attack: own } : { st }; }
       }
+      // nothing else left: go back and try again rather than give up on the last space in the street
+      if (!best && !anyway && act.some((st) => (this.blacklist.get(st) || 0) > now)) return this.pickSpace(act, true);
       return best;
     }
 
@@ -519,7 +547,22 @@
         if (this.plan.loose && dist < 5.5 && hd < 1.3 && !this.reverse) { this.beginManeuver(); return; }
         if (dist < 4 && hd > 1.2 && c.speed < 2 && !this.turn) { this.turn = { why: 'start', head: this.plan.startHead, t: 0, dir: 1, legT: 0, side: 0 }; }
         if (rem < 0.5 && dist > 2.6) { this.goes = (this.goes || 0) + 1; if (this.goes > 4) { this.goes = 0; this.abandon(10); } else this.beginApproach(this.target); }
-        if (this.stateT > 30) this.abandon(10);
+        // give up only if the drive is not getting anywhere, not just because it is a long way
+        if (this.stateT > 8) {
+          const tg = this.path ? this.path.length - this.pathS : U.dist(c.x, c.y, this.target.sp.x, this.target.sp.y);
+          if (this.progT == null || this.stateT < this.progT || this.turn) { this.progT = this.stateT; this.progD = tg; } // a K-turn is progress of a sort
+          else if (this.stateT - this.progT > 10) {
+            if (this.progD - tg < 15) {
+              this.progT = null;
+              const pr = M.arena.navProject(c.x, c.y);
+              this.edgePenalty.set(pr.e.id, (this.edgePenalty.get(pr.e.id) || 0) + 80);
+              if (M.parking.active.length > 1) { this.abandon(10); return; }
+              this.beginApproach(this.target); return; // the only space left: find another way to it
+            }
+            this.progT = this.stateT; this.progD = tg;
+          }
+        }
+        if (this.stateT > 70) this.abandon(10);
         return;
       }
       if (this.state === 'maneuver') {
@@ -595,7 +638,7 @@
       if (this.pushT > 0) { this.pushT -= 1 / 60; c.input.throttle = 1; c.input.brake = 0; return; }
       const barge = this.kind === 'confident' && this.m.phase !== 'circulation';
       const look = Math.max(6, c.speed * 1.6 + 4);
-      const d = this.pathObstacle(look, barge);
+      const d = this.obsD = this.pathObstacle(look, barge);
       this.lastAvoid = U.approach(this.lastAvoid || 0, this.avoidOffset, 0.05);
       // stuck in a queue behind something that is not moving: shove it, or find another way round
       if (d < 2.2 && c.speed < 0.6) this.blockedT = (this.blockedT || 0) + 1 / 60; else this.blockedT = Math.max(0, (this.blockedT || 0) - 1 / 30);

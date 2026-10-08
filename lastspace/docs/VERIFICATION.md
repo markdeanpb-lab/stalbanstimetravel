@@ -1,6 +1,6 @@
 # Verification record
 
-Build checked on 2026-10-07. Everything below was produced by the tools in `tools/`.
+Build checked on 2026-10-08. Everything below was produced by the tools in `tools/`.
 
 ## Headless simulation (`node tools/sim.js --fit --park --rules --impacts --match 12`)
 
@@ -13,27 +13,39 @@ The simulation runs in Node with the same files the browser loads (no rendering)
   suv     L 5.05 W 2: tightest margin 0.45 m in DALTON 4 (small, 6.5 deg tolerance)
   van     L 5.2 W 2: tightest margin 0.45 m in DALTON 4 (small, 6.4 deg tolerance)
 == park: one bot per vehicle per space ==
-  hatch   49/52 parked, mean 12.1 s
-     fails: BERNARD 3(small)s1:maneuver out 0.41 ang 13; COURT 1(bay)s1:goto out 4.24 ang 84; COURT 2(bay)s2:goto out 6.55 ang 75
-  estate  49/52 parked, mean 13.3 s
-     fails: COURT 1(bay)s1:goto out 14.01 ang 67; COURT 1(bay)s2:maneuver out 4.87 ang 9; COURT 2(bay)s2:goto out 45.05 ang 36
-  suv     48/52 parked, mean 13.9 s
-     fails: DALTON 4(small)s2:goto out 12.72 ang 53; COURT 1(bay)s1:goto out 17.66 ang 80; COURT 1(bay)s2:goto out 24.27 ang 81; COURT 2(bay)s2:goto out 44.95 ang 13
-  van     48/52 parked, mean 14.9 s
-     fails: COURT 1(bay)s1:choose out 38.80 ang 7; COURT 1(bay)s2:choose out 38.03 ang 9; COURT 2(bay)s2:choose out 42.37 ang 10; COURT 3(bay)s1:goto out 2.21 ang 49
+  hatch   50/52 parked, mean 13.0 s
+     fails: COURT 1(bay)s1:goto out 38.35 ang 6; COURT 2(bay)s2:settle out 2.22 ang 7
+  estate  50/52 parked, mean 14.0 s
+     fails: COURT 1(bay)s2:maneuver out 0.85 ang 2; COURT 2(bay)s2:goto out 4.59 ang 71
+  suv     48/52 parked, mean 14.2 s
+     fails: DALTON 4(small)s2:goto out 14.26 ang 72; COURT 1(bay)s1:goto out 36.30 ang 79; COURT 1(bay)s2:goto out 36.27 ang 82; COURT 2(bay)s2:goto out 7.21 ang 85
+  van     50/52 parked, mean 17.2 s
+     fails: COURT 2(bay)s2:maneuver out 6.32 ang 38; COURT 3(bay)s1:goto out 3.68 ang 70
 == 12 eight-bot matches ==
-  match 0 seed 100: OK 2.47 min, 2 rounds, winner Malcolm Ashby (hatch, nearest); parks 6, dislodged 1, impacts 74 (4 big), recoveries 1, remarks 44; sim 3.0 s
-  match 1 seed 101: OK 5.40 min, 4 rounds, winner Colin Pargeter (suv, confident); parks 11, dislodged 1, impacts 86 (14 big), recoveries 5, remarks 66; sim 4.3 s
-  match 2 seed 102: OK 4.35 min, 3 rounds, winner Priya Okonedo (hatch, quiet); parks 8, dislodged 0, impacts 201 (6 big), recoveries 2, remarks 53; sim 3.6 s
-  match 3 seed 103: OK 7.09 min, 5 rounds, winner Linda Marchmont (suv, bully); parks 17, dislodged 0, impacts 151 (8 big), recoveries 7, remarks 80; sim 5.3 s
-  match 4 seed 104: OK 4.06 min, 3 rounds, winner Malcolm Ashby (hatch, nearest); parks 8, dislodged 0, impacts 92 (7 big), recoveries 1, remarks 55; sim 3.1 s
-  match 5 seed 105: OK 2.85 min, 2 rounds, winner Trevor Baskerville (estate, quiet); parks 7, dislodged 0, impacts 106 (8 big), recoveries 2, remarks 52; sim 2.5 s
-  match 6 seed 106: OK 4.14 min, 3 rounds, winner Trevor Baskerville (estate, quiet); parks 8, dislodged 0, impacts 120 (6 big), recoveries 2, remarks 50; sim 3.2 s
-  match 7 seed 107: OK 2.66 min, 2 rounds, winner Malcolm Ashby (hatch, nearest); parks 6, dislodged 2, impacts 93 (2 big), recoveries 1, remarks 41; sim 2.1 s
-  match 8 seed 108: OK 5.30 min, 4 rounds, winner Colin Pargeter (suv, confident); parks 14, dislodged 1, impacts 130 (6 big), recoveries 2, remarks 70; sim 4.3 s
-  match 9 seed 109: OK 3.94 min, 3 rounds, winner Trevor Baskerville (estate, quiet); parks 9, dislodged 1, impacts 89 (4 big), recoveries 1, remarks 50; sim 3.3 s
-  match 10 seed 110: OK 3.74 min, 3 rounds, winner Sandra Okafor-Lowe (estate, confident); parks 10, dislodged 0, impacts 135 (9 big), recoveries 4, remarks 58; sim 3.0 s
-  match 11 seed 111: OK 3.97 min, 3 rounds, winner Malcolm Ashby (hatch, nearest); parks 8, dislodged 0, impacts 118 (18 big), recoveries 2, remarks 60; sim 3.3 s
+  match 0 seed 100: OK 4.83 min, 3 rounds, winner Trevor Baskerville (estate, quiet); parks 9, dislodged 0, impacts 131 (19 big), recoveries 0, remarks 61
+     R1:8d/7s | horn@1.1m parked 5 | R2:5d/4s | horn@2.4m parked 3 | R3:3d/2s | horn@3.6m parked 0 | SD:3d/2s
+  match 1 seed 101: OK 3.94 min, 3 rounds, winner Gary Strood (van, bully); parks 8, dislodged 1, impacts 92 (14 big), recoveries 4, remarks 48
+     R1:8d/7s | horn@1.3m parked 4 | R2:4d/3s | horn@2.6m parked 2 | R3:2d/1s | horn@3.8m parked 1
+  match 2 seed 102: OK 5.15 min, 4 rounds, winner Trevor Baskerville (estate, quiet); parks 12, dislodged 1, impacts 135 (19 big), recoveries 5, remarks 61
+     R1:8d/7s | horn@1.3m parked 5 | R2:5d/4s | horn@2.5m parked 3 | R3:3d/2s | horn@3.8m parked 2 | R4:2d/1s | horn@5.0m parked 1
+  match 3 seed 103: OK 5.05 min, 4 rounds, winner Malcolm Ashby (hatch, nearest); parks 11, dislodged 0, impacts 152 (7 big), recoveries 3, remarks 58
+     R1:8d/7s | horn@1.1m parked 5 | R2:5d/4s | horn@2.3m parked 3 | R3:3d/2s | horn@3.6m parked 2 | R4:2d/1s | horn@4.9m parked 1
+  match 4 seed 104: OK 4.08 min, 3 rounds, winner Deborah Fenwick-Hythe (estate, nearest); parks 9, dislodged 0, impacts 110 (13 big), recoveries 2, remarks 43
+     R1:8d/7s | horn@1.2m parked 6 | R2:6d/5s | horn@2.6m parked 2 | R3:2d/1s | horn@4.0m parked 1
+  match 5 seed 105: OK 4.26 min, 3 rounds, winner Gary Strood (van, bully); parks 9, dislodged 2, impacts 109 (10 big), recoveries 0, remarks 51
+     R1:8d/7s | horn@1.3m parked 4 | R2:4d/3s | horn@2.6m parked 2 | R3:2d/1s | horn@3.9m parked 0 | SD:2d/1s
+  match 6 seed 106: OK 5.26 min, 4 rounds, winner Linda Marchmont (suv, bully); parks 13, dislodged 0, impacts 156 (21 big), recoveries 1, remarks 63
+     R1:8d/7s | horn@1.1m parked 6 | R2:6d/5s | horn@2.3m parked 4 | R3:4d/3s | horn@3.6m parked 2 | R4:2d/1s | horn@5.0m parked 0 | SD:2d/1s
+  match 7 seed 107: OK 3.88 min, 3 rounds, winner Sandra Okafor-Lowe (estate, confident); parks 10, dislodged 1, impacts 153 (6 big), recoveries 2, remarks 46
+     R1:8d/7s | horn@1.2m parked 5 | R2:5d/4s | horn@2.5m parked 3 | R3:3d/2s | horn@3.8m parked 1
+  match 8 seed 108: OK 3.95 min, 3 rounds, winner Trevor Baskerville (estate, quiet); parks 10, dislodged 0, impacts 110 (11 big), recoveries 2, remarks 49
+     R1:8d/7s | horn@1.2m parked 6 | R2:6d/5s | horn@2.6m parked 3 | R3:3d/2s | horn@3.8m parked 1
+  match 9 seed 109: OK 4.29 min, 3 rounds, winner Sandra Okafor-Lowe (estate, confident); parks 9, dislodged 0, impacts 117 (10 big), recoveries 2, remarks 53
+     R1:8d/7s | horn@1.2m parked 6 | R2:6d/5s | horn@2.5m parked 2 | R3:2d/1s | horn@3.7m parked 0 | SD:2d/1s
+  match 10 seed 110: OK 4.98 min, 4 rounds, winner Priya Okonedo (hatch, quiet); parks 16, dislodged 1, impacts 117 (7 big), recoveries 3, remarks 64
+     R1:8d/7s | horn@1.1m parked 7 | R2:7d/6s | horn@2.4m parked 4 | R3:4d/3s | horn@3.7m parked 3 | R4:3d/2s | horn@4.9m parked 1
+  match 11 seed 111: OK 3.74 min, 3 rounds, winner Sandra Okafor-Lowe (estate, confident); parks 9, dislodged 0, impacts 98 (14 big), recoveries 3, remarks 49
+     R1:8d/7s | horn@1.3m parked 5 | R2:5d/4s | horn@2.5m parked 3 | R3:3d/2s | horn@3.6m parked 1
 == parking rules and collisions ==
   PASS not parked before 2 s (progress 0.75)
   PASS parked after 2 s below walking pace
@@ -68,7 +80,9 @@ What the sections mean:
 | Two-player split-screen with six bots | `browser-check.js` | Pass |
 | Tutorial: all six steps, scripted inputs | `browser-tutorial.js` | Pass ("TUTORIAL COMPLETE", no errors) |
 | Full solo match, player on autopilot, to the results screen | `browser-match.js` | Pass (3.8 min, finale freeze-frame, results, no errors) |
-| Phone (844 × 390, touch, landscape): menus by tap, then GO held while dragging STEER, then BRAKE held | `browser-touch.js` | Pass: car drove 7.6 m and turned right, then reversed; tutorial shows touch wording; no errors |
+| Phone (844 × 390, touch, landscape): menus by tap, then GO held while dragging STEER, then BRAKE held | `browser-touch.js` | Pass: car drove 11.1 m and turned right, then reversed; tutorial shows touch wording; no errors |
+| Phone spectating after elimination: NEXT and pause only, compact HUD | screenshot | Pass: no controls overlap the minimap or driver row |
+| Spoken commentary with a stand-in speech engine (headless Chromium has no voices) | `browser-voices.js` | Pass: every spoken line matched an on-screen caption, never two voices at once, one steady commentator voice, Barry spoke over the music and was cut off when it stopped, residents silent in "commentary only" mode, captions marked while being read |
 | Single-file build boots and runs a match | `build-single.js` + manual load | Pass |
 | Staged head-on crash: hatch hit by an SUV at 15 m/s | ad hoc | Front damage 100%, front bumper detached as debris, headlight broken, hatch shoved backwards |
 
@@ -76,5 +90,5 @@ What the sections mean:
 
 - Real-time frame rate on real hardware (software rendering is far too slow to judge).
 - Touch controls on a physical phone (tested in Chromium's phone emulation with real multi-touch events).
-- Gamepads and speech synthesis on real devices (the code paths run, but there is no device in the test container).
+- Gamepads and real speech voices (the code paths run against a stand-in speech engine; which voices you hear depends on the browser and operating system).
 - Long play sessions by people. The balance of the four vehicles against human players needs playtesting.

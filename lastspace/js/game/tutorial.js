@@ -64,7 +64,7 @@
       if (this.step >= this.steps.length) { this.finished = true; LS.Game.tutorialDone(); return; }
       const s = this.steps[this.step];
       s.start();
-      LS.Game.tutorialText(this.step, this.steps.length, s.title, LS.Touch && LS.Touch.wanted() ? s.touchText : s.text);
+      LS.Game.tutorialText(this.step, this.steps.length, s.title, LS.Touch.label(s.touchText, s.text));
       LS.Audio.beep(880, 0.15, 0.2);
     }
     update(dt) {

@@ -74,6 +74,12 @@ body.bighud .vhud { font-size: 19px; }
 .cap .who { font-size: 0.72em; letter-spacing: 0.1em; color: var(--dim); margin-right: 10px; }
 .cap .what { font-size: 1.05em; }
 .cap.fade { opacity: 0; }
+/* Barry on Verulam Sound: radio orange, in italics */
+.cap.radio { border-color: #ff9f1c; } .cap.radio .what { font-style: italic; }
+/* whoever is talking right now gets a little sound-wave mark (and it is not colour alone) */
+.cap.speaking .who::before { content: '\25B6\FE0E'; display: inline-block; margin-right: 5px; animation: talk 0.6s ease-in-out infinite alternate; }
+@keyframes talk { from { opacity: 0.35; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .cap.speaking .who::before { animation: none; } }
 .bigmsg { position: absolute; left: 50%; top: 30%; transform: translate(-50%, -50%) scale(0.8); opacity: 0; transition: all 0.25s; text-align: center; font: bold 4.2em var(--cond); letter-spacing: 0.06em; text-shadow: 0 4px 0 #000, 0 0 30px rgba(0,0,0,0.8); white-space: nowrap; }
 .bigmsg small { display: block; font-size: 0.32em; letter-spacing: 0.15em; color: var(--ink); }
 .bigmsg.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
@@ -153,7 +159,11 @@ table.stand tr.me { background: rgba(255,212,0,0.12); }
 
 /* ---------------------------------------------------------------- touch controls (phones, tablets) */
 #touch { position: fixed; inset: 0; pointer-events: none; display: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-body.touch-play #touch { display: block; }
+body.touch-play #touch, body.touch-spectate #touch { display: block; }
+body.touch-spectate #touch .t-steer, body.touch-spectate #touch .t-pedals, body.touch-spectate #touch .t-side { display: none; }
+.t-next { display: none; width: auto !important; padding: 0 10px !important; }
+body.touch-spectate .t-next { display: inline-block; }
+.t-top { display: flex; gap: 6px; }
 body.touch-play #game, #touch * { touch-action: none; }
 #touch > div, #touch .t-btn, #touch .t-pedal, #touch .t-steer { pointer-events: auto; }
 #touch .t-pedals, #touch .t-side, #touch .t-top { pointer-events: none; }
@@ -184,22 +194,23 @@ body.touch-play #game, #touch * { touch-action: none; }
 .t-top .t-small { width: 46px; height: 40px; font-size: 14px; }
 
 /* the HUD moves out from under your thumbs */
-body.touch-play .vhud { font-size: 12px; }
-body.touch-play .minimap { left: auto; right: calc(60px + env(safe-area-inset-right, 0px)); top: 8px; bottom: auto; width: 112px; height: 112px; }
+body.touch-ui .vhud { font-size: 12px; }
+body.touch-ui .minimap { left: auto; right: calc(60px + env(safe-area-inset-right, 0px)); top: 8px; bottom: auto; width: 112px; height: 112px; }
+body.touch-spectate .minimap { right: calc(158px + env(safe-area-inset-right, 0px)); }
 /* drivers as a single row of shapes under the round info: shape, number, and a mark for parked/out */
-body.touch-play .drivers { top: 70px; left: 14px; right: auto; width: auto; display: flex; padding: 2px 4px; gap: 2px; }
-body.touch-play .drow { display: flex; flex-direction: column; align-items: center; padding: 1px 3px; min-width: 22px; }
-body.touch-play .drow .dveh, body.touch-play .drow .dname { display: none; }
-body.touch-play .drow .dnum { font-size: 9px; }
-body.touch-play .drow .dst { font-size: 0; text-align: center; }
-body.touch-play .drow.parked .dst::after { content: 'P'; font-size: 10px; color: #7cff8a; }
-body.touch-play .drow.out .dst::after { content: '✖'; font-size: 10px; color: var(--red); }
-body.touch-play .dash { left: 14px; right: auto; bottom: auto; top: 118px; padding: 4px 8px; }
-body.touch-play .dash .dmg { width: 40px; height: 62px; }
-body.touch-play .speed b { font-size: 1.8em; } body.touch-play .gear { font-size: 1.3em; }
-body.touch-play .phasebox { min-width: 200px; padding: 3px 10px; }
-body.touch-play .phase-timer { font-size: 2em; } body.touch-play .phase-sub { display: none; }
-body.touch-play .arrow { top: 72px; }
+body.touch-ui .drivers { top: 70px; left: 14px; right: auto; width: auto; display: flex; padding: 2px 4px; gap: 2px; }
+body.touch-ui .drow { display: flex; flex-direction: column; align-items: center; padding: 1px 3px; min-width: 22px; }
+body.touch-ui .drow .dveh, body.touch-ui .drow .dname { display: none; }
+body.touch-ui .drow .dnum { font-size: 9px; }
+body.touch-ui .drow .dst { font-size: 0; text-align: center; }
+body.touch-ui .drow.parked .dst::after { content: 'P'; font-size: 10px; color: #7cff8a; }
+body.touch-ui .drow.out .dst::after { content: '✖'; font-size: 10px; color: var(--red); }
+body.touch-ui .dash { left: 14px; right: auto; bottom: auto; top: 118px; padding: 4px 8px; }
+body.touch-ui .dash .dmg { width: 40px; height: 62px; }
+body.touch-ui .speed b { font-size: 1.8em; } body.touch-ui .gear { font-size: 1.3em; }
+body.touch-ui .phasebox { min-width: 200px; padding: 3px 10px; }
+body.touch-ui .phase-timer { font-size: 2em; } body.touch-ui .phase-sub { display: none; }
+body.touch-ui .arrow { top: 72px; }
 body.touch-play .parkbox { top: 46%; width: 220px; }
 body.touch-play .parkbox .ring { width: 80px; height: 80px; }
 body.touch-play .prompt { bottom: auto; top: 30%; }

@@ -106,7 +106,8 @@ The residents' parked cars include an even larger "implausibly large" SUV class,
   - **bully** (Gary in the van, Linda in an SUV): rams vulnerable parked cars out of their spaces once spaces are scarce or time is short, then takes the space.
   - **quiet** (Priya, Trevor): avoids contested spaces and busy streets.
   - **confident** (Colin's luxury SUV, Sandra): barges through other cars and goes for wide spaces.
-- **Commentary and remarks** (`js/sim/remarks.js`, `js/data/text.js`): event-driven lines from a TV commentator, the drivers and the neighbours (named by house number). Examples: "That's directly outside my house.", "We actually need both cars.", "I was indicating.", "The permit doesn't guarantee a space.", "I'm putting this on the residents' group." Each channel is rate-limited and recent lines are not repeated. Optional speech synthesis reads the neighbours' lines aloud.
+- **Commentary and remarks** (`js/sim/remarks.js`, `js/data/text.js`): event-driven lines from a TV commentator, the drivers and the neighbours (named by house number). Examples: "That's directly outside my house.", "We actually need both cars.", "I was indicating.", "The permit doesn't guarantee a space.", "I'm putting this on the residents' group." Each channel is rate-limited and recent lines are not repeated.
+- **Spoken commentary** (`js/audio/audio.js`): the browser's speech synthesis reads out exactly what the captions say. The TV commentator has one steady voice and is never talked over. Barry, the drivetime presenter on Verulam Sound, chats over the music while everyone circulates, with the music ducked under him, and gets cut off mid-sentence when the music stops. Drivers and neighbours each get their own voice. A line that would arrive too late to match the picture is dropped rather than spoken out of step, and a caption stays up until it has been read. Settings → Spoken voices: commentary, radio and residents / commentary and radio only / off.
 - **Accessibility**: drivers have a colour *and* a shape *and* a number (●■▲◆★⬢✚◎). Space states use pattern (stripes or cross-hatch), icons (? / P / ✕), labels and colour. Camera shake can be turned off. There is a larger-text HUD option, and split-screen can be stacked or side by side.
 
 ## Verification
@@ -117,7 +118,8 @@ The simulation runs headless in Node (`tools/sim.js`) and the full game in headl
 - **Every vehicle can physically fit every scoring space.** This is checked both geometrically (smallest margin 0.45 m, van and SUV in the "small" space) and by bots actually parking each of the four vehicles in each of the 26 spaces.
 - **Parking detection holds up during collisions.** A gentle nudge keeps the park, and a 12 m/s SUV side ram dislodges it. Parks fail when 23° off the kerb line, when overhanging the end line, or when driving through at speed.
 - **Impacts depend on mass, direction and speed.** An SUV T-boning a hatch shoves it 6.2 m, but the reverse moves the SUV only 0.7 m. Tripling the speed shoves 9× further and does about 20× the damage. A rear-corner hit spins the victim 59° where a centre hit does not. A head-on at 9 + 9 m/s stops both cars dead, wrecks the fronts and knocks the bumpers off.
-- **Bots park and win.** Bots parked 194 of 208 solo trials (four vehicles, 26 spaces, two starts each). In the 12-match run the winners covered all four personalities (nearest, quiet, confident, bully) and three vehicles. The van won in earlier runs but not in this set.
+- **Bots park and win.** Bots parked 198 of 208 solo trials (four vehicles, 26 spaces, two starts each). In the 12-match run the winners covered all four personalities (nearest, quiet, confident, bully) and all four vehicles.
+- **Spoken lines match the captions.** With a stand-in speech engine, every spoken line was an on-screen caption, one voice at a time.
 
 Run them yourself (Node 18+; the browser checks need Playwright's Chromium):
 
@@ -127,18 +129,19 @@ node tools/browser-check.js out/check          # boot, solo, split-screen, tutor
 node tools/browser-match.js out/match hatch    # a whole match in the browser, to the results screen
 node tools/browser-tutorial.js out/tutorial    # the tutorial, every step
 node tools/browser-touch.js out/touch          # phone emulation: multi-touch steering, pedals, reverse
+node tools/browser-voices.js                   # spoken commentary matches the captions (stand-in speech engine)
 node tools/build-single.js                     # dist/last-space-st-albans.html
 python3 tools/build_map.py                     # regenerate js/data/mapdata.js from the OSM extract
 ```
 
 ## Known limitations and next steps
 
-- **Match length.** Bot-only matches in testing took 2.5–7.1 minutes (mean 4.2). That's a little shorter than the 5–8 minute target, because bots still fail to park in about a third of round-one spaces. With people driving, the length depends on how well they park. Better bot congestion handling would lengthen matches without changing the rules.
+- **Match length.** Bot-only matches in testing took 3.7–5.3 minutes (mean 4.45). That's still a little under the 5–8 minute target. Bots now fill about three quarters of round-one spaces (it was about two thirds). Many of the rest are cars shunted out of a space late on, or a space taken while a rival was on its way. With people driving, the length depends on how well they park.
 - **Bots and the car park.** Perpendicular bays in the small Grange Court car park are hard for the SUV and van bots (about half their attempts succeed), so the bots weight against them. Humans find them easier.
 - **Cars are low-poly procedural models.** Dents are vertex displacement, not a full soft-body simulation.
 - **Physics is 2D on the road plane.** Kerbs, speed cushions, body roll, pitch and overturning are modelled on top, but cars can't climb on each other.
 - **Online multiplayer** is a later milestone. The fixed-step simulation is deterministic per seed, which is a good basis for lockstep or rollback networking.
-- **Performance** was checked in software-rendered headless Chromium only. It hasn't been profiled on low-end laptops or real phones, and the touch controls have been tested in phone emulation rather than on a physical device.
+- **Performance** was checked in software-rendered headless Chromium only. Residents' parked cars use simpler models, which halves the triangles per frame (about 830k down to about 440k). It hasn't been profiled on low-end laptops or real phones, and the touch controls have been tested in phone emulation rather than on a physical device.
 
 ## Layout
 

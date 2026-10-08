@@ -105,9 +105,9 @@
       let prompt = '';
       if (car.status === 'active') {
         if (car.recovering) prompt = 'RECOVERING… you are vulnerable';
-        else if (car.canRecover && LS.Touch && LS.Touch.active && this.view.idx === 0) prompt = 'Stuck? Hold <b>RECOVER</b>';
+        else if (car.canRecover && this.view.idx === 0 && LS.Touch.active) prompt = 'Stuck? Hold <b>RECOVER</b>';
         else if (car.canRecover) prompt = `<kbd>${this.view.idx === 0 && m.humans.length < 2 ? 'R' : this.view.idx === 0 ? 'R' : 'L'}</kbd> / <kbd>X</kbd> hold to recover`;
-      } else if (car.status === 'eliminated' && m.phase !== 'results' && m.phase !== 'finale') prompt = LS.Touch && LS.Touch.wanted() ? `Spectating ${tgt.short} · tap ❚❚ for the menu` : `Spectating ${tgt.short} · <kbd>Tab</kbd> next driver · <kbd>Esc</kbd> menu`;
+      } else if (car.status === 'eliminated' && m.phase !== 'results' && m.phase !== 'finale') prompt = this.view.idx === 0 && LS.Touch.wanted() ? `Spectating ${tgt.short} · <b>NEXT ▶</b> for another driver · <b>❚❚</b> for the menu` : `Spectating ${tgt.short} · <kbd>Tab</kbd> next driver · <kbd>Esc</kbd> menu`;
       this.prompt.innerHTML = prompt; this.prompt.style.display = prompt ? 'block' : 'none';
       this.out.style.display = car.status === 'eliminated' && P !== 'finale' && P !== 'results' ? 'block' : 'none';
       this.out.innerHTML = `ELIMINATED<small>${car.place ? 'Finished ' + ordinal(car.place) : ''}</small>`;
@@ -178,8 +178,10 @@
     }
     caption(r) {
       const d = el('div', 'cap ' + r.channel, this.captions, `<span class="who">${r.speaker}</span><span class="what">${r.text}</span>`);
-      this.items.push({ d, t: 4.5 + r.text.length * 0.03 });
-      while (this.items.length > 3) { const x = this.items.shift(); x.d.remove(); }
+      const it = { d, t: 4.5 + r.text.length * 0.03, gone: false };
+      this.items.push(it);
+      while (this.items.length > 3) { const x = this.items.shift(); x.d.remove(); x.gone = true; }
+      return it;
     }
     announce(text, sub, cls, dur) {
       this.big.className = 'bigmsg show ' + (cls || ''); this.big.innerHTML = text + (sub ? `<small>${sub}</small>` : '');
@@ -187,9 +189,20 @@
     }
     lowerThird(title, sub, dur) { this.lower.innerHTML = `<b>${title}</b><span>${sub || ''}</span>`; this.lower.classList.add('show'); this.lowerT = dur || 4; }
     update(dt) {
-      for (const it of this.items.slice()) { it.t -= dt; if (it.t < 0.4) it.d.classList.add('fade'); if (it.t <= 0) { it.d.remove(); this.items.splice(this.items.indexOf(it), 1); } }
+      for (const it of this.items.slice()) {
+        // a caption being read out stays up until the voice finishes (within reason)
+        if (it.speaking && it.held < 14) { it.held = (it.held || 0) + dt; continue; }
+        it.t -= dt; if (it.t < 0.4) it.d.classList.add('fade');
+        if (it.t <= 0) { it.d.remove(); it.gone = true; this.items.splice(this.items.indexOf(it), 1); }
+      }
       if (this.bigT > 0) { this.bigT -= dt; if (this.bigT <= 0) this.big.classList.remove('show'); }
       if (this.lowerT > 0) { this.lowerT -= dt; if (this.lowerT <= 0) this.lower.classList.remove('show'); }
+    }
+    // the caption is being spoken: hold it and mark who is talking
+    speaking(it, on) {
+      if (!it || it.gone) return;
+      it.speaking = on; it.d.classList.toggle('speaking', on);
+      if (!on) { it.t = Math.max(it.t, 1.0); it.d.classList.remove('fade'); }
     }
     clear() { this.captions.innerHTML = ''; this.items = []; this.big.classList.remove('show'); this.lower.classList.remove('show'); }
   }

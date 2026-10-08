@@ -84,6 +84,12 @@ body.bighud .vhud { font-size: 19px; }
 .cap .who { font-size: 0.72em; letter-spacing: 0.1em; color: var(--dim); margin-right: 10px; }
 .cap .what { font-size: 1.05em; }
 .cap.fade { opacity: 0; }
+/* Barry on Verulam Sound: radio orange, in italics */
+.cap.radio { border-color: #ff9f1c; } .cap.radio .what { font-style: italic; }
+/* whoever is talking right now gets a little sound-wave mark (and it is not colour alone) */
+.cap.speaking .who::before { content: '\25B6\FE0E'; display: inline-block; margin-right: 5px; animation: talk 0.6s ease-in-out infinite alternate; }
+@keyframes talk { from { opacity: 0.35; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .cap.speaking .who::before { animation: none; } }
 .bigmsg { position: absolute; left: 50%; top: 30%; transform: translate(-50%, -50%) scale(0.8); opacity: 0; transition: all 0.25s; text-align: center; font: bold 4.2em var(--cond); letter-spacing: 0.06em; text-shadow: 0 4px 0 #000, 0 0 30px rgba(0,0,0,0.8); white-space: nowrap; }
 .bigmsg small { display: block; font-size: 0.32em; letter-spacing: 0.15em; color: var(--ink); }
 .bigmsg.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
@@ -163,7 +169,11 @@ table.stand tr.me { background: rgba(255,212,0,0.12); }
 
 /* ---------------------------------------------------------------- touch controls (phones, tablets) */
 #touch { position: fixed; inset: 0; pointer-events: none; display: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-body.touch-play #touch { display: block; }
+body.touch-play #touch, body.touch-spectate #touch { display: block; }
+body.touch-spectate #touch .t-steer, body.touch-spectate #touch .t-pedals, body.touch-spectate #touch .t-side { display: none; }
+.t-next { display: none; width: auto !important; padding: 0 10px !important; }
+body.touch-spectate .t-next { display: inline-block; }
+.t-top { display: flex; gap: 6px; }
 body.touch-play #game, #touch * { touch-action: none; }
 #touch > div, #touch .t-btn, #touch .t-pedal, #touch .t-steer { pointer-events: auto; }
 #touch .t-pedals, #touch .t-side, #touch .t-top { pointer-events: none; }
@@ -194,22 +204,23 @@ body.touch-play #game, #touch * { touch-action: none; }
 .t-top .t-small { width: 46px; height: 40px; font-size: 14px; }
 
 /* the HUD moves out from under your thumbs */
-body.touch-play .vhud { font-size: 12px; }
-body.touch-play .minimap { left: auto; right: calc(60px + env(safe-area-inset-right, 0px)); top: 8px; bottom: auto; width: 112px; height: 112px; }
+body.touch-ui .vhud { font-size: 12px; }
+body.touch-ui .minimap { left: auto; right: calc(60px + env(safe-area-inset-right, 0px)); top: 8px; bottom: auto; width: 112px; height: 112px; }
+body.touch-spectate .minimap { right: calc(158px + env(safe-area-inset-right, 0px)); }
 /* drivers as a single row of shapes under the round info: shape, number, and a mark for parked/out */
-body.touch-play .drivers { top: 70px; left: 14px; right: auto; width: auto; display: flex; padding: 2px 4px; gap: 2px; }
-body.touch-play .drow { display: flex; flex-direction: column; align-items: center; padding: 1px 3px; min-width: 22px; }
-body.touch-play .drow .dveh, body.touch-play .drow .dname { display: none; }
-body.touch-play .drow .dnum { font-size: 9px; }
-body.touch-play .drow .dst { font-size: 0; text-align: center; }
-body.touch-play .drow.parked .dst::after { content: 'P'; font-size: 10px; color: #7cff8a; }
-body.touch-play .drow.out .dst::after { content: '✖'; font-size: 10px; color: var(--red); }
-body.touch-play .dash { left: 14px; right: auto; bottom: auto; top: 118px; padding: 4px 8px; }
-body.touch-play .dash .dmg { width: 40px; height: 62px; }
-body.touch-play .speed b { font-size: 1.8em; } body.touch-play .gear { font-size: 1.3em; }
-body.touch-play .phasebox { min-width: 200px; padding: 3px 10px; }
-body.touch-play .phase-timer { font-size: 2em; } body.touch-play .phase-sub { display: none; }
-body.touch-play .arrow { top: 72px; }
+body.touch-ui .drivers { top: 70px; left: 14px; right: auto; width: auto; display: flex; padding: 2px 4px; gap: 2px; }
+body.touch-ui .drow { display: flex; flex-direction: column; align-items: center; padding: 1px 3px; min-width: 22px; }
+body.touch-ui .drow .dveh, body.touch-ui .drow .dname { display: none; }
+body.touch-ui .drow .dnum { font-size: 9px; }
+body.touch-ui .drow .dst { font-size: 0; text-align: center; }
+body.touch-ui .drow.parked .dst::after { content: 'P'; font-size: 10px; color: #7cff8a; }
+body.touch-ui .drow.out .dst::after { content: '✖'; font-size: 10px; color: var(--red); }
+body.touch-ui .dash { left: 14px; right: auto; bottom: auto; top: 118px; padding: 4px 8px; }
+body.touch-ui .dash .dmg { width: 40px; height: 62px; }
+body.touch-ui .speed b { font-size: 1.8em; } body.touch-ui .gear { font-size: 1.3em; }
+body.touch-ui .phasebox { min-width: 200px; padding: 3px 10px; }
+body.touch-ui .phase-timer { font-size: 2em; } body.touch-ui .phase-sub { display: none; }
+body.touch-ui .arrow { top: 72px; }
 body.touch-play .parkbox { top: 46%; width: 220px; }
 body.touch-play .parkbox .ring { width: 80px; height: 80px; }
 body.touch-play .prompt { bottom: auto; top: 30%; }
@@ -6902,16 +6913,36 @@ LS.TEXT = {
     intro: ["Good evening, and welcome to LAST SPACE, live from St Albans, where it's quarter past six and everyone is home.", "Eight drivers. Seven spaces. Four streets. One very long evening."],
     round: ['Round {round}. {drivers} drivers, {spaces} spaces.', "Round {round}: {spaces} spaces for {drivers} cars. Somebody's walking from the station tonight."],
     music_stop: ["THE MUSIC'S STOPPED! Spaces are live!", "And the radio cuts out - GO, GO, GO!", "Silence on Verulam Sound! Find a space!"],
-    parked: ['{name} is in - {space}!', '{name} tucks the {vehicle} into {space}.', 'Lovely work from {name}. {space}.'],
+    parked: ['{name} is in - {space}!', '{name} tucks the {vehicle} in, {space}.', 'Lovely work from {name}. {space}.'],
     dislodged: ['{name} has been shunted clean out of {space}!', "Oh, {name}'s been evicted from {space}!", '{by} turfs {name} out of {space}!'],
     big_hit: ['Oof. That will need a courtesy car.', 'Heavy contact.', "That's a claim.", 'Somewhere an insurer has just sat up in bed.'],
     horn: ["THERE'S THE HORN!", 'HORN! Hands off the wheel!'],
+    eliminated_many: ['{names} are all out. {n} cars to the station car park.', '{names}: eliminated. {n} more households parking round the corner and walking.', "That's {names} gone. {n} cars, one long walk."],
     eliminated: ['{name} is out. Catherine Street and a long walk.', "{name} has to park at the station. Brutal.", "{name} is eliminated - and it's raining by the station."],
     final: ['Two drivers. One space. This is what the whole street has been waiting for.', "It's the final. One space. Grange Street holds its breath."],
     sudden: ["Nobody parked! It's SUDDEN DEATH. First to hold a space for three seconds takes it all."],
     winner: ['{name} wins LAST SPACE!', '{name} is the last one parked on the street tonight!'],
     overturned: ["{name}'s on its side!", "That's not a park, {name}."],
     extra_space: ['The council has quietly unsuspended another bay.'],
+  },
+
+  // Barry, the drivetime presenter on Verulam Sound, talks over the music while everyone circulates.
+  // He is usually cut off mid-sentence when the music stops.
+  dj: {
+    open: [
+      "Twenty past six on Verulam Sound. If you're driving round the Grange Street area looking for a space, honestly, keep going.",
+      "This is Barry on Drivetime. The council would like to remind listeners that a permit does not guarantee a space.",
+      "Traffic now. Hatfield Road, solid. London Road, solid. Dalton Street is, well, Dalton Street.",
+      "That was a classic. Lines are open: is it ever acceptable to park across your own dropped kerb? I think we all know the answer.",
+      "A text from Sue in Bernard Street. Someone's been in my space since Tuesday. Sue, I feel that. I really do.",
+      "Weather: dry for now, with rain later, just in time for anyone walking back from the station car park.",
+    ],
+    more: [
+      "Quick word about wheelie bins on the pavement. Please don't. Anyway, here's another one for you, it's a real",
+      "Now, I've been told we've got time for one more before the news, so let's squeeze in a",
+      "Coming up after six thirty, we'll be talking to a man in Church Street who claims he once parked first time. Before that, here's",
+      "Message from the residents' group: the space outside number forty-eight is not, legally speaking, anybody's. Moving on, here's",
+    ],
   },
 
   radio: ['Verulam Sound FM - Drivetime with Barry', "Verulam Sound FM - traffic: it's bad, sorry", 'Verulam Sound FM - the hits, and Barry'],
@@ -8466,6 +8497,7 @@ LS.TEXT = {
           let dmin = 1e9;
           for (const c of live) dmin = Math.min(dmin, U.dist(c.x, c.y, s.sp.x, s.sp.y));
           let w = Math.pow(U.clamp((dmin - 5) / 12, 0.03, 1), 2); // nobody can simply sit on a space
+          w *= U.clamp((150 - dmin) / 70, 0.08, 1); // ...but somebody can get to it before the horn
           if (preferStreet && s.sp.street === preferStreet) w *= 5;
           // spread the live spaces round the neighbourhood so no corner is left without one
           let dc = 1e9; for (const q of chosen) dc = Math.min(dc, U.dist(q.sp.x, q.sp.y, s.sp.x, s.sp.y));
@@ -8568,7 +8600,7 @@ LS.TEXT = {
   const PERSONAS = {
     nearest: { label: 'Goes for the nearest space', contest: 2.5, speed: 1.0, cautious: 0.7, ram: 0.2, attackBias: 0.0 },
     bully: { label: 'Targets vulnerable parked cars', contest: 1.0, speed: 1.0, cautious: 0.3, ram: 0.8, attackBias: 1.0 },
-    quiet: { label: 'Avoids fights, looks for quiet streets', contest: 14, speed: 0.92, cautious: 1.0, ram: 0.0, attackBias: -1 },
+    quiet: { label: 'Avoids fights, looks for quiet streets', contest: 6, speed: 0.92, cautious: 1.0, ram: 0.0, attackBias: -1 },
     confident: { label: 'Unjustified confidence', contest: 0.0, speed: 1.12, cautious: 0.0, ram: 1.0, attackBias: 0.3 },
   };
 
@@ -8820,6 +8852,25 @@ LS.TEXT = {
           }
         }
       }
+      // two drivers fiddling about beside the same space: after a while one of them gives up and goes elsewhere
+      if (this.target && (this.state === 'goto' || this.state === 'maneuver' || this.state === 'settle')) {
+        const sp = this.target.sp, myD = U.dist(c.x, c.y, sp.x, sp.y);
+        this.nearT = myD < 12 ? (this.nearT || 0) + 0.3 : 0;
+        if (this.nearT > 5) {
+          for (const o of M.cars) {
+            if (o === c || o.status !== 'active' || (o.park.parked && o.park.space !== this.target)) continue;
+            const od = U.dist(o.x, o.y, sp.x, sp.y);
+            if (od > 9) continue;
+            const rival = o.bot ? o.bot.target === this.target && (o.bot.nearT || 0) > 2 : o.speed < 3;
+            if (!rival) continue;
+            // the one further from the space backs off (ties: the later car on the grid); a human is
+            // given way to after a longer stand-off unless you are that sort of driver
+            const yieldIt = o.bot ? myD > od + 0.6 || (Math.abs(myD - od) <= 0.6 && M.cars.indexOf(c) > M.cars.indexOf(o))
+              : this.nearT > 9 && this.p.ram < 1;
+            if (yieldIt) { this.nearT = 0; this.abandon(14); return; }
+          }
+        }
+      } else this.nearT = 0;
       if (this.state === 'choose' || (this.state === 'goto' && this.stateT > 12 && this.stateT % 6 < 0.4) || this.replan) {
         this.replan = false;
         const best = this.pickSpace(act);
@@ -8841,17 +8892,20 @@ LS.TEXT = {
       const scarce = free <= 1 || this.m.timeLeft < 26;
       return (this.p.attackBias >= 1 && ratio > 0.85 && scarce) || (this.p.ram >= 1 && ratio > 1.2 && scarce) || (late && ratio > 1.4 && this.p.attackBias > 0);
     }
-    pickSpace(act) {
+    pickSpace(act, anyway) {
       const c = this.car, M = this.m, now = M.time;
       let best = null, bestCost = 1e9;
       for (const st of act) {
-        if ((this.blacklist.get(st) || 0) > now) continue;
+        if (!anyway && (this.blacklist.get(st) || 0) > now) continue;
         const own = st.owner;
         const occupied = own && own !== c && own.park.parked && own.park.space === st;
         const d = U.dist(c.x, c.y, st.sp.x, st.sp.y);
         const tp = { hatch: 110, estate: 140, suv: 170, van: 190 }[c.spec.type];
         const route = this.m.arena.navPath(c.x, c.y, st.sp.access.x, st.sp.access.y, { heading: c.a, turnPenalty: tp, penalty: (e) => this.edgePenalty.get(e.id) || 0 }).length;
         let cost = route / (9 * this.speedMul);
+        // can we even get there before the horn? (narrow streets: about 6 m/s door to door, plus parking)
+        const eta = route / (6 * this.speedMul) + 6;
+        if (M.phase === 'battle' && eta > M.timeLeft) cost += 25 + (eta - M.timeLeft);
         // entry difficulty for this vehicle
         const slack = (st.sp.hl * 2 - c.spec.L);
         cost += slack < 0.8 ? 6 : slack < 1.6 ? 3 : 0;
@@ -8862,7 +8916,11 @@ LS.TEXT = {
           if (o === c || o.status !== 'active') continue;
           const od = U.dist(o.x, o.y, st.sp.x, st.sp.y);
           if (od < d) cost += this.p.contest * (od < 15 ? 1.5 : 0.6);
-          if (o.bot && o.bot.target === st && od < d + 10) cost += 9 + this.p.contest * 0.6; // already claimed by someone nearer
+          if (o.bot && o.bot.target === st && o.bot !== this) {
+            // already claimed; someone halfway into it has as good as got it
+            if (od < 14 && (o.bot.state === 'maneuver' || o.bot.state === 'settle' || o.bot.state === 'hold')) cost += 45;
+            else cost += od < d + 10 ? 16 + this.p.contest * 0.6 : 4;
+          } else if (!o.bot && od < 9 && o.speed < 3 && od < d) cost += 20; // a player lining up for it
           if (this.kind === 'quiet' && od < 30) cost += 6;
         }
         if (occupied) {
@@ -8873,6 +8931,8 @@ LS.TEXT = {
         if (st === this.target) { cost *= 0.6; cost -= 3; this.curCost = cost; } // commitment
         if (cost < bestCost) { bestCost = cost; best = occupied ? { st, attack: own } : { st }; }
       }
+      // nothing else left: go back and try again rather than give up on the last space in the street
+      if (!best && !anyway && act.some((st) => (this.blacklist.get(st) || 0) > now)) return this.pickSpace(act, true);
       return best;
     }
 
@@ -9074,7 +9134,22 @@ LS.TEXT = {
         if (this.plan.loose && dist < 5.5 && hd < 1.3 && !this.reverse) { this.beginManeuver(); return; }
         if (dist < 4 && hd > 1.2 && c.speed < 2 && !this.turn) { this.turn = { why: 'start', head: this.plan.startHead, t: 0, dir: 1, legT: 0, side: 0 }; }
         if (rem < 0.5 && dist > 2.6) { this.goes = (this.goes || 0) + 1; if (this.goes > 4) { this.goes = 0; this.abandon(10); } else this.beginApproach(this.target); }
-        if (this.stateT > 30) this.abandon(10);
+        // give up only if the drive is not getting anywhere, not just because it is a long way
+        if (this.stateT > 8) {
+          const tg = this.path ? this.path.length - this.pathS : U.dist(c.x, c.y, this.target.sp.x, this.target.sp.y);
+          if (this.progT == null || this.stateT < this.progT || this.turn) { this.progT = this.stateT; this.progD = tg; } // a K-turn is progress of a sort
+          else if (this.stateT - this.progT > 10) {
+            if (this.progD - tg < 15) {
+              this.progT = null;
+              const pr = M.arena.navProject(c.x, c.y);
+              this.edgePenalty.set(pr.e.id, (this.edgePenalty.get(pr.e.id) || 0) + 80);
+              if (M.parking.active.length > 1) { this.abandon(10); return; }
+              this.beginApproach(this.target); return; // the only space left: find another way to it
+            }
+            this.progT = this.stateT; this.progD = tg;
+          }
+        }
+        if (this.stateT > 70) this.abandon(10);
         return;
       }
       if (this.state === 'maneuver') {
@@ -9150,7 +9225,7 @@ LS.TEXT = {
       if (this.pushT > 0) { this.pushT -= 1 / 60; c.input.throttle = 1; c.input.brake = 0; return; }
       const barge = this.kind === 'confident' && this.m.phase !== 'circulation';
       const look = Math.max(6, c.speed * 1.6 + 4);
-      const d = this.pathObstacle(look, barge);
+      const d = this.obsD = this.pathObstacle(look, barge);
       this.lastAvoid = U.approach(this.lastAvoid || 0, this.avoidOffset, 0.05);
       // stuck in a queue behind something that is not moving: shove it, or find another way round
       if (d < 2.2 && c.speed < 0.6) this.blockedT = (this.blockedT || 0) + 1 / 60; else this.blockedT = Math.max(0, (this.blockedT || 0) - 1 / 30);
@@ -9258,11 +9333,13 @@ LS.TEXT = {
   class Remarks {
     constructor(match, rand) {
       this.m = match; this.rand = rand; this.T = LS.TEXT;
-      this.last = { driver: -99, neighbour: -99, commentary: -99 };
+      this.last = { driver: -99, neighbour: -99, commentary: -99, radio: -99 };
       this.used = new Map(); // text -> time last used
       this.keyT = new Map(); // key -> time
       match.on('*', (ev, d) => this.on(ev, d));
     }
+    // how the commentary refers to a driver: "You" is fine on your own screen but not on the telly
+    nm(c) { return c.human && c.short === LS.TEXT.playerNames[0] ? 'Player One' : c.short; }
     fmt(s, d) { return s.replace(/\{(\w+)\}/g, (_, k) => (d && d[k] != null ? d[k] : '')); }
     pick(list) {
       const now = this.m.time;
@@ -9277,12 +9354,13 @@ LS.TEXT = {
       if (!o.force && now - this.last[channel] < gap) return false;
       if (!o.force && now - (this.keyT.get(key + (who && who.index != null ? who.index : '')) ?? -999) < (o.cool || 25)) return false;
       if (!o.force && o.p != null && this.rand() > o.p) return false;
-      const pool = channel === 'commentary' ? this.T.commentary[key] : this.T.remarks[key];
+      const pool = channel === 'commentary' ? this.T.commentary[key] : channel === 'radio' ? this.T.dj[key] : this.T.remarks[key];
       if (!pool) return false;
       const text = this.fmt(this.pick(pool), data);
       this.last[channel] = now; this.keyT.set(key + (who && who.index != null ? who.index : ''), now);
       let speaker;
       if (channel === 'commentary') speaker = 'COMMENTARY';
+      else if (channel === 'radio') speaker = 'BARRY · VERULAM SOUND';
       else if (channel === 'neighbour') speaker = (o.neighbour || this.T.neighbours[Math.floor(this.rand() * this.T.neighbours.length)]).toUpperCase();
       else speaker = who ? who.name.toUpperCase() : 'RESIDENT';
       this.m.emit('remark', { channel, key, text, speaker, car: who || null, time: now });
@@ -9300,12 +9378,19 @@ LS.TEXT = {
             else this.say('commentary', 'round', null, { round: d.round, drivers: d.drivers, spaces: d.spaces }, { force: true });
           }
           if (d.phase === 'sudden') this.say('commentary', 'sudden', null, {}, { force: true });
+          // Barry chats over the music; if the radio is still on later he starts another link (and gets cut off)
+          if (d.phase === 'circulation' && m.mode === 'match') {
+            const round = m.round;
+            const live = () => m.phase === 'circulation' && m.round === round;
+            m.after(round === 1 ? 4.5 : 6.5, () => { if (live()) this.say('radio', 'open', null, {}, { force: true }); });
+            m.after(round === 1 ? 17 : 19, () => { if (live()) this.say('radio', 'more', null, {}, { force: true }); });
+          }
           break;
         case 'musicStop': this.say('commentary', 'music_stop', null, {}, { force: true }); break;
         case 'horn': this.say('commentary', 'horn', null, {}, { force: true }); break;
         case 'parked': {
           const c = d.car, sp = d.space.sp;
-          const data = { name: c.short, space: d.space.sp.name || d.space.sp.label.replace(/^(\w)(\w*)/, (a, x, y) => x + y.toLowerCase()), vehicle: c.spec.class.toLowerCase() };
+          const data = { name: this.nm(c), space: d.space.sp.name || d.space.sp.label.replace(/^(\w)(\w*)/, (a, x, y) => x + y.toLowerCase()), vehicle: c.spec.class.toLowerCase() };
           if (c.home && U.dist(c.home.x, c.home.y, sp.x, sp.y) < 22) { this.say('driver', 'outside_house', c, data, { force: true }); break; }
           // it is always outside somebody's house: the nearest front door has views
           if (this.rand() < 0.4) {
@@ -9318,17 +9403,26 @@ LS.TEXT = {
         }
         case 'dislodged': {
           const c = d.car, by = d.by;
-          const data = { name: c.short, by: by ? by.short : 'Someone', space: d.space ? (d.space.sp.name || d.space.sp.label) : 'the space' };
+          const data = { name: this.nm(c), by: by ? this.nm(by) : 'Someone', space: d.space ? (d.space.sp.name ? 'the space ' + d.space.sp.name : d.space.sp.label) : 'the space' };
           if (by) {
             if (!this.say('driver', 'permit', by, data, { cool: 30 })) this.say('commentary', 'dislodged', c, data, { cool: 8 });
           } else this.say('driver', 'lost_space', c, data, { p: 0.6 });
           if (by && by.spec.type === 'suv' && c.spec.type === 'hatch') this.say('neighbour', 'suv_push', null, data, { p: 0.5, cool: 50 });
           break;
         }
-        case 'eliminated':
-          this.say('driver', 'residents_group', d.car, { name: d.car.short }, { force: true });
-          setTimeoutish(m, 1.6, () => this.say('commentary', 'eliminated', d.car, { name: d.car.short }, { force: true }));
+        case 'eliminatedGroup': {
+          const cs = d.cars; if (!cs.length) break;
+          // one grumble per horn (a human's first, if one went out), and one line of commentary for the lot
+          const who = cs.find((c) => c.human) || cs[Math.floor(this.rand() * cs.length)];
+          this.say('driver', 'residents_group', who, { name: this.nm(who) }, { force: true });
+          if (cs.length === 1) setTimeoutish(m, 1.6, () => this.say('commentary', 'eliminated', cs[0], { name: this.nm(cs[0]) }, { force: true }));
+          else {
+            const names = cs.map((c) => this.nm(c)), list = names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
+            const n = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven'][cs.length] || String(cs.length);
+            setTimeoutish(m, 1.6, () => this.say('commentary', 'eliminated_many', null, { names: list, n }, { force: true }));
+          }
           break;
+        }
         case 'impact': {
           if (d.severity > 6.5) { if (!this.say('commentary', 'big_hit', null, {}, { cool: 12 })) this.say('neighbour', 'big_hit', null, {}, { p: 0.5, cool: 20 }); }
           if (d.aggressor && d.severity > 2.5 && Math.abs(d.aggressor.steerAngle) > 0.22) this.say('driver', 'indicating', d.aggressor, {}, { p: 0.55, cool: 40 });
@@ -9340,11 +9434,11 @@ LS.TEXT = {
           break;
         case 'pavement': this.say('neighbour', 'pavement', null, {}, { p: 0.5, cool: 30 }); break;
         case 'hornUse': this.say('neighbour', 'horn', null, {}, { p: 0.25, cool: 30 }); break;
-        case 'overturn': if (!this.say('commentary', 'overturned', d.car, { name: d.car.short }, { cool: 15 })) this.say('neighbour', 'overturned', null, {}, { p: 0.6 }); break;
+        case 'overturn': if (!this.say('commentary', 'overturned', d.car, { name: this.nm(d.car) }, { cool: 15 })) this.say('neighbour', 'overturned', null, {}, { p: 0.6 }); break;
         case 'recovered': this.say('neighbour', 'recovered', null, {}, { p: 0.3, cool: 30 }); break;
         case 'extraSpace': this.say('commentary', 'extra_space', null, {}, { force: true }); break;
         case 'winner':
-          this.say('commentary', 'winner', d.car, { name: d.car.short }, { force: true });
+          this.say('commentary', 'winner', d.car, { name: this.nm(d.car) }, { force: true });
           setTimeoutish(m, 2.2, () => this.say('neighbour', 'cant_leave', null, {}, { force: true, neighbour: 'Mrs Cotterill, No. 12' }));
           break;
       }
@@ -9489,17 +9583,19 @@ LS.TEXT = {
       }
       const out = alive.filter((c) => !parked.includes(c));
       this.lastHorn.out = out;
-      for (const c of out) this.eliminate(c);
+      for (const c of out) this.eliminate(c, true);
+      this.emit('eliminatedGroup', { cars: out });
       if (parked.length === 1) { this.declareWinner(parked[0]); return; }
       this.setPhase('horn', 4.0);
     }
-    eliminate(c) {
+    eliminate(c, grouped) {
       c.status = 'eliminated'; c.elimRound = this.round; c.elimT = this.time;
       c.place = this.alive.length + 1;
       this.eliminatedOrder.push(c);
       c.park.parked = false;
       this.after(1.2, () => { c.body.enabled = false; c.body.vx = c.body.vy = c.body.w = 0; });
-      this.emit('eliminated', { car: c });
+      this.emit('eliminated', { car: c, grouped: !!grouped });
+      if (!grouped) this.emit('eliminatedGroup', { cars: [c] });
     }
     declareWinner(c) {
       this.winner = c; c.place = 1;
@@ -9776,13 +9872,14 @@ LS.TEXT = {
 <script>/* js/audio/audio.js */
 /* LAST SPACE - sound, all synthesised with WebAudio: jaunty local-radio music that stops dead,
    engines, tyre squeal, crunches scaled to impact severity, glass, horns, the closing air horn,
-   a ticking clock, and (optionally) the neighbours' voices through speech synthesis. */
+   a ticking clock, and spoken commentary, radio links and residents through speech synthesis. */
 (function (LS) {
   'use strict';
   const U = LS.U;
   const A = LS.Audio = {
-    ctx: null, enabled: true, vol: { master: 0.8, music: 0.6, sfx: 0.9 }, voices: true,
+    ctx: null, enabled: true, vol: { master: 0.8, music: 0.6, sfx: 0.9 }, voices: 'all',
     init() {
+      this.unlockSpeech();
       if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
       const AC = window.AudioContext || window.webkitAudioContext; if (!AC) { this.enabled = false; return; }
       const c = this.ctx = new AC();
@@ -9888,7 +9985,7 @@ LS.TEXT = {
     musicOn() {
       if (!this.ctx) return;
       const c = this.ctx, t = c.currentTime;
-      this.musicBus.gain.cancelScheduledValues(t); this.musicBus.gain.setValueAtTime(this.musicBus.gain.value, t); this.musicBus.gain.linearRampToValueAtTime(this.vol.music * 0.55, t + 0.4);
+      this.musicBus.gain.cancelScheduledValues(t); this.musicBus.gain.setValueAtTime(this.musicBus.gain.value, t); this.musicBus.gain.linearRampToValueAtTime(this.vol.music * 0.55 * (this.speech.cur ? 0.45 : 1), t + 0.4);
       if (this.musicTimer) return;
       this.step = 0; this.nextT = t + 0.1;
       this.musicTimer = setInterval(() => this.schedule(), 50);
@@ -9899,6 +9996,7 @@ LS.TEXT = {
       // tape-stop: drop, then dead air
       this.musicBus.gain.cancelScheduledValues(t); this.musicBus.gain.setValueAtTime(this.musicBus.gain.value, t); this.musicBus.gain.linearRampToValueAtTime(0, t + 0.06);
       if (this.musicTimer) { clearInterval(this.musicTimer); this.musicTimer = null; }
+      this.cutRadio();
       const n = this.noise(), g = c.createGain(); n.connect(g); g.connect(this.sfx); this.env(g, t, 0.001, 0.25, 0.08); n.start(t); n.stop(t + 0.12);
       const o = c.createOscillator(), og = c.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(220, t); o.frequency.exponentialRampToValueAtTime(30, t + 0.35); o.connect(og); og.connect(this.sfx); this.env(og, t, 0.005, 0.15, 0.35); o.start(t); o.stop(t + 0.4);
     },
@@ -9933,16 +10031,124 @@ LS.TEXT = {
     },
 
     // ------------------------------------------------------------------ voices
-    say(text, who) {
-      if (!this.voices || !window.speechSynthesis) return;
-      try {
-        if (speechSynthesis.speaking && who !== 'force') speechSynthesis.cancel();
-        const u = new SpeechSynthesisUtterance(text);
-        const vs = speechSynthesis.getVoices().filter((v) => /en[-_]GB/i.test(v.lang));
-        if (vs.length) u.voice = vs[(text.length + (who ? who.length : 0)) % vs.length];
-        u.lang = 'en-GB'; u.rate = 1.05; u.pitch = 0.8 + ((who || '').length % 5) * 0.12; u.volume = 0.9;
-        speechSynthesis.speak(u);
-      } catch (e) { /* speech is optional */ }
+    // Speech synthesis reads out exactly what the captions say: the TV commentator, Barry on the radio,
+    // and (if wanted) the residents. One voice at a time: the commentator is never talked over, a line
+    // that has waited too long is dropped rather than spoken out of step with the picture, and the
+    // music ducks while anyone is talking. this.voices: 'all' | 'commentary' (commentator and Barry) | 'off'
+    speech: { q: [], cur: null, voices: null, cast: new Map() },
+    speechOK() { return !!(window.speechSynthesis && window.SpeechSynthesisUtterance); },
+    unlockSpeech() {
+      // iOS and some Androids only allow speech after a first utterance inside a user gesture
+      if (!this.speechOK() || this.speech.unlocked) return;
+      this.speech.unlocked = true;
+      try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } catch (e) { /* optional */ }
+      try { speechSynthesis.onvoiceschanged = () => { this.speech.voices = null; this.speech.cast.clear(); }; } catch (e) { /* optional */ }
+    },
+    voiceList() {
+      const S = this.speech;
+      if (!S.voices || !S.voices.length) {
+        let all = []; try { all = speechSynthesis.getVoices(); } catch (e) { /* none */ }
+        const gb = all.filter((v) => /en[-_]GB/i.test(v.lang));
+        S.voices = gb.length ? gb : all.filter((v) => /^en/i.test(v.lang));
+      }
+      return S.voices;
+    },
+    // who sounds like what: the commentator and Barry get distinct, steady voices; residents are spread over the rest
+    castFor(role, who) {
+      const S = this.speech, key = role === 'resident' ? 'r:' + (who || '') : role;
+      if (S.cast.has(key)) return S.cast.get(key);
+      const vs = this.voiceList();
+      const male = (v) => /male|daniel|george|arthur|ryan|thomas|oliver|james|harry|alfie|rishi/i.test(v.name) && !/female/i.test(v.name);
+      const local = (v) => v.localService !== false;
+      let h = 0; for (const ch of key) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+      let voice = null, pitch = 1, rate = 1.05;
+      if (role === 'commentary') { voice = vs.find((v) => male(v) && local(v)) || vs.find(male) || vs[0] || null; pitch = 0.92; rate = 1.08; }
+      else if (role === 'radio') {
+        const pres = this.castFor('commentary').voice;
+        voice = vs.find((v) => male(v) && v !== pres) || pres || vs[0] || null; pitch = voice === pres ? 1.18 : 1.05; rate = 1.12;
+      } else {
+        const pres = this.castFor('commentary').voice, pool = vs.filter((v) => v !== pres);
+        const list = pool.length ? pool : vs;
+        voice = list.length ? list[h % list.length] : null; pitch = 0.75 + (h % 7) * 0.09; rate = 0.98 + (h % 5) * 0.04;
+      }
+      const c = { voice, pitch, rate };
+      S.cast.set(key, c);
+      return c;
+    },
+    // item: { text, role: 'commentary' | 'radio' | 'resident', who, onstart, onend }
+    say(item) {
+      if (typeof item === 'string') item = { text: item, role: 'resident', who: arguments[1] };
+      const mode = this.voices === true ? 'all' : this.voices === false ? 'off' : this.voices || 'all';
+      if (mode === 'off' || !this.speechOK()) return false;
+      if (mode === 'commentary' && item.role === 'resident') return false;
+      const S = this.speech, pri = { commentary: 3, radio: 2, resident: 1 }[item.role] || 1;
+      item.pri = pri; item.at = performance.now();
+      if (!S.cur) { this.speakNow(item); return true; }
+      if (pri > S.cur.pri) { // the commentator talks over everyone else
+        S.q = S.q.filter((q) => q.pri >= pri);
+        S.q.unshift(item); this.cancelSpeech(true);
+        return true;
+      }
+      // otherwise wait in line; residents only queue behind each other briefly
+      S.q = S.q.filter((q) => q.pri >= pri || q.pri > 1);
+      S.q.push(item); S.q.sort((a, b) => b.pri - a.pri || a.at - b.at);
+      if (S.q.length > 3) S.q.length = 3;
+      return true;
+    },
+    speakNow(item) {
+      const S = this.speech;
+      let u;
+      try { u = new SpeechSynthesisUtterance(item.text); } catch (e) { return; }
+      const c = this.castFor(item.role, item.who);
+      try { if (c.voice) u.voice = c.voice; } catch (e) { /* not a real voice object */ }
+      u.lang = (c.voice && c.voice.lang) || 'en-GB'; u.pitch = c.pitch; u.rate = c.rate;
+      u.volume = item.role === 'resident' ? 0.85 : 1;
+      S.cur = item; item.u = u;
+      let done = false;
+      const finish = () => {
+        if (done) return; done = true;
+        clearTimeout(item.guard);
+        if (S.cur === item) S.cur = null;
+        if (item.onend) item.onend();
+        this.duck(false);
+        // Chrome can swallow an utterance queued straight after cancel(): leave it a moment
+        setTimeout(() => { if (!S.cur) this.nextSpeech(); }, 60);
+      };
+      u.onstart = () => { if (item.onstart) item.onstart(); };
+      u.onend = finish; u.onerror = finish;
+      item.finish = finish;
+      // some engines never fire onend: give up after a generous estimate of the line's length
+      item.guard = setTimeout(finish, 2500 + item.text.length * 110);
+      this.duck(true);
+      try { if (speechSynthesis.paused) speechSynthesis.resume(); speechSynthesis.speak(u); } catch (e) { finish(); }
+    },
+    nextSpeech() {
+      const S = this.speech, now = performance.now();
+      while (S.q.length) {
+        const it = S.q.shift();
+        const maxWait = it.role === 'commentary' ? 4500 : it.role === 'radio' ? 3000 : 1800;
+        if (now - it.at <= maxWait && !(it.stale && it.stale())) { this.speakNow(it); return; }
+      }
+    },
+    cancelSpeech(keepQueue) {
+      const S = this.speech;
+      if (!keepQueue) S.q = [];
+      const cur = S.cur;
+      try { if (this.speechOK()) speechSynthesis.cancel(); } catch (e) { /* optional */ }
+      if (cur && cur.finish) cur.finish();
+      else if (keepQueue) setTimeout(() => { if (!S.cur) this.nextSpeech(); }, 60);
+    },
+    // Barry stops mid-word when the music does
+    cutRadio() {
+      const S = this.speech;
+      S.q = S.q.filter((q) => q.role !== 'radio');
+      if (S.cur && S.cur.role === 'radio') this.cancelSpeech(true);
+    },
+    duck(on) {
+      if (!this.ctx || !this.musicTimer) return;
+      const t = this.ctx.currentTime, g = this.musicBus.gain;
+      g.cancelScheduledValues(t); g.setValueAtTime(g.value, t);
+      g.linearRampToValueAtTime(this.vol.music * 0.55 * (on ? 0.45 : 1), t + (on ? 0.15 : 0.6));
     },
   };
 })(window.LS);
@@ -10256,17 +10462,18 @@ LS.TEXT = {
   }
 
   // parts: { paint: [geos], glass: [geos], dark: [geos], bumperF, bumperR, wheels: [{x,z,r,w}], lights: {...}, plates }
-  function buildParts(type, spec, paintRGB) {
+  function buildParts(type, spec, paintRGB, lod) {
     const P = PROFILES[type] || PROFILES.estate;
     const L = spec.L, W = spec.W, H = spec.H || P.roof;
     const scaleH = H / P.roof;
     const clear = P.clear, belt = P.belt * scaleH, roof = H;
     const hl = L / 2, hw = W / 2;
     const out = { paint: [], glass: [], dark: [], chrome: [], wheels: [], P };
+    const lo = lod === 'low'; // residents' parked cars: same shapes, far fewer triangles
 
     // lower body
     const bh = belt - clear;
-    const body = new THREE.BoxGeometry(L, bh, W, 14, 4, 6);
+    const body = lo ? new THREE.BoxGeometry(L, bh, W, 6, 2, 3) : new THREE.BoxGeometry(L, bh, W, 14, 4, 6);
     roundBox(body, hl, bh / 2, hw, Math.min(0.3, bh * 0.45));
     body.translate(0, clear + bh / 2, 0);
     // bonnet slopes down towards the nose; boot drops a little
@@ -10279,7 +10486,7 @@ LS.TEXT = {
     // cabin / greenhouse
     const cabF = hl - L * P.hood, cabR = -hl + L * (1 - P.cabEnd);
     const cabLen = cabF - cabR, cabH = roof - belt;
-    const cab = new THREE.BoxGeometry(cabLen, cabH, W * 0.96, 8, 2, 4);
+    const cab = new THREE.BoxGeometry(cabLen, cabH, W * 0.96, lo ? 6 : 8, 2, lo ? 2 : 4);
     { const p = cab.attributes.position;
       for (let i = 0; i < p.count; i++) {
         let x = p.getX(i), y = p.getY(i), z = p.getZ(i);
@@ -10305,7 +10512,7 @@ LS.TEXT = {
 
     // bumpers
     const bumpCol = P.bumper === 'body' ? paintRGB.map((v) => v * 0.92) : P.bumper === 'chrome' ? CHROME : DARK;
-    const mkBump = (end) => { const g = new THREE.BoxGeometry(0.24, 0.3, W + 0.04, 2, 2, 6); roundBox(g, 0.12, 0.15, W / 2 + 0.02, 0.1); g.translate(end * (hl + 0.04), clear + 0.2, 0); return setColors(g, bumpCol); };
+    const mkBump = (end) => { const g = new THREE.BoxGeometry(0.24, 0.3, W + 0.04, lo ? 1 : 2, lo ? 1 : 2, lo ? 2 : 6); roundBox(g, 0.12, 0.15, W / 2 + 0.02, 0.1); g.translate(end * (hl + 0.04), clear + 0.2, 0); return setColors(g, bumpCol); };
     out.bumperF = mkBump(1); out.bumperR = mkBump(-1);
 
     // wheels
@@ -10515,11 +10722,11 @@ LS.TEXT = {
       this.meshes = [];
       for (const [model, list] of this.byModel) {
         const spec = { L: list[0].hx * 2, W: list[0].hy * 2, H: PROFILES[model].roof, wb: list[0].hx * 2 * 0.6, track: list[0].hy * 2 - 0.25, type: model };
-        const parts = buildParts(model, spec, [1, 1, 1]);
+        const parts = buildParts(model, spec, [1, 1, 1], 'low');
         const paintGeo = THREE.BufferGeometryUtils.mergeGeometries([parts.body, parts.cab, parts.bumperF, parts.bumperR, ...parts.paint].map((g) => { g = g.clone(); if (g.index) g = g.toNonIndexed(); return g; }), false);
         // fixed parts: wheels (as boxes, cheap), lights, trim
         const fixed = [];
-        for (const w of parts.wheels) { const g = new THREE.CylinderGeometry(w.r, w.r, w.w, 12); g.rotateX(Math.PI / 2); g.translate(w.x, w.r, w.z); fixed.push(setColors(g, TYRE)); }
+        for (const w of parts.wheels) { const g = new THREE.CylinderGeometry(w.r, w.r, w.w, 8); g.rotateX(Math.PI / 2); g.translate(w.x, w.r, w.z); fixed.push(setColors(g, TYRE)); }
         for (const k of ['hl', 'hr', 'tl', 'tr']) { const d = parts.lights[k]; const g = new THREE.BoxGeometry(d.w, d.h, d.d); g.translate(d.x, d.y, d.z); fixed.push(setColors(g, k[0] === 'h' ? [0.9, 0.9, 0.8] : [0.5, 0.05, 0.05])); }
         for (const g of parts.dark.concat(parts.chrome)) fixed.push(g);
         const fixedGeo = THREE.BufferGeometryUtils.mergeGeometries(fixed.map((g) => (g.index ? g.toNonIndexed() : g)), false);
@@ -11063,12 +11270,26 @@ LS.TEXT = {
         }
         const fin = LS.Game.match && LS.Game.match.phase === 'finale';
         it.icon.visible = !fin; if (fin) it.beacon.visible = false;
-        if (s === 'active') { it.beacon.material.opacity = parked ? 0.1 : 0.14 + Math.sin(t * 4) * 0.05; it.icon.position.y = 3.6 + Math.sin(t * 3 + st.sp.id) * 0.15; }
+        if (s === 'active') { it._bb = parked ? 0.1 : 0.14 + Math.sin(t * 4) * 0.05; it.icon.position.y = 3.6 + Math.sin(t * 3 + st.sp.id) * 0.15; }
         if (s === 'candidate') it.icon.position.y = 3.4 + Math.sin(t * 2 + st.sp.id) * 0.2;
       }
     }
   }
 
+  // per viewport: the sign and beacon over a space you are in (or right next to) would fill the
+  // screen, so they step aside for that view; the painted markings stay
+  SpacesView.prototype.forView = function (car) {
+    for (const it of this.items) {
+      if (it.st.status === 'idle') continue;
+      const d = car ? Math.hypot(car.x - it.st.sp.x, car.y - it.st.sp.y) : 99;
+      const near = d < 11, k = U.clamp((d - 11) / 10, 0, 1);
+      if (it._baseIcon === undefined) it._baseIcon = true;
+      it.icon.material.opacity = near ? 0 : 0.35 + 0.65 * k;
+      it.icon.material.transparent = true;
+      it.beacon.material.opacity = near ? 0 : (it._bb != null ? it._bb : 0.14) * (0.3 + 0.7 * k);
+      it.owner.material.opacity = near ? 0.25 : 1;
+    }
+  };
   LS.World3D = World3D; LS.BinsView = BinsView; LS.SpacesView = SpacesView;
 })(window.LS);
 
@@ -11416,9 +11637,9 @@ LS.TEXT = {
       let prompt = '';
       if (car.status === 'active') {
         if (car.recovering) prompt = 'RECOVERING… you are vulnerable';
-        else if (car.canRecover && LS.Touch && LS.Touch.active && this.view.idx === 0) prompt = 'Stuck? Hold <b>RECOVER</b>';
+        else if (car.canRecover && this.view.idx === 0 && LS.Touch.active) prompt = 'Stuck? Hold <b>RECOVER</b>';
         else if (car.canRecover) prompt = `<kbd>${this.view.idx === 0 && m.humans.length < 2 ? 'R' : this.view.idx === 0 ? 'R' : 'L'}</kbd> / <kbd>X</kbd> hold to recover`;
-      } else if (car.status === 'eliminated' && m.phase !== 'results' && m.phase !== 'finale') prompt = LS.Touch && LS.Touch.wanted() ? `Spectating ${tgt.short} · tap ❚❚ for the menu` : `Spectating ${tgt.short} · <kbd>Tab</kbd> next driver · <kbd>Esc</kbd> menu`;
+      } else if (car.status === 'eliminated' && m.phase !== 'results' && m.phase !== 'finale') prompt = this.view.idx === 0 && LS.Touch.wanted() ? `Spectating ${tgt.short} · <b>NEXT ▶</b> for another driver · <b>❚❚</b> for the menu` : `Spectating ${tgt.short} · <kbd>Tab</kbd> next driver · <kbd>Esc</kbd> menu`;
       this.prompt.innerHTML = prompt; this.prompt.style.display = prompt ? 'block' : 'none';
       this.out.style.display = car.status === 'eliminated' && P !== 'finale' && P !== 'results' ? 'block' : 'none';
       this.out.innerHTML = `ELIMINATED<small>${car.place ? 'Finished ' + ordinal(car.place) : ''}</small>`;
@@ -11489,8 +11710,10 @@ LS.TEXT = {
     }
     caption(r) {
       const d = el('div', 'cap ' + r.channel, this.captions, `<span class="who">${r.speaker}</span><span class="what">${r.text}</span>`);
-      this.items.push({ d, t: 4.5 + r.text.length * 0.03 });
-      while (this.items.length > 3) { const x = this.items.shift(); x.d.remove(); }
+      const it = { d, t: 4.5 + r.text.length * 0.03, gone: false };
+      this.items.push(it);
+      while (this.items.length > 3) { const x = this.items.shift(); x.d.remove(); x.gone = true; }
+      return it;
     }
     announce(text, sub, cls, dur) {
       this.big.className = 'bigmsg show ' + (cls || ''); this.big.innerHTML = text + (sub ? `<small>${sub}</small>` : '');
@@ -11498,9 +11721,20 @@ LS.TEXT = {
     }
     lowerThird(title, sub, dur) { this.lower.innerHTML = `<b>${title}</b><span>${sub || ''}</span>`; this.lower.classList.add('show'); this.lowerT = dur || 4; }
     update(dt) {
-      for (const it of this.items.slice()) { it.t -= dt; if (it.t < 0.4) it.d.classList.add('fade'); if (it.t <= 0) { it.d.remove(); this.items.splice(this.items.indexOf(it), 1); } }
+      for (const it of this.items.slice()) {
+        // a caption being read out stays up until the voice finishes (within reason)
+        if (it.speaking && it.held < 14) { it.held = (it.held || 0) + dt; continue; }
+        it.t -= dt; if (it.t < 0.4) it.d.classList.add('fade');
+        if (it.t <= 0) { it.d.remove(); it.gone = true; this.items.splice(this.items.indexOf(it), 1); }
+      }
       if (this.bigT > 0) { this.bigT -= dt; if (this.bigT <= 0) this.big.classList.remove('show'); }
       if (this.lowerT > 0) { this.lowerT -= dt; if (this.lowerT <= 0) this.lower.classList.remove('show'); }
+    }
+    // the caption is being spoken: hold it and mark who is talking
+    speaking(it, on) {
+      if (!it || it.gone) return;
+      it.speaking = on; it.d.classList.toggle('speaking', on);
+      if (!on) { it.t = Math.max(it.t, 1.0); it.d.classList.remove('fade'); }
     }
     clear() { this.captions.innerHTML = ''; this.items = []; this.big.classList.remove('show'); this.lower.classList.remove('show'); }
   }
@@ -11517,13 +11751,13 @@ LS.TEXT = {
 
   M.root = null;
   M.show = function (html, cls) {
-    M.hide();
+    if (M.root) { M.root.remove(); M.root = null; }
     const o = M.root = el('div', 'overlay ' + (cls || ''), document.getElementById('ui'), html);
     const first = o.querySelector('[data-focus]') || o.querySelector('button');
     if (first) setTimeout(() => first.focus(), 30);
     return o;
   };
-  M.hide = function () { if (M.root) { M.root.remove(); M.root = null; } };
+  M.hide = function () { if (M.root) { M.root.remove(); M.root = null; } M.current = null; };
   M.on = (sel, fn) => { M.root.querySelectorAll(sel).forEach((b) => b.addEventListener('click', (e) => { LS.Audio.init(); fn(e, b); })); };
   // gamepad / arrow navigation between buttons in the current overlay
   M.navigate = function () {
@@ -11537,7 +11771,10 @@ LS.TEXT = {
     if (I.ok && document.activeElement && items.includes(document.activeElement)) document.activeElement.click();
   };
 
+  // re-render the current screen when its wording depends on touch vs keys
+  M.refresh = function () { if (M.root && M.current) M.current(); };
   M.title = function () {
+    M.current = M.title;
     M.show(`
       <div class="title-card">
         <div class="kicker">LIVE · 18:15 · A WEEKDAY · ST ALBANS AL3</div>
@@ -11546,7 +11783,7 @@ LS.TEXT = {
         <div class="streets">Bernard Street · Grange Street · Dalton Street · Church Street</div>
         <div class="menu-buttons">
           <button data-act="solo" data-focus>SOLO MATCH <small>you vs seven residents</small></button>
-          <button data-act="duo">TWO-PLAYER SPLIT-SCREEN <small>${LS.Touch && LS.Touch.wanted() ? 'player 2 needs a gamepad or keyboard' : 'plus six residents'}</small></button>
+          <button data-act="duo">TWO-PLAYER SPLIT-SCREEN <small>${LS.Touch.label('player 2 needs a gamepad or keyboard', 'plus six residents')}</small></button>
           <button data-act="tutorial">TUTORIAL <small>driving, shunting, parking</small></button>
           <button data-act="settings">SETTINGS</button>
           <button data-act="controls">CONTROLS</button>
@@ -11562,6 +11799,7 @@ LS.TEXT = {
 
   const bars = (n) => '<span class="bar">' + '■'.repeat(n) + '<i>' + '■'.repeat(5 - n) + '</i></span>';
   M.setup = function (players) {
+    M.current = () => M.setup(players);
     const S = LS.Game.settings;
     const picks = (S.lastPicks || ['hatch', 'suv']).slice(0, players);
     while (picks.length < players) picks.push('estate');
@@ -11575,7 +11813,7 @@ LS.TEXT = {
     };
     let html = `<div class="setup"><h2>${players === 1 ? 'SOLO MATCH' : 'TWO-PLAYER SPLIT-SCREEN'}</h2>`;
     for (let p = 0; p < players; p++) {
-      html += `<div class="pick"><h3><span class="glyph" style="color:${LS.IDENTITY[p].color}">${LS.IDENTITY[p].glyph}</span> PLAYER ${p + 1} <small>${LS.Touch && LS.Touch.wanted() && p === 0 ? 'Touch: steering pad on the left, pedals on the right' : players === 2 ? (p === 0 ? 'W A S D · Space · Q horn · E camera · R recover' : '↑ ↓ ← → · / handbrake · . horn · , camera · L recover') : 'WASD or arrows · Space handbrake · H horn · C parking camera · R recover'}</small></h3><div class="vcards">${LS.VEHICLE_ORDER.map((t) => card(t, p)).join('')}</div></div>`;
+      html += `<div class="pick"><h3><span class="glyph" style="color:${LS.IDENTITY[p].color}">${LS.IDENTITY[p].glyph}</span> PLAYER ${p + 1} <small>${p === 0 && LS.Touch.wanted() ? 'Touch: steering pad on the left, pedals on the right' : players === 2 ? (p === 0 ? 'W A S D · Space · Q horn · E camera · R recover' : '↑ ↓ ← → · / handbrake · . horn · , camera · L recover') : 'WASD or arrows · Space handbrake · H horn · C parking camera · R recover'}</small></h3><div class="vcards">${LS.VEHICLE_ORDER.map((t) => card(t, p)).join('')}</div></div>`;
     }
     html += `<div class="setup-row"><label>Residents <select id="diff"><option value="easy">Polite</option><option value="normal">Entitled</option><option value="hard">Unhinged</option></select></label>
       <button data-act="go" data-focus>START THE EVENING ▶</button><button data-act="back">BACK</button></div></div>`;
@@ -11593,7 +11831,7 @@ LS.TEXT = {
     const S = LS.Game.settings;
     M.show(`<div class="panel"><h2>SETTINGS</h2>
       <label class="row"><span>Camera shake</span><input type="checkbox" id="shake" ${S.shake ? 'checked' : ''}></label>
-      <label class="row"><span>Neighbours' voices (speech synthesis)</span><input type="checkbox" id="voices" ${S.voices ? 'checked' : ''}></label>
+      <label class="row"><span>Spoken voices${LS.Audio.speechOK() ? '' : ' (not available in this browser)'}</span><select id="voices"><option value="all">Commentary, radio and residents</option><option value="commentary">Commentary and radio only</option><option value="off">Off</option></select></label>
       <label class="row"><span>Music volume</span><input type="range" id="music" min="0" max="1" step="0.05" value="${S.music}"></label>
       <label class="row"><span>Effects volume</span><input type="range" id="sfx" min="0" max="1" step="0.05" value="${S.sfx}"></label>
       <label class="row"><span>Graphics</span><select id="quality"><option value="high">High (shadows)</option><option value="medium">Medium</option><option value="low">Low (no shadows)</option></select></label>
@@ -11603,9 +11841,9 @@ LS.TEXT = {
       <p class="fine">Spaces and drivers always use shapes, patterns and labels as well as colour. Graphics changes apply to the next match.</p>
       <button data-act="back" data-focus>DONE</button></div>`);
     const R = M.root;
-    R.querySelector('#quality').value = S.quality; R.querySelector('#split').value = S.split; R.querySelector('#touchc').value = S.touch || 'auto';
+    R.querySelector('#quality').value = S.quality; R.querySelector('#split').value = S.split; R.querySelector('#touchc').value = S.touch || 'auto'; R.querySelector('#voices').value = S.voices || 'all';
     const save = () => {
-      S.shake = R.querySelector('#shake').checked; S.voices = R.querySelector('#voices').checked; S.music = +R.querySelector('#music').value; S.sfx = +R.querySelector('#sfx').value;
+      S.shake = R.querySelector('#shake').checked; S.voices = R.querySelector('#voices').value; if (S.voices === 'off') LS.Audio.cancelSpeech(); S.music = +R.querySelector('#music').value; S.sfx = +R.querySelector('#sfx').value;
       S.quality = R.querySelector('#quality').value; S.split = R.querySelector('#split').value; S.bighud = R.querySelector('#bighud').checked; S.touch = R.querySelector('#touchc').value;
       LS.Game.saveSettings(); LS.Game.applySettings();
     };
@@ -11675,16 +11913,21 @@ LS.TEXT = {
 (function (LS) {
   'use strict';
   const U = LS.U;
+  const COARSE = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
   const T = LS.Touch = {
     state: { steer: 0, throttle: 0, brake: 0, handbrake: 0, horn: 0, recover: 0, look: 0, cam: false, pause: false },
-    active: false, built: false, used: false,
-    // auto: on for coarse pointers (phones/tablets) or as soon as someone touches the screen
+    mode: 'off', built: false, used: false, coarse: COARSE, resets: [],
+    get active() { return T.mode === 'play'; },
+    // auto: on for phones and tablets (coarse pointer), or once someone actually touches the screen.
+    // A touchscreen laptop stays on keyboard controls until it is touched, and back again on a key press.
     wanted() {
       const s = LS.Game && LS.Game.settings ? LS.Game.settings.touch : 'auto';
       if (s === 'on') return true;
       if (s === 'off') return false;
-      return T.used || (window.matchMedia && matchMedia('(pointer: coarse)').matches) || ('ontouchstart' in window && navigator.maxTouchPoints > 0);
+      return T.used || COARSE;
     },
+    // one place to choose wording for touch or keys
+    label(touchText, keyText) { return T.wanted() ? touchText : keyText; },
     build() {
       if (T.built) return;
       T.built = true;
@@ -11700,6 +11943,7 @@ LS.TEXT = {
           </div>
         </div>
         <div class="t-top">
+          <button class="t-btn t-small t-next" id="t-next" aria-label="Watch the next driver">NEXT ▶</button>
           <button class="t-btn t-small" id="t-pause" aria-label="Pause">❚❚</button>
         </div>
         <div class="t-side">
@@ -11709,52 +11953,59 @@ LS.TEXT = {
           <button class="t-btn t-small t-recover" id="t-recover" aria-label="Recover the car">HOLD TO<br>RECOVER</button>
         </div>`;
       document.getElementById('ui').appendChild(root);
+      T.el = { recover: root.querySelector('#t-recover'), cam: root.querySelector('#t-cam') };
       const S = T.state;
+      // every control releases on up, cancel and lost capture, and can be reset when the overlay hides
+      const track = (el, down, move, up) => {
+        let pid = null;
+        const end = (e) => { if (e && e.pointerId !== pid) return; pid = null; el.classList.remove('on'); up(); };
+        el.addEventListener('pointerdown', (e) => { e.preventDefault(); try { el.setPointerCapture(e.pointerId); } catch (x) { /* synthetic */ } pid = e.pointerId; el.classList.add('on'); LS.Audio.init(); down(e); });
+        if (move) el.addEventListener('pointermove', (e) => { if (e.pointerId === pid) move(e); });
+        el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end); el.addEventListener('lostpointercapture', end);
+        T.resets.push(() => { if (pid !== null) end(null); pid = null; el.classList.remove('on'); up(); });
+      };
       // steering pad: relative drag from where the thumb lands
       const pad = root.querySelector('#t-steer'), knob = pad.querySelector('.t-knob');
-      let sp = null;
+      let x0 = 0;
       const steerFrom = (e) => {
         const w = Math.max(60, pad.clientWidth * 0.32);
-        const v = U.clamp((e.clientX - sp.x0) / w, -1, 1);
+        const v = U.clamp((e.clientX - x0) / w, -1, 1);
         S.steer = Math.sign(v) * Math.pow(Math.abs(v), 1.25);
         knob.style.transform = `translateX(${v * w}px)`;
       };
-      pad.addEventListener('pointerdown', (e) => { e.preventDefault(); pad.setPointerCapture(e.pointerId); sp = { id: e.pointerId, x0: e.clientX }; pad.classList.add('on'); steerFrom(e); LS.Audio.init(); });
-      pad.addEventListener('pointermove', (e) => { if (sp && e.pointerId === sp.id) steerFrom(e); });
-      const steerEnd = (e) => { if (!sp || e.pointerId !== sp.id) return; sp = null; S.steer = 0; knob.style.transform = ''; pad.classList.remove('on'); };
-      pad.addEventListener('pointerup', steerEnd); pad.addEventListener('pointercancel', steerEnd);
+      track(pad, (e) => { x0 = e.clientX; steerFrom(e); }, steerFrom, () => { S.steer = 0; knob.style.transform = ''; });
       // pedals: analogue by height
-      const pedal = (id, key) => {
+      for (const [id, key] of [['#t-go', 'throttle'], ['#t-brake', 'brake']]) {
         const el = root.querySelector(id), fill = el.querySelector('.t-fill');
-        let pid = null;
         const val = (e) => { const r = el.getBoundingClientRect(); const v = U.clamp(0.35 + 0.65 * (1 - (e.clientY - r.top) / r.height), 0.35, 1); S[key] = v; fill.style.height = Math.round(v * 100) + '%'; };
-        el.addEventListener('pointerdown', (e) => { e.preventDefault(); el.setPointerCapture(e.pointerId); pid = e.pointerId; el.classList.add('on'); val(e); LS.Audio.init(); });
-        el.addEventListener('pointermove', (e) => { if (e.pointerId === pid) val(e); });
-        const end = (e) => { if (e.pointerId !== pid) return; pid = null; S[key] = 0; fill.style.height = '0'; el.classList.remove('on'); };
-        el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
-      };
-      pedal('#t-go', 'throttle'); pedal('#t-brake', 'brake');
-      // hold buttons and tap buttons
-      const hold = (id, key) => {
-        const el = root.querySelector(id); let pid = null;
-        el.addEventListener('pointerdown', (e) => { e.preventDefault(); el.setPointerCapture(e.pointerId); pid = e.pointerId; S[key] = 1; el.classList.add('on'); LS.Audio.init(); });
-        const end = (e) => { if (e.pointerId !== pid) return; pid = null; S[key] = 0; el.classList.remove('on'); };
-        el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
-      };
-      hold('#t-hand', 'handbrake'); hold('#t-horn', 'horn'); hold('#t-look', 'look'); hold('#t-recover', 'recover');
-      const tap = (id, key) => root.querySelector(id).addEventListener('pointerdown', (e) => { e.preventDefault(); S[key] = true; LS.Audio.init(); });
-      tap('#t-cam', 'cam'); tap('#t-pause', 'pause');
+        track(el, val, val, () => { S[key] = 0; fill.style.height = '0'; });
+      }
+      for (const [id, key] of [['#t-hand', 'handbrake'], ['#t-horn', 'horn'], ['#t-look', 'look'], ['#t-recover', 'recover']]) {
+        track(root.querySelector(id), () => { S[key] = 1; }, null, () => { S[key] = 0; });
+      }
+      const tap = (id, fn) => root.querySelector(id).addEventListener('pointerdown', (e) => { e.preventDefault(); LS.Audio.init(); fn(); });
+      tap('#t-cam', () => { S.cam = true; });
+      tap('#t-pause', () => { if (LS.Game.paused) LS.Game.resume(); else LS.Game.pause(); });
+      tap('#t-next', () => LS.Game.cycleSpectate());
       root.addEventListener('contextmenu', (e) => e.preventDefault());
     },
-    // called every frame by the game
-    update(show, car) {
-      if (show && !T.built) T.build();
+    releaseAll() { for (const r of T.resets) r(); for (const k in T.state) T.state[k] = typeof T.state[k] === 'boolean' ? false : 0; },
+    // called every frame by the game: mode is 'play' (driving), 'spectate' (out: pause and next only) or 'off'
+    update(mode, car) {
+      if (mode !== 'off' && !T.built) T.build();
       if (!T.built) return;
-      T.active = !!show;
-      document.body.classList.toggle('touch-play', T.active);
-      if (!T.active) { for (const k in T.state) T.state[k] = typeof T.state[k] === 'boolean' ? false : 0; return; }
-      T.root.querySelector('#t-recover').classList.toggle('show', !!(car && (car.canRecover || car.recovering)));
-      T.root.querySelector('#t-cam').classList.toggle('on', !!(LS.Game.views && LS.Game.views[0] && LS.Game.views[0].mode === 'park'));
+      if (mode !== T.mode) {
+        if (T.mode === 'play') T.releaseAll();
+        T.mode = mode;
+        document.body.classList.toggle('touch-play', mode === 'play');
+        document.body.classList.toggle('touch-spectate', mode === 'spectate');
+        document.body.classList.toggle('touch-ui', mode !== 'off'); // compact phone HUD whether driving or watching
+      }
+      if (mode !== 'play') return;
+      const rec = !!(car && (car.canRecover || car.recovering));
+      if (rec !== T._rec) { T._rec = rec; T.el.recover.classList.toggle('show', rec); }
+      const cam = !!(LS.Game.views && LS.Game.views[0] && LS.Game.views[0].mode === 'park');
+      if (cam !== T._cam) { T._cam = cam; T.el.cam.classList.toggle('on', cam); }
     },
     // merge into player 1's input; one-shot buttons are consumed here
     apply(o) {
@@ -11765,11 +12016,11 @@ LS.TEXT = {
       o.handbrake = Math.max(o.handbrake, S.handbrake); o.horn = Math.max(o.horn, S.horn);
       o.recover = Math.max(o.recover, S.recover); o.look = Math.max(o.look, S.look);
       if (S.cam) { o.camToggle = true; S.cam = false; }
-      if (S.pause) { o.pause = true; S.pause = false; }
     },
   };
-  window.addEventListener('touchstart', () => { T.used = true; document.body.classList.add('is-touch'); }, { passive: true, once: true });
-  if (window.matchMedia && matchMedia('(pointer: coarse)').matches) document.addEventListener('DOMContentLoaded', () => document.body.classList.add('is-touch'));
+  // the first real touch switches wording and controls to touch; a key press on a hybrid laptop switches back
+  window.addEventListener('touchstart', () => { if (!T.used) { T.used = true; if (LS.Menus && LS.Menus.refresh) LS.Menus.refresh(); } }, { passive: true });
+  window.addEventListener('keydown', () => { if (T.used && !COARSE) { T.used = false; if (LS.Menus && LS.Menus.refresh) LS.Menus.refresh(); } });
 })(window.LS);
 
 </script>
@@ -11840,7 +12091,7 @@ LS.TEXT = {
       if (this.step >= this.steps.length) { this.finished = true; LS.Game.tutorialDone(); return; }
       const s = this.steps[this.step];
       s.start();
-      LS.Game.tutorialText(this.step, this.steps.length, s.title, LS.Touch && LS.Touch.wanted() ? s.touchText : s.text);
+      LS.Game.tutorialText(this.step, this.steps.length, s.title, LS.Touch.label(s.touchText, s.text));
       LS.Audio.beep(880, 0.15, 0.2);
     }
     update(dt) {
@@ -11864,7 +12115,7 @@ LS.TEXT = {
 (function (LS) {
   'use strict';
   const U = LS.U;
-  const DEFAULTS = { shake: true, voices: true, music: 0.6, sfx: 0.9, quality: 'high', split: 'auto', difficulty: 'normal', bighud: false, lastPicks: ['hatch', 'suv'], touch: 'auto' };
+  const DEFAULTS = { shake: true, voices: 'all', music: 0.6, sfx: 0.9, quality: 'high', split: 'auto', difficulty: 'normal', bighud: false, lastPicks: ['hatch', 'suv'], touch: 'auto' };
   const COARSE = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
 
   const G = LS.Game = {
@@ -11874,6 +12125,7 @@ LS.TEXT = {
       // phones and tablets start on a lighter graphics setting
       if (COARSE) this.settings.quality = 'low';
       try { const s = JSON.parse(localStorage.getItem('lastspace.settings') || '{}'); Object.assign(this.settings, s); } catch (e) { /* storage blocked */ }
+      if (typeof this.settings.voices === 'boolean') this.settings.voices = this.settings.voices ? 'all' : 'off'; // older saved settings
     },
     saveSettings() { try { localStorage.setItem('lastspace.settings', JSON.stringify(this.settings)); } catch (e) { /* storage blocked */ } },
     applySettings() {
@@ -11931,7 +12183,7 @@ LS.TEXT = {
       if (this.fx) { sc.remove(this.fx.add.points, this.fx.soft.points, this.fx.bits.points, this.fx.skids); for (const [, g] of this.fx.debris) sc.remove(g); }
       this.tutorialMarker(null);
       LS.Audio.stopEngines(); LS.Audio.musicStop();
-      this.tv.clear();
+      this.tv.clear(); LS.Audio.cancelSpeech();
       document.body.classList.remove('freeze');
       const tp = document.getElementById('tutpanel'); if (tp) tp.remove();
       this.match = null; this.tutorial = null;
@@ -11969,7 +12221,7 @@ LS.TEXT = {
     },
     restart() { if (this.cfg && !this.cfg.tutorial) this.startMatch(this.cfg); else if (this.cfg && this.cfg.tutorial) this.startTutorial(); },
     quit() { this.teardown(); this.startMatch({ players: [], attract: true }); LS.Menus.title(); },
-    pause() { if (this.state !== 'play' || this.paused) return; this.paused = true; LS.Audio.stopEngines(); if (LS.Audio.ctx) LS.Audio.ctx.suspend(); LS.Menus.pause(); },
+    pause() { if (this.state !== 'play' || this.paused) return; this.paused = true; LS.Audio.stopEngines(); LS.Audio.cancelSpeech(); if (LS.Audio.ctx) LS.Audio.ctx.suspend(); LS.Menus.pause(); },
     resume() { this.paused = false; LS.Menus.hide(); if (LS.Audio.ctx) LS.Audio.ctx.resume(); },
 
     startTutorial() {
@@ -12038,8 +12290,12 @@ LS.TEXT = {
       match.on('remark', (r) => {
         if (this.state === 'attract' && r.channel !== 'commentary') return;
         if (this.state === 'attract') return;
-        tv.caption(r);
-        if (this.settings.voices && r.channel !== 'commentary') A.say(r.text, r.speaker);
+        const cap = tv.caption(r);
+        // the voice reads exactly what the caption says, and the caption waits for it
+        A.say({
+          text: r.text.replace(/\s+-\s+/g, ', '), role: r.channel === 'commentary' ? 'commentary' : r.channel === 'radio' ? 'radio' : 'resident', who: r.speaker,
+          onstart: () => tv.speaking(cap, true), onend: () => tv.speaking(cap, false), stale: () => cap.gone,
+        });
       });
       match.on('winner', (d) => { if (this.state === 'attract') return; this.finale = { car: d.car, t: 0 }; });
       match.on('results', (res) => { if (this.state === 'attract') return; this.state = 'results'; document.body.classList.remove('freeze'); LS.Audio.stopEngines(); LS.Menus.results(res); });
@@ -12057,7 +12313,7 @@ LS.TEXT = {
     frame(now) {
       const dt = Math.min(0.05, (now - this.last) / 1000); this.last = now;
       LS.Input.update(dt);
-      if (LS.Touch) { const me = this.match && this.match.humans[0]; LS.Touch.update(this.state === 'play' && !this.paused && !!me && me.status === 'active' && LS.Touch.wanted(), me); }
+      if (LS.Touch) { const me = this.match && this.match.humans[0]; const on = this.state === 'play' && !this.paused && !!me && LS.Touch.wanted(); LS.Touch.update(!on ? 'off' : me.status === 'active' ? 'play' : 'spectate', me); }
       LS.Menus.navigate();
       const m = this.match; if (!m) return;
       const t = now / 1000;
@@ -12168,6 +12424,7 @@ LS.TEXT = {
         const R = rects[i];
         v.cam.aspect = R.w / R.h; v.cam.updateProjectionMatrix();
         if (this.views.length > 1) { const tg = v.target(); this.w3.focus(tg.x, tg.y); }
+        this.spaces.forView(v.target());
         // your own badge would sit in the middle of your screen
         for (const [c, cv] of this.carViews) cv.badge.visible = c.status === 'active' && c !== v.target() && this.state !== 'attract';
         r.setViewport(R.x, R.y, R.w, R.h); r.setScissor(R.x, R.y, R.w, R.h);
@@ -12179,7 +12436,7 @@ LS.TEXT = {
 
   // debug / test hooks (used by tools/browser-check.js)
   LS.debug = {
-    sim(seconds) { const m = G.match; const n = Math.round(seconds * 30); for (let i = 0; i < n; i++) { m.step(1 / 30); if (G.tutorial) G.tutorial.update(1 / 30); } G.updateVisuals(1 / 30, performance.now() / 1000, true); G.render(); },
+    sim(seconds) { const m = G.match; const n = Math.round(seconds * 30); for (let i = 0; i < n; i++) { m.step(1 / 30); if (G.tutorial) G.tutorial.update(1 / 30); G.tv.update(1 / 30); } G.updateVisuals(1 / 30, performance.now() / 1000, true); G.render(); },
     autopilot(persona) { const m = G.match; for (const c of m.humans) { const b = new LS.Bot(c, m, persona || 'nearest', LS.U.rng(5 + c.player), 'normal'); m.bots.push(b); c.bot = b; } },
     state() { const m = G.match; return m && { phase: m.phase, round: m.round, time: m.time, alive: m.alive.length, cars: m.cars.map((c) => ({ name: c.short, status: c.status, parked: c.park.parked, damage: +c.damage.total.toFixed(2) })) }; },
   };

@@ -41,16 +41,36 @@ LS.TEXT = {
     intro: ["Good evening, and welcome to LAST SPACE, live from St Albans, where it's quarter past six and everyone is home.", "Eight drivers. Seven spaces. Four streets. One very long evening."],
     round: ['Round {round}. {drivers} drivers, {spaces} spaces.', "Round {round}: {spaces} spaces for {drivers} cars. Somebody's walking from the station tonight."],
     music_stop: ["THE MUSIC'S STOPPED! Spaces are live!", "And the radio cuts out - GO, GO, GO!", "Silence on Verulam Sound! Find a space!"],
-    parked: ['{name} is in - {space}!', '{name} tucks the {vehicle} into {space}.', 'Lovely work from {name}. {space}.'],
+    parked: ['{name} is in - {space}!', '{name} tucks the {vehicle} in, {space}.', 'Lovely work from {name}. {space}.'],
     dislodged: ['{name} has been shunted clean out of {space}!', "Oh, {name}'s been evicted from {space}!", '{by} turfs {name} out of {space}!'],
     big_hit: ['Oof. That will need a courtesy car.', 'Heavy contact.', "That's a claim.", 'Somewhere an insurer has just sat up in bed.'],
     horn: ["THERE'S THE HORN!", 'HORN! Hands off the wheel!'],
+    eliminated_many: ['{names} are all out. {n} cars to the station car park.', '{names}: eliminated. {n} more households parking round the corner and walking.', "That's {names} gone. {n} cars, one long walk."],
     eliminated: ['{name} is out. Catherine Street and a long walk.', "{name} has to park at the station. Brutal.", "{name} is eliminated - and it's raining by the station."],
     final: ['Two drivers. One space. This is what the whole street has been waiting for.', "It's the final. One space. Grange Street holds its breath."],
     sudden: ["Nobody parked! It's SUDDEN DEATH. First to hold a space for three seconds takes it all."],
     winner: ['{name} wins LAST SPACE!', '{name} is the last one parked on the street tonight!'],
     overturned: ["{name}'s on its side!", "That's not a park, {name}."],
     extra_space: ['The council has quietly unsuspended another bay.'],
+  },
+
+  // Barry, the drivetime presenter on Verulam Sound, talks over the music while everyone circulates.
+  // He is usually cut off mid-sentence when the music stops.
+  dj: {
+    open: [
+      "Twenty past six on Verulam Sound. If you're driving round the Grange Street area looking for a space, honestly, keep going.",
+      "This is Barry on Drivetime. The council would like to remind listeners that a permit does not guarantee a space.",
+      "Traffic now. Hatfield Road, solid. London Road, solid. Dalton Street is, well, Dalton Street.",
+      "That was a classic. Lines are open: is it ever acceptable to park across your own dropped kerb? I think we all know the answer.",
+      "A text from Sue in Bernard Street. Someone's been in my space since Tuesday. Sue, I feel that. I really do.",
+      "Weather: dry for now, with rain later, just in time for anyone walking back from the station car park.",
+    ],
+    more: [
+      "Quick word about wheelie bins on the pavement. Please don't. Anyway, here's another one for you, it's a real",
+      "Now, I've been told we've got time for one more before the news, so let's squeeze in a",
+      "Coming up after six thirty, we'll be talking to a man in Church Street who claims he once parked first time. Before that, here's",
+      "Message from the residents' group: the space outside number forty-eight is not, legally speaking, anybody's. Moving on, here's",
+    ],
   },
 
   radio: ['Verulam Sound FM - Drivetime with Barry', "Verulam Sound FM - traffic: it's bad, sorry", 'Verulam Sound FM - the hits, and Barry'],

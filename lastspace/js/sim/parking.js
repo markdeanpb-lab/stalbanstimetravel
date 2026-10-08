@@ -76,6 +76,7 @@
           let dmin = 1e9;
           for (const c of live) dmin = Math.min(dmin, U.dist(c.x, c.y, s.sp.x, s.sp.y));
           let w = Math.pow(U.clamp((dmin - 5) / 12, 0.03, 1), 2); // nobody can simply sit on a space
+          w *= U.clamp((150 - dmin) / 70, 0.08, 1); // ...but somebody can get to it before the horn
           if (preferStreet && s.sp.street === preferStreet) w *= 5;
           // spread the live spaces round the neighbourhood so no corner is left without one
           let dc = 1e9; for (const q of chosen) dc = Math.min(dc, U.dist(q.sp.x, q.sp.y, s.sp.x, s.sp.y));

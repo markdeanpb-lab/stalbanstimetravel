@@ -3,7 +3,7 @@
 (function (LS) {
   'use strict';
   const U = LS.U;
-  const DEFAULTS = { shake: true, voices: true, music: 0.6, sfx: 0.9, quality: 'high', split: 'auto', difficulty: 'normal', bighud: false, lastPicks: ['hatch', 'suv'], touch: 'auto' };
+  const DEFAULTS = { shake: true, voices: 'all', music: 0.6, sfx: 0.9, quality: 'high', split: 'auto', difficulty: 'normal', bighud: false, lastPicks: ['hatch', 'suv'], touch: 'auto' };
   const COARSE = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
 
   const G = LS.Game = {
@@ -13,6 +13,7 @@
       // phones and tablets start on a lighter graphics setting
       if (COARSE) this.settings.quality = 'low';
       try { const s = JSON.parse(localStorage.getItem('lastspace.settings') || '{}'); Object.assign(this.settings, s); } catch (e) { /* storage blocked */ }
+      if (typeof this.settings.voices === 'boolean') this.settings.voices = this.settings.voices ? 'all' : 'off'; // older saved settings
     },
     saveSettings() { try { localStorage.setItem('lastspace.settings', JSON.stringify(this.settings)); } catch (e) { /* storage blocked */ } },
     applySettings() {
@@ -70,7 +71,7 @@
       if (this.fx) { sc.remove(this.fx.add.points, this.fx.soft.points, this.fx.bits.points, this.fx.skids); for (const [, g] of this.fx.debris) sc.remove(g); }
       this.tutorialMarker(null);
       LS.Audio.stopEngines(); LS.Audio.musicStop();
-      this.tv.clear();
+      this.tv.clear(); LS.Audio.cancelSpeech();
       document.body.classList.remove('freeze');
       const tp = document.getElementById('tutpanel'); if (tp) tp.remove();
       this.match = null; this.tutorial = null;
@@ -108,7 +109,7 @@
     },
     restart() { if (this.cfg && !this.cfg.tutorial) this.startMatch(this.cfg); else if (this.cfg && this.cfg.tutorial) this.startTutorial(); },
     quit() { this.teardown(); this.startMatch({ players: [], attract: true }); LS.Menus.title(); },
-    pause() { if (this.state !== 'play' || this.paused) return; this.paused = true; LS.Audio.stopEngines(); if (LS.Audio.ctx) LS.Audio.ctx.suspend(); LS.Menus.pause(); },
+    pause() { if (this.state !== 'play' || this.paused) return; this.paused = true; LS.Audio.stopEngines(); LS.Audio.cancelSpeech(); if (LS.Audio.ctx) LS.Audio.ctx.suspend(); LS.Menus.pause(); },
     resume() { this.paused = false; LS.Menus.hide(); if (LS.Audio.ctx) LS.Audio.ctx.resume(); },
 
     startTutorial() {
@@ -177,8 +178,12 @@
       match.on('remark', (r) => {
         if (this.state === 'attract' && r.channel !== 'commentary') return;
         if (this.state === 'attract') return;
-        tv.caption(r);
-        if (this.settings.voices && r.channel !== 'commentary') A.say(r.text, r.speaker);
+        const cap = tv.caption(r);
+        // the voice reads exactly what the caption says, and the caption waits for it
+        A.say({
+          text: r.text.replace(/\s+-\s+/g, ', '), role: r.channel === 'commentary' ? 'commentary' : r.channel === 'radio' ? 'radio' : 'resident', who: r.speaker,
+          onstart: () => tv.speaking(cap, true), onend: () => tv.speaking(cap, false), stale: () => cap.gone,
+        });
       });
       match.on('winner', (d) => { if (this.state === 'attract') return; this.finale = { car: d.car, t: 0 }; });
       match.on('results', (res) => { if (this.state === 'attract') return; this.state = 'results'; document.body.classList.remove('freeze'); LS.Audio.stopEngines(); LS.Menus.results(res); });
@@ -196,7 +201,7 @@
     frame(now) {
       const dt = Math.min(0.05, (now - this.last) / 1000); this.last = now;
       LS.Input.update(dt);
-      if (LS.Touch) { const me = this.match && this.match.humans[0]; LS.Touch.update(this.state === 'play' && !this.paused && !!me && me.status === 'active' && LS.Touch.wanted(), me); }
+      if (LS.Touch) { const me = this.match && this.match.humans[0]; const on = this.state === 'play' && !this.paused && !!me && LS.Touch.wanted(); LS.Touch.update(!on ? 'off' : me.status === 'active' ? 'play' : 'spectate', me); }
       LS.Menus.navigate();
       const m = this.match; if (!m) return;
       const t = now / 1000;
@@ -307,6 +312,7 @@
         const R = rects[i];
         v.cam.aspect = R.w / R.h; v.cam.updateProjectionMatrix();
         if (this.views.length > 1) { const tg = v.target(); this.w3.focus(tg.x, tg.y); }
+        this.spaces.forView(v.target());
         // your own badge would sit in the middle of your screen
         for (const [c, cv] of this.carViews) cv.badge.visible = c.status === 'active' && c !== v.target() && this.state !== 'attract';
         r.setViewport(R.x, R.y, R.w, R.h); r.setScissor(R.x, R.y, R.w, R.h);
@@ -318,7 +324,7 @@
 
   // debug / test hooks (used by tools/browser-check.js)
   LS.debug = {
-    sim(seconds) { const m = G.match; const n = Math.round(seconds * 30); for (let i = 0; i < n; i++) { m.step(1 / 30); if (G.tutorial) G.tutorial.update(1 / 30); } G.updateVisuals(1 / 30, performance.now() / 1000, true); G.render(); },
+    sim(seconds) { const m = G.match; const n = Math.round(seconds * 30); for (let i = 0; i < n; i++) { m.step(1 / 30); if (G.tutorial) G.tutorial.update(1 / 30); G.tv.update(1 / 30); } G.updateVisuals(1 / 30, performance.now() / 1000, true); G.render(); },
     autopilot(persona) { const m = G.match; for (const c of m.humans) { const b = new LS.Bot(c, m, persona || 'nearest', LS.U.rng(5 + c.player), 'normal'); m.bots.push(b); c.bot = b; } },
     state() { const m = G.match; return m && { phase: m.phase, round: m.round, time: m.time, alive: m.alive.length, cars: m.cars.map((c) => ({ name: c.short, status: c.status, parked: c.park.parked, damage: +c.damage.total.toFixed(2) })) }; },
   };

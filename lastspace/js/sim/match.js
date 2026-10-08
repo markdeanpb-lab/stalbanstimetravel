@@ -130,17 +130,19 @@
       }
       const out = alive.filter((c) => !parked.includes(c));
       this.lastHorn.out = out;
-      for (const c of out) this.eliminate(c);
+      for (const c of out) this.eliminate(c, true);
+      this.emit('eliminatedGroup', { cars: out });
       if (parked.length === 1) { this.declareWinner(parked[0]); return; }
       this.setPhase('horn', 4.0);
     }
-    eliminate(c) {
+    eliminate(c, grouped) {
       c.status = 'eliminated'; c.elimRound = this.round; c.elimT = this.time;
       c.place = this.alive.length + 1;
       this.eliminatedOrder.push(c);
       c.park.parked = false;
       this.after(1.2, () => { c.body.enabled = false; c.body.vx = c.body.vy = c.body.w = 0; });
-      this.emit('eliminated', { car: c });
+      this.emit('eliminated', { car: c, grouped: !!grouped });
+      if (!grouped) this.emit('eliminatedGroup', { cars: [c] });
     }
     declareWinner(c) {
       this.winner = c; c.place = 1;

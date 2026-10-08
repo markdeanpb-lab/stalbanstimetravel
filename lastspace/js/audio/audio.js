@@ -1,12 +1,13 @@
 /* LAST SPACE - sound, all synthesised with WebAudio: jaunty local-radio music that stops dead,
    engines, tyre squeal, crunches scaled to impact severity, glass, horns, the closing air horn,
-   a ticking clock, and (optionally) the neighbours' voices through speech synthesis. */
+   a ticking clock, and spoken commentary, radio links and residents through speech synthesis. */
 (function (LS) {
   'use strict';
   const U = LS.U;
   const A = LS.Audio = {
-    ctx: null, enabled: true, vol: { master: 0.8, music: 0.6, sfx: 0.9 }, voices: true,
+    ctx: null, enabled: true, vol: { master: 0.8, music: 0.6, sfx: 0.9 }, voices: 'all',
     init() {
+      this.unlockSpeech();
       if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
       const AC = window.AudioContext || window.webkitAudioContext; if (!AC) { this.enabled = false; return; }
       const c = this.ctx = new AC();
@@ -112,7 +113,7 @@
     musicOn() {
       if (!this.ctx) return;
       const c = this.ctx, t = c.currentTime;
-      this.musicBus.gain.cancelScheduledValues(t); this.musicBus.gain.setValueAtTime(this.musicBus.gain.value, t); this.musicBus.gain.linearRampToValueAtTime(this.vol.music * 0.55, t + 0.4);
+      this.musicBus.gain.cancelScheduledValues(t); this.musicBus.gain.setValueAtTime(this.musicBus.gain.value, t); this.musicBus.gain.linearRampToValueAtTime(this.vol.music * 0.55 * (this.speech.cur ? 0.45 : 1), t + 0.4);
       if (this.musicTimer) return;
       this.step = 0; this.nextT = t + 0.1;
       this.musicTimer = setInterval(() => this.schedule(), 50);
@@ -123,6 +124,7 @@
       // tape-stop: drop, then dead air
       this.musicBus.gain.cancelScheduledValues(t); this.musicBus.gain.setValueAtTime(this.musicBus.gain.value, t); this.musicBus.gain.linearRampToValueAtTime(0, t + 0.06);
       if (this.musicTimer) { clearInterval(this.musicTimer); this.musicTimer = null; }
+      this.cutRadio();
       const n = this.noise(), g = c.createGain(); n.connect(g); g.connect(this.sfx); this.env(g, t, 0.001, 0.25, 0.08); n.start(t); n.stop(t + 0.12);
       const o = c.createOscillator(), og = c.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(220, t); o.frequency.exponentialRampToValueAtTime(30, t + 0.35); o.connect(og); og.connect(this.sfx); this.env(og, t, 0.005, 0.15, 0.35); o.start(t); o.stop(t + 0.4);
     },
@@ -157,16 +159,124 @@
     },
 
     // ------------------------------------------------------------------ voices
-    say(text, who) {
-      if (!this.voices || !window.speechSynthesis) return;
-      try {
-        if (speechSynthesis.speaking && who !== 'force') speechSynthesis.cancel();
-        const u = new SpeechSynthesisUtterance(text);
-        const vs = speechSynthesis.getVoices().filter((v) => /en[-_]GB/i.test(v.lang));
-        if (vs.length) u.voice = vs[(text.length + (who ? who.length : 0)) % vs.length];
-        u.lang = 'en-GB'; u.rate = 1.05; u.pitch = 0.8 + ((who || '').length % 5) * 0.12; u.volume = 0.9;
-        speechSynthesis.speak(u);
-      } catch (e) { /* speech is optional */ }
+    // Speech synthesis reads out exactly what the captions say: the TV commentator, Barry on the radio,
+    // and (if wanted) the residents. One voice at a time: the commentator is never talked over, a line
+    // that has waited too long is dropped rather than spoken out of step with the picture, and the
+    // music ducks while anyone is talking. this.voices: 'all' | 'commentary' (commentator and Barry) | 'off'
+    speech: { q: [], cur: null, voices: null, cast: new Map() },
+    speechOK() { return !!(window.speechSynthesis && window.SpeechSynthesisUtterance); },
+    unlockSpeech() {
+      // iOS and some Androids only allow speech after a first utterance inside a user gesture
+      if (!this.speechOK() || this.speech.unlocked) return;
+      this.speech.unlocked = true;
+      try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } catch (e) { /* optional */ }
+      try { speechSynthesis.onvoiceschanged = () => { this.speech.voices = null; this.speech.cast.clear(); }; } catch (e) { /* optional */ }
+    },
+    voiceList() {
+      const S = this.speech;
+      if (!S.voices || !S.voices.length) {
+        let all = []; try { all = speechSynthesis.getVoices(); } catch (e) { /* none */ }
+        const gb = all.filter((v) => /en[-_]GB/i.test(v.lang));
+        S.voices = gb.length ? gb : all.filter((v) => /^en/i.test(v.lang));
+      }
+      return S.voices;
+    },
+    // who sounds like what: the commentator and Barry get distinct, steady voices; residents are spread over the rest
+    castFor(role, who) {
+      const S = this.speech, key = role === 'resident' ? 'r:' + (who || '') : role;
+      if (S.cast.has(key)) return S.cast.get(key);
+      const vs = this.voiceList();
+      const male = (v) => /male|daniel|george|arthur|ryan|thomas|oliver|james|harry|alfie|rishi/i.test(v.name) && !/female/i.test(v.name);
+      const local = (v) => v.localService !== false;
+      let h = 0; for (const ch of key) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+      let voice = null, pitch = 1, rate = 1.05;
+      if (role === 'commentary') { voice = vs.find((v) => male(v) && local(v)) || vs.find(male) || vs[0] || null; pitch = 0.92; rate = 1.08; }
+      else if (role === 'radio') {
+        const pres = this.castFor('commentary').voice;
+        voice = vs.find((v) => male(v) && v !== pres) || pres || vs[0] || null; pitch = voice === pres ? 1.18 : 1.05; rate = 1.12;
+      } else {
+        const pres = this.castFor('commentary').voice, pool = vs.filter((v) => v !== pres);
+        const list = pool.length ? pool : vs;
+        voice = list.length ? list[h % list.length] : null; pitch = 0.75 + (h % 7) * 0.09; rate = 0.98 + (h % 5) * 0.04;
+      }
+      const c = { voice, pitch, rate };
+      S.cast.set(key, c);
+      return c;
+    },
+    // item: { text, role: 'commentary' | 'radio' | 'resident', who, onstart, onend }
+    say(item) {
+      if (typeof item === 'string') item = { text: item, role: 'resident', who: arguments[1] };
+      const mode = this.voices === true ? 'all' : this.voices === false ? 'off' : this.voices || 'all';
+      if (mode === 'off' || !this.speechOK()) return false;
+      if (mode === 'commentary' && item.role === 'resident') return false;
+      const S = this.speech, pri = { commentary: 3, radio: 2, resident: 1 }[item.role] || 1;
+      item.pri = pri; item.at = performance.now();
+      if (!S.cur) { this.speakNow(item); return true; }
+      if (pri > S.cur.pri) { // the commentator talks over everyone else
+        S.q = S.q.filter((q) => q.pri >= pri);
+        S.q.unshift(item); this.cancelSpeech(true);
+        return true;
+      }
+      // otherwise wait in line; residents only queue behind each other briefly
+      S.q = S.q.filter((q) => q.pri >= pri || q.pri > 1);
+      S.q.push(item); S.q.sort((a, b) => b.pri - a.pri || a.at - b.at);
+      if (S.q.length > 3) S.q.length = 3;
+      return true;
+    },
+    speakNow(item) {
+      const S = this.speech;
+      let u;
+      try { u = new SpeechSynthesisUtterance(item.text); } catch (e) { return; }
+      const c = this.castFor(item.role, item.who);
+      try { if (c.voice) u.voice = c.voice; } catch (e) { /* not a real voice object */ }
+      u.lang = (c.voice && c.voice.lang) || 'en-GB'; u.pitch = c.pitch; u.rate = c.rate;
+      u.volume = item.role === 'resident' ? 0.85 : 1;
+      S.cur = item; item.u = u;
+      let done = false;
+      const finish = () => {
+        if (done) return; done = true;
+        clearTimeout(item.guard);
+        if (S.cur === item) S.cur = null;
+        if (item.onend) item.onend();
+        this.duck(false);
+        // Chrome can swallow an utterance queued straight after cancel(): leave it a moment
+        setTimeout(() => { if (!S.cur) this.nextSpeech(); }, 60);
+      };
+      u.onstart = () => { if (item.onstart) item.onstart(); };
+      u.onend = finish; u.onerror = finish;
+      item.finish = finish;
+      // some engines never fire onend: give up after a generous estimate of the line's length
+      item.guard = setTimeout(finish, 2500 + item.text.length * 110);
+      this.duck(true);
+      try { if (speechSynthesis.paused) speechSynthesis.resume(); speechSynthesis.speak(u); } catch (e) { finish(); }
+    },
+    nextSpeech() {
+      const S = this.speech, now = performance.now();
+      while (S.q.length) {
+        const it = S.q.shift();
+        const maxWait = it.role === 'commentary' ? 4500 : it.role === 'radio' ? 3000 : 1800;
+        if (now - it.at <= maxWait && !(it.stale && it.stale())) { this.speakNow(it); return; }
+      }
+    },
+    cancelSpeech(keepQueue) {
+      const S = this.speech;
+      if (!keepQueue) S.q = [];
+      const cur = S.cur;
+      try { if (this.speechOK()) speechSynthesis.cancel(); } catch (e) { /* optional */ }
+      if (cur && cur.finish) cur.finish();
+      else if (keepQueue) setTimeout(() => { if (!S.cur) this.nextSpeech(); }, 60);
+    },
+    // Barry stops mid-word when the music does
+    cutRadio() {
+      const S = this.speech;
+      S.q = S.q.filter((q) => q.role !== 'radio');
+      if (S.cur && S.cur.role === 'radio') this.cancelSpeech(true);
+    },
+    duck(on) {
+      if (!this.ctx || !this.musicTimer) return;
+      const t = this.ctx.currentTime, g = this.musicBus.gain;
+      g.cancelScheduledValues(t); g.setValueAtTime(g.value, t);
+      g.linearRampToValueAtTime(this.vol.music * 0.55 * (on ? 0.45 : 1), t + (on ? 0.15 : 0.6));
     },
   };
 })(window.LS);
