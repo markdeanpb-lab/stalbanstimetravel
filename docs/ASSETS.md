@@ -66,3 +66,9 @@ None of these use asset files:
 - **Building details:** window and shopfront art, signs and plaques (`game/js/world/textures.js`). Every business name is fictional.
 - **Effects:** smoke, leaves, fireworks and pigeons (`game/js/world/fx.js`).
 - **Sound and music:** the Web Audio synthesis in `game/js/core/audio.js` and `music.js`.
+
+## Striders Slam (`arena/`)
+
+- **Runner character:** Quaternius, *Universal Animation Library* (Standard), [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/), downloaded from [OpenGameArt](https://opengameart.org/content/universal-animation-library). The mannequin was remeshed and reshaped, and its animations trimmed, in Blender 4.2 by `tools/arena/build_runner.py`. The licence file is `arena/assets/runner.LICENSE.txt`.
+- **three.js** r186.1 (MIT) and **postprocessing** 6.39.5 (Zlib): `arena/vendor/`, with their licence files.
+- Everything else in the arena (the ring, crowd, lighting, textures, belt, effects and synthesised sound) is generated in code.

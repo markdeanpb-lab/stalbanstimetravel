@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#08090c">
+<meta name="description" content="Striders Slam: walk a St Albans Strider out through a packed wrestling arena, into the ring, and win over the crowd.">
+<title>Striders Slam</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="view" aria-label="Arena view"></canvas>
+
+<div id="hud" class="hidden">
+  <div id="objective" class="panel" aria-live="polite">
+    <div class="label">Objective</div>
+    <div id="obj-text">Make your entrance</div>
+  </div>
+  <div id="energy" class="panel" aria-label="Crowd energy">
+    <div class="label">Crowd energy</div>
+    <div class="bar"><div id="energy-fill"></div></div>
+    <div id="energy-pct">0%</div>
+  </div>
+  <div id="list" class="panel">
+    <div class="label">Crowd pleasers <span class="key">J</span></div>
+    <ul id="list-items"></ul>
+  </div>
+  <div id="prompt" class="hidden"><span class="key" id="prompt-key">E</span><span id="prompt-text"></span></div>
+  <div id="toast" class="hidden"></div>
+  <div id="subtitle" class="hidden"></div>
+  <div id="help" class="panel">
+    <div><span class="key">W A S D</span> move <span class="key">Shift</span> sprint <span class="key">Space</span> jump</div>
+    <div><span class="key">E</span> interact <span class="key">V</span> victory pose <span class="key">B</span> dance <span class="key">F</span> punch</div>
+    <div><span class="key">Mouse</span> look <span class="key">Wheel</span> zoom <span class="key">M</span> mute <span class="key">H</span> hide help</div>
+  </div>
+  <button id="mute" class="icon-btn" aria-label="Mute">🔊</button>
+</div>
+
+<div id="touch" class="hidden" aria-hidden="true">
+  <div id="stick-zone"><div id="stick-base"><div id="stick-knob"></div></div></div>
+  <div id="look-zone"></div>
+  <div id="tbtns">
+    <button class="tbtn" data-k="KeyE">✋<span>Use</span></button>
+    <button class="tbtn" data-k="Space">⤒<span>Jump</span></button>
+    <button class="tbtn big" data-k="KeyV">🙌<span>Pose</span></button>
+    <button class="tbtn" data-k="ShiftLeft" data-hold="1">🏃<span>Run</span></button>
+    <button class="tbtn" data-k="KeyB">💃<span>Dance</span></button>
+    <button class="tbtn" data-k="KeyF">👊<span>Punch</span></button>
+  </div>
+</div>
+
+<div id="title" class="screen">
+  <div class="card">
+    <div class="kicker">Live from the Herts Arena</div>
+    <h1>STRIDERS<br>SLAM</h1>
+    <div class="sub">#1538 · The St Albans Strider</div>
+    <div id="loading">Loading the arena…</div>
+    <button id="start" class="hidden">Enter the arena</button>
+    <div class="howto">
+      <p>You're backstage, at the top of the ramp. Make your entrance, get into the ring and win over a packed house.</p>
+      <p class="keys kbd-only"><b>Keyboard:</b> WASD move · Shift sprint · Space jump · E interact · V victory pose · B dance · F punch · mouse look (click to lock)</p>
+      <p class="keys"><b>Touch:</b> left thumb moves, right thumb looks; buttons on the right.</p>
+    </div>
+  </div>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script src="assets/runner.glb.js"></script>
+<script src="js/runner.js"></script>
+<script src="js/arena.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

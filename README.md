@@ -191,6 +191,10 @@ They run the game in headless Chromium with software WebGL, which is far too slo
 
 `node tools/build-artifact.js out/artifact` packages the game as a page for publishing as a claude.ai Artifact. The page is the body of `index.html` with the stylesheet inlined, and the scripts are published beside it. In that viewer, a game in progress survives a republish of the page.
 
+## Striders Slam (the wrestling arena)
+
+`arena/` holds a separate small game: a St Albans Striders runner walks out to a packed wrestling arena, climbs into the ring and wins over the crowd. Open `arena/index.html` to play. See [`arena/README.md`](arena/README.md) for its controls, how the character was built in Blender from a CC0 Quaternius mannequin, and its credits.
+
 ## Repository layout
 
 ```
@@ -199,6 +203,8 @@ game/                 the runnable game (open index.html)
 docs/                 design note, research notes, known issues, verification + screenshots
 tools/                developer-only tools (map pipeline, texture pack, three.js vendoring, headless checks, playthrough, perf, screenshots)
 dist/                 curfew-st-albans-m1.zip (the game folder plus docs)
+arena/                Striders Slam, the wrestling-arena game (open index.html)
+tools/arena/          Blender build of its runner character, packing and screenshot scripts
 ```
 
 ## Credits and licences
