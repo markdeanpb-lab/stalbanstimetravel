@@ -189,7 +189,7 @@ node tools/screens.js out/screens           # the screenshots in docs/screenshot
 
 They run the game in headless Chromium with software WebGL, which is far too slow to play in real time, so they advance the game with `SA.debug.sim()` and take screenshots between steps.
 
-`node tools/build-artifact.js out/artifact` packages the game as a page for publishing as a claude.ai Artifact. The page is the body of `index.html` with the stylesheet inlined, and the scripts are published beside it. In that viewer, a game in progress survives a republish of the page.
+`node tools/build-artifact.js out/artifact` packages the game (add `arena` as a second argument for Striders Slam) as a page for publishing as a claude.ai Artifact. The page is the body of `index.html` with the stylesheet inlined, and the scripts are published beside it. In that viewer, a game in progress survives a republish of the page.
 
 ## Striders Slam (the wrestling arena)
 

@@ -1,5 +1,5 @@
 // Builds the page published as a claude.ai Artifact, so the game can be played from a link.
-// Usage: node tools/build-artifact.js <outdir>
+// Usage: node tools/build-artifact.js <outdir> [game|arena]
 // Writes <outdir>/index.html and <outdir>/files.json ({ "published/path": "game/source/path" }).
 // The Artifact viewer wraps the page in its own <!doctype html><head><body> skeleton, so the page
 // is the body content of game/index.html with the title first and the stylesheet inlined; the
@@ -8,17 +8,17 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const GAME = path.join(ROOT, 'game');
+const GAME = path.join(ROOT, process.argv[3] || 'game');
 const out = process.argv[2] || path.join(ROOT, 'dist', 'artifact');
 fs.mkdirSync(out, { recursive: true });
 
 const html = fs.readFileSync(path.join(GAME, 'index.html'), 'utf8');
 const body = html.slice(html.indexOf('<body>') + '<body>'.length, html.lastIndexOf('</body>')).trim();
-const css = fs.readFileSync(path.join(GAME, 'css', 'style.css'), 'utf8');
+const css = fs.readFileSync(fs.existsSync(path.join(GAME, 'css', 'style.css')) ? path.join(GAME, 'css', 'style.css') : path.join(GAME, 'style.css'), 'utf8');
 if (/<\/style/i.test(css)) throw new Error('style.css contains a closing style tag');
 
 const page = [
-  '<title>Curfew St Albans</title>',
+  process.argv[3] === 'arena' ? html.match(/<title>[^<]*<\/title>/)[0] : '<title>Curfew St Albans</title>',
   '<style>',
   css.trim(),
   '</style>',
@@ -32,7 +32,7 @@ const files = {};
 for (const m of body.matchAll(/<script src="([^"]+)"><\/script>/g)) {
   const rel = m[1];
   if (/^https?:/.test(rel)) continue;
-  const src = path.join('game', rel);
+  const src = path.join(path.relative(ROOT, GAME), rel);
   if (!fs.existsSync(path.join(ROOT, src))) throw new Error('missing ' + src);
   files[rel] = src;
 }

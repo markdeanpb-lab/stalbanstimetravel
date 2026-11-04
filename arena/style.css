@@ -4,6 +4,7 @@
   --ink: #f4f2ea;
   --panel: rgba(8, 9, 14, 0.72);
   --edge: rgba(255, 207, 26, 0.35);
+  color-scheme: dark;
   --font: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
 }
 * { box-sizing: border-box; }
